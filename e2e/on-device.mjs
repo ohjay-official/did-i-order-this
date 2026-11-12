@@ -291,6 +291,11 @@ try {
   let context = browser.contexts()[0];
   let page = context.pages()[0] || (await context.newPage());
 
+  // nano-probe's first availability() call was ~25s after Chrome start.
+  // Calling the Prompt API too early can crash the on-device backend
+  // ("Error loading backend") and leave availability() stuck on unavailable.
+  console.log("Waiting for the on-device backend to start");
+  await new Promise((r) => setTimeout(r, 25_000));
   await page.goto("http://127.0.0.1:8123/warmup", { waitUntil: "domcontentloaded", timeout: 30_000 });
   await page.click("#go");
   const warmupDeadline = Date.now() + timeoutMs;
@@ -309,6 +314,7 @@ try {
     return {
       result: probe.result || null,
       availabilityBefore: probe.availabilityBefore || null,
+      availabilityTextOnly: probe.availabilityTextOnly || null,
       availabilityWithImage: probe.availabilityWithImage || null,
       availabilityAfter: probe.availabilityAfter || null,
       createMs: probe.createMs || null,
@@ -321,8 +327,10 @@ try {
   console.log(
     "WARMUP:",
     result.warmup.result,
-    "text=",
+    "default=",
     result.warmup.availabilityBefore,
+    "text=",
+    result.warmup.availabilityTextOnly,
     "image=",
     result.warmup.availabilityWithImage,
     "after=",

@@ -17,10 +17,6 @@
 <script>
   const out = { steps: [], ua: navigator.userAgent };
   const logEl = document.getElementById("log");
-  const createOptions = {
-    expectedInputs: [{ type: "text", languages: ["en"] }],
-    expectedOutputs: [{ type: "text", languages: ["en"] }],
-  };
   function log(msg) {
     const line = new Date().toISOString().slice(11, 19) + "  " + msg;
     out.steps.push(line);
@@ -34,21 +30,29 @@
         log("LanguageModel is not defined");
         return;
       }
-      let before = await LanguageModel.availability(createOptions);
-      log("availability(text): " + before);
+      // Same calls as ohjay-official/nano-probe. Do not pass createOptions
+      // here; the proven runner path used the API defaults.
+      let before = await LanguageModel.availability();
+      log("availability(): " + before);
       const waitStart = Date.now();
       while (before === "unavailable" && Date.now() - waitStart < 60_000) {
         log("backend not ready, retrying availability");
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        before = await LanguageModel.availability(createOptions);
-        log("availability(text): " + before);
+        before = await LanguageModel.availability();
+        log("availability(): " + before);
       }
+      const textOnly = await LanguageModel.availability({
+        expectedInputs: [{ type: "text", languages: ["en"] }],
+        expectedOutputs: [{ type: "text", languages: ["en"] }],
+      }).catch((err) => String(err));
       const withImage = await LanguageModel.availability({
         expectedInputs: [{ type: "text", languages: ["en"] }, { type: "image" }],
         expectedOutputs: [{ type: "text", languages: ["en"] }],
       }).catch((err) => String(err));
       out.availabilityBefore = before;
+      out.availabilityTextOnly = textOnly;
       out.availabilityWithImage = withImage;
+      log("availability(text): " + textOnly);
       log("availability(text+image): " + withImage);
       if (before === "unavailable") {
         out.result = "unavailable";
@@ -56,7 +60,6 @@
       }
       const t0 = performance.now();
       const session = await LanguageModel.create({
-        ...createOptions,
         monitor(m) {
           m.addEventListener("downloadprogress", (e) => {
             out.lastProgress = e.loaded;
@@ -65,7 +68,7 @@
         },
       });
       out.createMs = Math.round(performance.now() - t0);
-      out.availabilityAfter = await LanguageModel.availability(createOptions);
+      out.availabilityAfter = await LanguageModel.availability();
       log("session ready after " + out.createMs + " ms; availability=" + out.availabilityAfter);
       const t1 = performance.now();
       const answer = await session.prompt("Reply with the single word ok. No other text.");
