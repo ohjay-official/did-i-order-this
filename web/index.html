@@ -53,60 +53,183 @@
         </div>
       </section>
 
-      <section class="compare" aria-label="How the check decides">
-        <div class="compare-inner">
-          <h2>The email can look official. What you ordered is what counts.</h2>
-          <p class="lede">In the default sample, you are not expecting any parcel. An official UPS domain does not change that.</p>
-          <div class="compare-grid">
-            <article class="compare-card">
-              <h3>What the email claims</h3>
-              <p>A DHL desk is holding a parcel, cites tracking number GM123456789012345, and asks for a $2.99 release fee.</p>
-            </article>
-            <article class="compare-card">
-              <h3>What is stored on this device</h3>
-              <p>No expected shipments are stored on this device. The domain dhl-parcel-desk.example is not in the official-domain pack.</p>
-            </article>
-            <article class="compare-card is-verdict">
-              <h3>What code decides</h3>
-              <p class="source-label">Checked on this device</p>
-              <p class="compare-headline">You're not expecting any parcel right now.</p>
-              <p>The model only reads the claim. Deterministic code issues the verdict.</p>
-            </article>
+      
+      <div class="below-hero">
+        <section class="bleed" aria-label="How the check decides">
+          <div class="bleed-inner">
+            <div class="bleed-head">
+              <h2>The email can look official. What you ordered is what counts.</h2>
+              <p>In the default sample you are not expecting any parcel. An official-looking domain does not change that.</p>
+            </div>
+            <div class="bento">
+              <article class="bento-tile">
+                <div class="tile-visual"><article class="mock-email">
+  <p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;<br /><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
+  <p class="subject">Your parcel is held. Pay the release fee.</p>
+  <p class="body">Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p>
+</article></div>
+                <div class="tile-copy">
+                  <h3>What the email claims</h3>
+                  <p>A DHL desk is holding a parcel, cites tracking number GM123456789012345, and asks for a $2.99 release fee.</p>
+                </div>
+              </article>
+              <article class="bento-tile">
+                <div class="tile-visual"><div class="match">
+  <div class="match-col">
+    <p>Cited in the email</p>
+    <p class="num is-miss">GM123456789012345</p>
+  </div>
+  <p class="match-result">No match</p>
+  <div class="match-col">
+    <p>Expected parcels on this device</p>
+    <p class="num is-empty">None</p>
+  </div>
+</div></div>
+                <div class="tile-copy">
+                  <h3>What is stored on this device</h3>
+                  <p>No expected shipments are stored. The domain dhl-parcel-desk.example is not in the official-domain pack.</p>
+                </div>
+              </article>
+              <article class="bento-tile is-wide">
+                <div class="tile-visual is-warm"><div class="mock-verdict is-warning">
+  <p class="kicker">Warning</p>
+  <p class="headline">You're not expecting any parcel right now.</p>
+  <span class="stamp">Checked on this device</span>
+</div></div>
+                <div class="tile-copy">
+                  <h3>What code decides</h3>
+                  <p>The model only reads the claim. Deterministic code issues the verdict and the source stamp.</p>
+                </div>
+              </article>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="beats" aria-label="How a check runs">
-        <div class="beats-inner">
-          <h2>Four steps, then a stamp</h2>
-          <ol class="beat-list">
-            <li>
-              <span class="beat-num">01</span>
-              <h3>Keep orders on this device</h3>
-              <p>The sample inbox starts with a small demo set of orders. Imports are parsed in the browser and are not uploaded.</p>
-            </li>
-            <li>
-              <span class="beat-num">02</span>
-              <h3>Open the email you want to check</h3>
-              <p>Paste it above, pick a sample, or read an open Gmail thread as text in the Chrome extension.</p>
-            </li>
-            <li>
-              <span class="beat-num">03</span>
-              <h3>Try on-device AI first</h3>
-              <p>A check starts on the device through Firebase AI Logic. Cloud inference happens only after you allow it, and only on the hosted site.</p>
-            </li>
-            <li>
-              <span class="beat-num">04</span>
-              <h3>Code issues the verdict</h3>
-              <p>Matching tracking is marked safe. No match is a warning. The source label always says where the check ran.</p>
-            </li>
-          </ol>
-          <p class="related">
-            <a href="/how-it-works/">The full walkthrough</a>
-            <a href="/privacy/">What stays on this device</a>
-          </p>
-        </div>
-      </section>
+        <section class="bleed is-raised" aria-label="Sample emails">
+          <div class="bleed-inner">
+            <div class="bleed-head">
+              <h2>The same check, across the sample inbox</h2>
+              <p>These are the fictional demo threads that ship in the product today, not testimonials and not a live mailbox.</p>
+            </div>
+            <div class="gallery">
+              <article class="gallery-card">
+                <div class="gallery-visual"><article class="mock-email">
+  <p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;<br /><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
+  <p class="subject">Your parcel is held. Pay the release fee.</p>
+  <p class="body">Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p>
+</article><div class="mock-verdict is-warning">
+  <p class="kicker">Warning</p>
+  <p class="headline">You're not expecting any parcel right now.</p>
+  <span class="stamp">Checked on this device</span>
+</div></div>
+                <div class="gallery-copy">
+                  <h3>Fake DHL release fee</h3>
+                  <p>A carrier-hold lure. The cited tracking number is not an expected parcel, so the verdict is Warning.</p>
+                </div>
+              </article>
+              <article class="gallery-card">
+                <div class="gallery-visual"><article class="mock-email">
+  <p class="meta"><strong>From</strong> UPS &lt;pkginfo@ups.com&gt;</p>
+  <p class="subject">UPS delivery update for 1Z999AA10123456784</p>
+  <p class="body">A delivery update is available for tracking number 1Z999AA10123456784. This is the genuine-looking carrier sample in the demo inbox.</p>
+</article></div>
+                <div class="gallery-copy">
+                  <h3>UPS delivery update</h3>
+                  <p>The wording looks like a real carrier update. It is still judged by the tracking number stored on this device, not by how official it looks.</p>
+                </div>
+              </article>
+              <article class="gallery-card">
+                <div class="gallery-visual"><article class="mock-email">
+  <p class="meta"><strong>From</strong> Northwind Outfitters</p>
+  <p class="subject">Your order has shipped</p>
+  <p class="body">Order NW-10482 has shipped with tracking number 1Z999AA10123456784.</p>
+</article></div>
+                <div class="gallery-copy">
+                  <h3>Store shipment notice</h3>
+                  <p>Northwind Outfitters cites an order and a tracking number. After you confirm, that shipment can be saved on this device.</p>
+                </div>
+              </article>
+              <article class="gallery-card">
+                <div class="gallery-visual"><article class="mock-email">
+  <p class="meta"><strong>From</strong> Streamhut Billing</p>
+  <p class="subject">Your Streamhut invoice is due</p>
+  <p class="body">Invoice INV-88931 is due for your Streamhut renewal.</p>
+</article></div>
+                <div class="gallery-copy">
+                  <h3>Subscription renewal</h3>
+                  <p>Streamhut Billing cites invoice INV-88931. Renewals are checked against a stored order or invoice number, not a scam score.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="bleed" aria-label="Compared with other options">
+          <div class="bleed-inner">
+            <div class="bleed-head">
+              <h2>Compared with a spam folder, or with guessing</h2>
+              <p>This product does not replace your mail app. It answers a narrower question: does this claim match what you ordered?</p>
+            </div>
+            <div class="table-wrap">
+              <table class="compare-table">
+                <thead>
+                  <tr>
+                    <th>Question</th>
+                    <th>Did I Order This?</th>
+                    <th>A spam filter</th>
+                    <th>Reading the email yourself</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Checks a cited tracking or order number against your records</td>
+                    <td class="is-yes">Yes, against orders stored on this device</td>
+                    <td class="is-no">No</td>
+                    <td class="is-no">Only if you look them up by hand</td>
+                  </tr>
+                  <tr>
+                    <td>Starts the AI read on this device</td>
+                    <td class="is-yes">Yes</td>
+                    <td class="is-no">Mail is usually processed on a server</td>
+                    <td class="is-no">No AI step</td>
+                  </tr>
+                  <tr>
+                    <td>Sends the email to a server only after you agree</td>
+                    <td class="is-yes">Yes, and only on the hosted site</td>
+                    <td class="is-no">Not in your control</td>
+                    <td class="is-yes">Nothing is sent</td>
+                  </tr>
+                  <tr>
+                    <td>Labels where the check ran</td>
+                    <td class="is-yes">On this device, in the cloud, limited, or not completed</td>
+                    <td class="is-no">No</td>
+                    <td class="is-no">No</td>
+                  </tr>
+                  <tr>
+                    <td>Scans your whole inbox</td>
+                    <td class="is-no">No. One pasted email, or the Gmail thread that is open</td>
+                    <td class="is-no">It already sees the mailbox</td>
+                    <td class="is-yes">You choose what to open</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="bleed is-warm" aria-label="Open the sample inbox">
+          <div class="bleed-inner">
+            <div class="bleed-head">
+              <h2>Try it on the sample inbox</h2>
+              <p>The hosted inbox includes the DHL hold thread and the other demo messages. No account is required.</p>
+            </div>
+            <div class="cta-row">
+              <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+              <a class="btn btn-ghost" href="/how-it-works/">See a check taken apart</a>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

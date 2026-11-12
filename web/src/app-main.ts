@@ -1,6 +1,6 @@
 import { InboxApp } from "./ui/InboxApp.ts";
 import { mountShell } from "./site/shell.ts";
-import "./styles.css";
+import "./styles-v5.css";
 
 mountShell(document, { current: "/app/" });
 

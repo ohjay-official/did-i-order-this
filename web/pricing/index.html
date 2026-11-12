@@ -3,52 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pricing | Did I Order This?</title>
-    <meta name="description" content="There is no paid plan to buy today. The hosted checker and the extension are free to use as they work now." />
+    <title>Pricing · Did I Order This?</title>
+    <meta name="description" content="There is no paid plan to buy today. The sample inbox and the sideloaded extension are free to try." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/pricing/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="Pricing | Did I Order This?" />
-    <meta property="og:description" content="There is no paid plan to buy today. The hosted checker and the extension are free to use as they work now." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="There is no paid plan to buy today. The sample inbox and the sideloaded extension are free to try." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/pricing/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pricing | Did I Order This?" />
-    <meta name="twitter:description" content="There is no paid plan to buy today. The hosted checker and the extension are free to use as they work now." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="There is no paid plan to buy today. The sample inbox and the sideloaded extension are free to try." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero pricing-hero">
+      <header class="page-hero">
         <p class="eyebrow">Pricing</p>
         <h1>There is no paid plan to buy today</h1>
         <p class="lede">This is a public product you can try during the #BuildHybridAI 2026 period. No subscription form is attached to this page, and no company has endorsed this product.</p>
-      </section>
-
-      <section class="price-stage" data-reveal>
-        <p class="price-word">Free</p>
-        <p class="price-note">No account is required for the sample inbox.</p>
-        <ul class="price-list">
-          <li>The hosted sample inbox, including the DHL hold thread and the other demo messages</li>
-          <li>On-device import of an Amazon, PayPal, or generic order-history file</li>
-          <li>A cloud check only after you agree, when on-device AI is not available</li>
-          <li>The Chrome extension, when you sideload it, for on-device checks of an open Gmail thread</li>
-        </ul>
-        <div class="actions">
-          <a class="btn" href="/app/">Open the sample inbox</a>
-          <a class="btn btn-secondary" href="/faq/">Read the FAQ</a>
+      </header>
+      <section class="bleed">
+        <div class="bleed-inner">
+          <div class="price-grid">
+            <article class="price-card is-live">
+              <p class="price-kicker">Available now</p>
+              <p class="amount">Free</p>
+              <p class="lede">No account is required for the sample inbox.</p>
+              <ul>
+                <li>The hosted sample inbox, including the DHL hold thread and the other demo messages</li>
+                <li>On-device import of an Amazon, PayPal, or generic order-history file</li>
+                <li>A cloud check only after you agree, when on-device AI is not available</li>
+                <li>The Chrome extension, when you sideload it, for on-device checks of an open Gmail thread</li>
+              </ul>
+              <div class="cta-row">
+                <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+              </div>
+            </article>
+            <article class="price-card is-planned">
+              <p class="price-kicker">Planned, not live</p>
+              <p class="amount">Store listing</p>
+              <p class="lede">A Chrome Web Store listing is planned. It is not available today. You sideload the unpacked build instead.</p>
+              <ul>
+                <li>Chrome Web Store listing <span class="badge-planned">Planned</span></li>
+                <li>Screenshot or .eml ingest is not available today and is not listed as a live feature</li>
+                <li>There is no paid Pro plan to announce</li>
+              </ul>
+            </article>
+          </div>
         </div>
       </section>
-
-      <section class="page-prose">
-        <h2>What is not for sale</h2>
-        <p>There is no Pro tier, no usage meter, and no enterprise contract on this site. If a paid plan is offered later, this page will say what it includes and what it costs. It will not invent those details in advance.</p>
+      <section class="bleed is-raised">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>What you are not being sold</h2>
+            <p>There is no trial countdown, no usage meter, and no upgrade dialog in the sample inbox.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-ghost" href="/faq/">Pricing questions</a>
+          </div>
+        </div>
       </section>
-
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

@@ -3,81 +3,151 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Features | Did I Order This?</title>
-    <meta name="description" content="Order checks, a carrier rule, on-device import, a visible source label, and a Chrome side panel for Gmail." />
+    <title>Features · Did I Order This?</title>
+    <meta name="description" content="What you can do today: check a cited tracking or order number against records stored on this device." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/features/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="Features | Did I Order This?" />
-    <meta property="og:description" content="Order checks, a carrier rule, on-device import, a visible source label, and a Chrome side panel for Gmail." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="What you can do today: check a cited tracking or order number against records stored on this device." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/features/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Features | Did I Order This?" />
-    <meta name="twitter:description" content="Order checks, a carrier rule, on-device import, a visible source label, and a Chrome side panel for Gmail." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="What you can do today: check a cited tracking or order number against records stored on this device." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero">
+      <header class="page-hero">
         <p class="eyebrow">Features</p>
         <h1>What you can do today</h1>
         <p class="lede">These are the features that ship now. Nothing here is a roadmap item presented as finished.</p>
-      </section>
+      </header>
 
-      <section class="feature-lead" data-reveal>
-        <p class="eyebrow">The rule that matters</p>
-        <h2>A carrier email is judged by the tracking number you already have, not by how official it looks.</h2>
-        <div class="rule-row">
-          <article>
-            <h3>If the number matches an expected parcel</h3>
-            <p>Code marks the check Safe.</p>
+      <div class="hero-visual-wrap">
+        <div class="bleed-inner" style="width:100%">
+          <article class="bento-tile is-wide" style="min-height:0">
+            <div class="tile-visual is-warm"><div class="match"><div class="match-col"><p>Cited in the email</p><p class="num is-miss">GM123456789012345</p></div><p class="match-result">No match</p><div class="match-col"><p>Expected parcels on this device</p><p class="num is-empty">None</p></div></div></div>
+            <div class="tile-copy">
+              <h3>A carrier email is judged by the tracking number you already have, not by how official it looks.</h3>
+              <p>If the number matches an expected parcel, code marks the check Safe. If it does not, the check is Warning, even when the domain looks official.</p>
+            </div>
           </article>
-          <article>
-            <h3>If it does not</h3>
-            <p>Code marks the check Warning, even when the domain looks official.</p>
-          </article>
-          <article>
-            <h3>Store and billing mail</h3>
-            <p>Those are checked by the cited order or invoice number, not by a scam score.</p>
-          </article>
+        </div>
+      </div>
+
+      <section class="bleed" aria-label="Product surfaces">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>The product, in the places it actually appears</h2>
+            <p>Each tile is a view from the hosted sample inbox or the Chrome side panel, not a stock illustration.</p>
+          </div>
+          <div class="bento">
+            <article class="bento-tile is-wide">
+              <div class="tile-visual"><div class="mock-threads"><div class="mock-thread is-current"><p class="from">DHL Express Desk</p><p class="sub">Your parcel is held. Pay the release fee.</p><p class="when">12 Nov 2026</p></div><div class="mock-thread"><p class="from">Northwind Outfitters</p><p class="sub">Your order has shipped</p><p class="when">11 Nov 2026</p></div><div class="mock-thread"><p class="from">UPS</p><p class="sub">UPS delivery update for 1Z999AA10123456784</p><p class="when">12 Nov 2026</p></div></div></div>
+              <div class="tile-copy">
+                <h3>A sample inbox you can open now</h3>
+                <p>Three demo threads ship with the product, including the DHL hold, a Northwind shipment notice, and a UPS update.</p>
+              </div>
+            </article>
+            <article class="bento-tile">
+              <div class="tile-visual is-warm"><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div>
+              <div class="tile-copy">
+                <h3>A stamp for every check</h3>
+                <p>The label always says where the check ran: on this device, in the cloud after you agreed, as a limited check with no AI, or not completed.</p>
+              </div>
+            </article>
+            <article class="bento-tile">
+              <div class="tile-visual is-ink" style="padding-bottom:20px"><div class="frame-panel"><div class="frame-body"><p style="margin:0 0 8px;font-family:var(--display);font-size:18px;">Did I Order This?</p><p style="margin:0 0 12px;color:var(--secondary);font-size:13px;line-height:18px;">The side panel reads only the Gmail thread that is open.</p><p style="margin:0 0 4px;font-size:12px;"><strong>From</strong> DHL Express Desk</p><p style="margin:0 0 14px;font-size:12px;"><strong>Subject</strong> Your parcel is held. Pay the release fee.</p><p class="btn btn-primary" style="margin:0 0 12px;">Check this email</p><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div></div></div>
+              <div class="tile-copy">
+                <h3>A side panel for an open Gmail thread</h3>
+                <p>The extension reads the message on screen as text. It keeps orders in chrome.storage.local and does not send mail to the cloud.</p>
+              </div>
+            </article>
+            <article class="bento-tile">
+              <div class="tile-visual"><div class="mock-email"><p class="meta">Structured claim the model is allowed to produce</p><p class="subject">Claims to be DHL, as a carrier</p><p class="body">Claimed domain: dhl-parcel-desk.example<br />Asks you to: pay a release fee<br />Cites: tracking GM123456789012345<br />Email kind: carrier_update</p></div></div>
+              <div class="tile-copy">
+                <h3>The model reads the claim. Code issues the verdict.</h3>
+                <p>Firebase AI Logic is asked only to structure what the email claims. Deterministic code compares that claim with the records on this device.</p>
+              </div>
+            </article>
+            <article class="bento-tile">
+              <div class="tile-visual" style="align-items:center"><div class="mock-consent"><h3>Send this email to the cloud?</h3><p>On-device AI did not run. The hosted site can send the text of this one email after you agree. The extension never does this.</p><div class="btn-row"><span class="btn btn-primary">Send this email</span><span class="btn btn-ghost">Do not send</span><span class="btn btn-ghost">Run a limited check (no AI)</span></div></div></div>
+              <div class="tile-copy">
+                <h3>Cloud only after you agree</h3>
+                <p>If on-device AI is unavailable on the hosted site, a consent sheet asks before the text of that one email is sent. You can still run a limited check with no AI.</p>
+              </div>
+            </article>
+            <article class="bento-tile is-wide">
+              <div class="tile-visual is-warm">
+                <div class="mock-email" style="width:100%">
+                  <p class="meta">On-device import</p>
+                  <p class="subject">Amazon, PayPal, or a generic order-history file</p>
+                  <p class="body">CSV and ZIP files are parsed in the browser. They are not uploaded. Import lives in the sample inbox under Import order history.</p>
+                </div>
+              </div>
+              <div class="tile-copy">
+                <h3>Import stays on this device</h3>
+                <p>Store and billing mail are checked by the cited order or invoice number, not by a scam score.</p>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
-      <section class="feature-list">
-        <article class="feature" data-reveal>
-          <h3>Orders stored on this device</h3>
-          <p>Orders, shipments, and known senders stay in IndexedDB in this browser, or in chrome.storage.local in the extension. The demo set can be reset. You can save a shipment after a check.</p>
-        </article>
-        <article class="feature" data-reveal>
-          <h3>On-device import</h3>
-          <p>Import an Amazon Retail.OrderHistory CSV or ZIP, a PayPal activity CSV, or a generic CSV. Parsing happens locally. Jumia, Walmart, and Shopify customer exports are not supported.</p>
-        </article>
-        <article class="feature" data-reveal>
-          <h3>A visible hybrid label</h3>
-          <p>Each finished check shows whether it ran on the device, in the cloud after you agreed, as a limited check with no AI, or was not completed.</p>
-        </article>
-        <article class="feature" data-reveal>
-          <h3>Consent before cloud inference</h3>
-          <p>The default is on-device only. If on-device AI is missing, the hosted site asks before sending the email off the device. The extension does not send mail to the cloud.</p>
-        </article>
-        <article class="feature" data-reveal>
-          <h3>A Chrome side panel for Gmail</h3>
-          <p>The extension reads the open Gmail thread as text and runs on-device AI only. Cloud checks go through the hosted site after you agree. The extension is not in the Chrome Web Store yet.</p>
-        </article>
+      <section class="bleed is-raised" aria-label="Sample checks">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>The kinds of mail this is built to check</h2>
+            <p>The gallery uses the fictional demo threads that ship today. Carrier holds, shipment notices, and renewals are the email kinds the product classifies.</p>
+          </div>
+          <div class="gallery">
+            <article class="gallery-card"><div class="gallery-visual"><article class="mock-email"><p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p><p class="subject">Your parcel is held. Pay the release fee.</p><p class="body">Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p></article><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div><div class="gallery-copy"><h3>Fake DHL release fee</h3><p>A carrier-hold lure in the sample inbox. Warning, because no expected parcel is stored.</p></div></article>
+            <article class="gallery-card"><div class="gallery-visual"><article class="mock-email"><p class="meta"><strong>From</strong> DHL Express Desk</p><p class="subject">Duty payment required for your shipment</p><p class="body">A duty payment is requested for tracking number GM999888777666555.</p></article></div><div class="gallery-copy"><h3>Duty payment with the wrong tracking number</h3><p>Another DHL-hold demo thread, citing GM999888777666555, which is also not an expected parcel.</p></div></article>
+            <article class="gallery-card"><div class="gallery-visual"><article class="mock-email"><p class="meta"><strong>From</strong> UPS</p><p class="subject">UPS delivery update for 1Z999AA10123456784</p><p class="body">A delivery update is available for tracking number 1Z999AA10123456784.</p></article></div><div class="gallery-copy"><h3>UPS delivery update</h3><p>Judged by the cited tracking number, not by how official the wording looks.</p></div></article>
+            <article class="gallery-card"><div class="gallery-visual"><article class="mock-email"><p class="meta"><strong>From</strong> Northwind Outfitters</p><p class="subject">Your order has shipped</p><p class="body">Order NW-10482 has shipped with tracking number 1Z999AA10123456784.</p></article></div><div class="gallery-copy"><h3>Store shipment notice</h3><p>Northwind cites order NW-10482 and a tracking number you can save after you confirm.</p></div></article>
+            <article class="gallery-card"><div class="gallery-visual"><article class="mock-email"><p class="meta"><strong>From</strong> Streamhut Billing</p><p class="subject">Your Streamhut invoice is due</p><p class="body">Invoice INV-88931 is due for your Streamhut renewal.</p></article></div><div class="gallery-copy"><h3>Subscription renewal</h3><p>Streamhut cites invoice INV-88931. Renewals are checked against a stored order or invoice number.</p></div></article>
+          </div>
+        </div>
       </section>
 
-      <section class="page-end">
-        <p class="related">
-          <a href="/extension/">How the extension works</a>
-          <a href="/app/">Open the sample inbox</a>
-        </p>
+      <section class="bleed" aria-label="Comparison">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Compared with a spam folder, or with guessing</h2>
+            <p>The product answers one question: does this claim match what you ordered?</p>
+          </div>
+          <div class="table-wrap">
+            <table class="compare-table">
+              <thead><tr><th>Question</th><th>Did I Order This?</th><th>A spam filter</th><th>Reading the email yourself</th></tr></thead>
+              <tbody>
+                <tr><td>Checks a cited tracking or order number against your records</td><td class="is-yes">Yes, against orders stored on this device</td><td class="is-no">No</td><td class="is-no">Only if you look them up by hand</td></tr>
+                <tr><td>Starts the AI read on this device</td><td class="is-yes">Yes</td><td class="is-no">Mail is usually processed on a server</td><td class="is-no">No AI step</td></tr>
+                <tr><td>Sends mail only after you agree</td><td class="is-yes">Yes, and only on the hosted site</td><td class="is-no">Not in your control</td><td class="is-yes">Nothing is sent</td></tr>
+                <tr><td>Labels where the check ran</td><td class="is-yes">Four official source labels</td><td class="is-no">No</td><td class="is-no">No</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
+      <section class="bleed is-warm">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Open the sample inbox</h2>
+            <p>No account is required. The DHL hold thread is already there.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-ghost" href="/how-it-works/">See a check taken apart</a>
+          </div>
+        </div>
+      </section>
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

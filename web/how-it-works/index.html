@@ -3,94 +3,99 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>How it works | Did I Order This?</title>
-    <meta name="description" content="On-device AI reads what an email claims. Code checks that claim against the orders and tracking numbers stored on this device." />
+    <title>How it works · Did I Order This?</title>
+    <meta name="description" content="A parcel email, taken apart: the model reads the claim, and code checks it against orders stored on this device." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/how-it-works/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="How it works | Did I Order This?" />
-    <meta property="og:description" content="On-device AI reads what an email claims. Code checks that claim against the orders and tracking numbers stored on this device." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="A parcel email, taken apart: the model reads the claim, and code checks it against orders stored on this device." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/how-it-works/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="How it works | Did I Order This?" />
-    <meta name="twitter:description" content="On-device AI reads what an email claims. Code checks that claim against the orders and tracking numbers stored on this device." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="A parcel email, taken apart: the model reads the claim, and code checks it against orders stored on this device." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero">
+      <header class="page-hero">
         <p class="eyebrow">How it works</p>
         <h1>A parcel email, taken apart</h1>
         <p class="lede">A delivery message can look official and still be a lure. The product splits the work on purpose: a model reads the wording, and code decides the verdict.</p>
-      </section>
+      </header>
 
-      <section class="story" aria-label="A sample check, step by step">
-        <article class="story-scene" data-reveal>
-          <p class="story-num">01</p>
-          <div class="story-copy">
+      <section class="bleed is-raised" id="scene-1" aria-label="The email arrives">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <p class="eyebrow">01</p>
             <h2>The email arrives</h2>
             <p>This is the sample DHL hold used in the demo. It cites a tracking number and asks for a $2.99 release fee.</p>
           </div>
-          <div class="story-mail">
-            <p><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p>
-            <p><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
-            <p>Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p>
-          </div>
-        </article>
+          <div class="story-visual"><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">sample inbox</span></div><div class="frame-body"><article class="mock-email"><p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p><p class="subject">Your parcel is held. Pay the release fee.</p><p class="body">Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p></article></div></div></div>
+        </div>
+      </section>
 
-        <article class="story-scene" data-reveal>
-          <p class="story-num">02</p>
-          <div class="story-copy">
+      <section class="bleed" id="scene-2" aria-label="The model reads the claim">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <p class="eyebrow">02</p>
             <h2>The model reads the claim</h2>
             <p>On-device AI, through Firebase AI Logic, turns the wording into a structured claim. It does not issue Safe, Warning, or Neutral.</p>
           </div>
-          <dl class="claim-board">
-            <div><dt>Claims to be</dt><dd>DHL, as a carrier, at dhl-parcel-desk.example</dd></div>
-            <div><dt>Asks you to</dt><dd>Pay a release fee</dd></div>
-            <div><dt>Cites</dt><dd>Tracking GM123456789012345</dd></div>
-          </dl>
-        </article>
+          <div class="bento">
+            <article class="bento-tile"><div class="tile-visual"><article class="mock-email"><p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p><p class="subject">Your parcel is held. Pay the release fee.</p><p class="body">Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p></article></div><div class="tile-copy"><h3>The wording</h3><p>A held parcel, a tracking number, and a fee.</p></div></article>
+            <article class="bento-tile"><div class="tile-visual"><div class="mock-email"><p class="meta">Structured claim the model is allowed to produce</p><p class="subject">Claims to be DHL, as a carrier</p><p class="body">Claimed domain: dhl-parcel-desk.example<br />Asks you to: pay a release fee<br />Cites: tracking GM123456789012345<br />Email kind: carrier_update</p></div></div><div class="tile-copy"><h3>The structured claim</h3><p>Party, domain, payment request, cited numbers, and email kind.</p></div></article>
+          </div>
+        </div>
+      </section>
 
-        <article class="story-scene" data-reveal>
-          <p class="story-num">03</p>
-          <div class="story-copy">
+      <section class="bleed is-raised" id="scene-3" aria-label="Code looks at what you ordered">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <p class="eyebrow">03</p>
             <h2>Code looks at what you actually ordered</h2>
-            <p>The comparison uses the orders and tracking numbers stored on this device. Imports are parsed in the browser and are not uploaded. On the default demo set you are not expecting any parcel.</p>
+            <p>The cited tracking number is compared with expected parcels stored on this device. In the default sample, there are none.</p>
           </div>
-          <div class="ledger-board">
-            <p class="ledger-empty">Expected parcels on this device</p>
-            <p class="ledger-zero">None</p>
-            <p>The claimed domain dhl-parcel-desk.example is not in the official-domain pack.</p>
-          </div>
-        </article>
+          <div class="story-visual"><div class="match"><div class="match-col"><p>Cited in the email</p><p class="num is-miss">GM123456789012345</p></div><p class="match-result">No match</p><div class="match-col"><p>Expected parcels on this device</p><p class="num is-empty">None</p></div></div></div>
+        </div>
+      </section>
 
-        <article class="story-scene is-verdict" data-reveal>
-          <p class="story-num">04</p>
-          <div class="story-copy">
+      <section class="bleed" id="scene-4" aria-label="A stamp, then the verdict">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <p class="eyebrow">04</p>
             <h2>A stamp, then the verdict</h2>
-            <p>Matching tracking is marked safe. No match is a warning. The source label always says where the check ran: on this device, in the cloud after you agreed, as a limited check with no AI, or not completed.</p>
+            <p>Matching tracking is marked safe. No match is a warning. The source label always says where the check ran.</p>
           </div>
-          <div class="story-verdict result result-warning">
-            <p class="outcome">warning</p>
-            <h3 class="headline">You're not expecting any parcel right now.</h3>
-            <p class="source-label">Checked on this device</p>
-            <p>The model only reads the claim. Deterministic code issues the verdict.</p>
+          <div class="bento">
+            <article class="bento-tile is-wide">
+              <div class="tile-visual is-warm"><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div>
+              <div class="tile-copy">
+                <h3>The model only reads the claim. Deterministic code issues the verdict.</h3>
+                <p>dhl-parcel-desk.example is not in the official-domain pack, which is added as a reason, not as a replacement for the tracking check.</p>
+              </div>
+            </article>
           </div>
-        </article>
+        </div>
       </section>
 
-      <section class="page-end">
-        <p class="related">
-          <a href="/privacy/">What stays on this device</a>
-          <a href="/app/">Try the sample inbox</a>
-        </p>
+      <section class="bleed is-warm">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Run this check yourself</h2>
+            <p>The same DHL hold thread is waiting in the sample inbox.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-ghost" href="/privacy/">See what stays on this device</a>
+          </div>
+        </div>
       </section>
-
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

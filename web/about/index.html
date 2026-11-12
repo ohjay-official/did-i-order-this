@@ -3,58 +3,87 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>About | Did I Order This?</title>
-    <meta name="description" content="A delivery-scam guard built by Oh-Jay for #BuildHybridAI 2026, using Firebase AI Logic for on-device and consented cloud inference." />
+    <title>About · Did I Order This?</title>
+    <meta name="description" content="Built by Oh-Jay as an entry for #BuildHybridAI 2026, to check a parcel claim against what you ordered." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/about/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="About | Did I Order This?" />
-    <meta property="og:description" content="A delivery-scam guard built by Oh-Jay for #BuildHybridAI 2026, using Firebase AI Logic for on-device and consented cloud inference." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="Built by Oh-Jay as an entry for #BuildHybridAI 2026, to check a parcel claim against what you ordered." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/about/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="About | Did I Order This?" />
-    <meta name="twitter:description" content="A delivery-scam guard built by Oh-Jay for #BuildHybridAI 2026, using Firebase AI Logic for on-device and consented cloud inference." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="Built by Oh-Jay as an entry for #BuildHybridAI 2026, to check a parcel claim against what you ordered." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero">
+      <header class="page-hero">
         <p class="eyebrow">About</p>
         <h1>Built to check a parcel claim against what you ordered</h1>
         <p class="lede">Did I Order This? is a delivery-scam guard for email. It was built by Oh-Jay as an entry for #BuildHybridAI 2026, the Firebase AI Logic hybrid inference hackathon.</p>
+      </header>
+
+      <section class="bleed is-raised" aria-label="The problem">
+        <div class="bleed-inner">
+          <div class="bento">
+            <article class="bento-tile is-wide">
+              <div class="tile-visual is-warm">
+                <article class="mock-email">
+                  <p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p>
+                  <p class="subject">Your parcel is held. Pay the release fee.</p>
+                  <p class="body">A message like this can look official. Without a way to check the claim against purchases and tracking numbers that never leave your laptop, a fake parcel message looks like a real one.</p>
+                </article>
+              </div>
+              <div class="tile-copy">
+                <h3>The problem</h3>
+                <p>A delivery, renewal, invoice, or refund email can ask you to pay a fee or click a link. The usual advice is to look carefully. This product compares the claim with what you actually ordered.</p>
+              </div>
+            </article>
+          </div>
+        </div>
       </section>
 
-      <section class="about-story">
-        <article data-reveal>
-          <h2>The problem</h2>
-          <p>A delivery, renewal, invoice, or refund email can ask you to pay a fee or click a link. Without a way to check that claim against purchases and tracking numbers that never leave your laptop, a fake parcel message looks like a real one.</p>
-        </article>
-        <article data-reveal>
-          <h2>The approach</h2>
-          <p>On-device AI reads what the email claims. Deterministic code checks that claim against the orders stored on the device. Cloud inference is a fallback you can refuse. All model calls go through Firebase AI Logic, not through a raw browser Prompt API in the product.</p>
-        </article>
-        <article data-reveal>
-          <h2>Who it is for</h2>
-          <p>Anyone who gets carrier and billing email in a browser, including judges who need to try a demo without a Gmail login. The hosted sample inbox is the public path. The Chrome extension is for an open Gmail thread on a laptop that can run on-device AI.</p>
-        </article>
-        <article data-reveal>
-          <h2>License and credits</h2>
-          <p>The product is released under the Apache License 2.0. The site's visual craft follows unslop by Damir Sokolovsky, licensed under CC BY 4.0. DHL, UPS, Amazon, and PayPal are named only as examples of email types and import formats. They have not endorsed this product.</p>
-        </article>
+      <section class="bleed" aria-label="The approach">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>The approach</h2>
+            <p>On-device AI reads what the email claims. Deterministic code checks that claim against the orders stored on the device. Cloud inference is a fallback on the hosted site, and only after you agree.</p>
+          </div>
+        </div>
       </section>
 
-      <section class="page-end">
-        <p class="related">
-          <a href="/privacy/">How privacy is handled</a>
-          <a href="/how-it-works/">How a check runs</a>
-        </p>
+      <section class="bleed is-raised" aria-label="Build timeline">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>How this build came together</h2>
+            <p>A short, factual timeline from the #BuildHybridAI 2026 period. These are product milestones, not a company history.</p>
+          </div>
+          <div class="timeline">
+            <article class="time-item"><p class="when">Nov 2026</p><div><h3>The brief</h3><p>Check a delivery or billing email against a purchase and tracking record kept on this device, using Firebase AI Logic on the device first.</p></div></article>
+            <article class="time-item"><p class="when">Nov 2026</p><div><h3>The product</h3><p>A hosted sample inbox, on-device import, a consent-gated cloud fallback, official source labels, and a Chrome side panel that never sends mail to the cloud.</p></div></article>
+            <article class="time-item"><p class="when">Nov 2026</p><div><h3>The site</h3><p>The landing hero was rebuilt as a live checker on a warm color field. The rest of the pages were then filled out as designed product surfaces, not as leftover text pages.</p></div></article>
+          </div>
+        </div>
       </section>
 
+      <section class="bleed" aria-label="Credits">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Who, and credits</h2>
+            <p>Built by Oh-Jay. Inference runs through Firebase AI Logic. Visual craft follows unslop by Damir Sokolovsky, CC BY 4.0. The product is released under the Apache License 2.0. No company has endorsed this entry.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-ghost" href="/features/">See what ships today</a>
+          </div>
+        </div>
+      </section>
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

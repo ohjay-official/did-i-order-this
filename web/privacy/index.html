@@ -3,73 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Privacy and security | Did I Order This?</title>
-    <meta name="description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
+    <title>Privacy · Did I Order This?</title>
+    <meta name="description" content="What stays on this device, and what can leave, after you agree." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/privacy/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="Privacy and security | Did I Order This?" />
-    <meta property="og:description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="What stays on this device, and what can leave, after you agree." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/privacy/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Privacy and security | Did I Order This?" />
-    <meta name="twitter:description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="What stays on this device, and what can leave, after you agree." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero">
+      <header class="page-hero">
         <p class="eyebrow">Privacy and security</p>
         <h1>What stays here. What can leave.</h1>
         <p class="lede">The product exists so a delivery email can be checked without sending your inbox to a server. Here is exactly what stays on this device, and what can leave.</p>
+      </header>
+
+      <section class="bleed" aria-label="Data flow">
+        <div class="bleed-inner">
+          <div class="flow">
+            <div class="flow-col is-stay">
+              <h3>Stays on this device</h3>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>Orders and tracking numbers</h4><p>Stored in this browser or in the extension's local storage.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>Imported CSV and ZIP files</h4><p>Read locally. They are not uploaded.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>The open Gmail thread</h4><p>Read as text by the extension, with no Gmail API access and no mailbox scan.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>On-device inference</h4><p>Every check starts on the device through Firebase AI Logic.</p></div></div>
+            </div>
+            <div class="flow-col is-leave">
+              <h3>Leaves only if you agree</h3>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>The text of that one email</h4><p>And only on the hosted site, after a consent dialog.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>Nothing, if you choose Do not send</h4><p>You can still run a limited check with no AI.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>Nothing from the Chrome extension</h4><p>The side panel never sends mail to the cloud.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>App Check on production cloud</h4><p>reCAPTCHA Enterprise protects production cloud calls. It does not read your inbox.</p></div></div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section class="trust-split" aria-label="Where data stays">
-        <article class="trust-col is-stay" data-reveal>
-          <h2>Stays on this device</h2>
-          <ul>
-            <li>Your orders, shipments, and known senders, in this browser or in the extension's local storage</li>
-            <li>Imported CSV and ZIP files, which are read locally and are not uploaded</li>
-            <li>The open Gmail thread, read as text only by the extension, with no Gmail API access and no mailbox scan</li>
-            <li>On-device inference through Firebase AI Logic, which is how every check starts</li>
-          </ul>
-        </article>
-        <article class="trust-col is-leave" data-reveal>
-          <h2>Leaves only if you agree</h2>
-          <ul>
-            <li>The text of that one email, and only on the hosted site, after a consent dialog</li>
-            <li>Nothing, if you choose Do not send. You can still run a limited check with no AI</li>
-            <li>Nothing from the Chrome extension, which never sends mail to the cloud</li>
-            <li>App Check with reCAPTCHA Enterprise protects production cloud calls on did-i-order-this.vercel.app</li>
-          </ul>
-        </article>
+      <section class="bleed is-raised" aria-label="Consent and extension">
+        <div class="bleed-inner">
+          <div class="bento">
+            <article class="bento-tile">
+              <div class="tile-visual" style="align-items:center"><div class="mock-consent"><h3>Send this email to the cloud?</h3><p>On-device AI did not run. The hosted site can send the text of this one email after you agree. The extension never does this.</p><div class="btn-row"><span class="btn btn-primary">Send this email</span><span class="btn btn-ghost">Do not send</span><span class="btn btn-ghost">Run a limited check (no AI)</span></div></div></div>
+              <div class="tile-copy">
+                <h3>The consent sheet, as it appears</h3>
+                <p>If on-device AI is unavailable on the hosted site, you see this choice before any email text leaves the device.</p>
+              </div>
+            </article>
+            <article class="bento-tile">
+              <div class="tile-visual is-ink" style="padding-bottom:20px"><div class="frame-panel"><div class="frame-body"><p style="margin:0 0 8px;font-family:var(--display);font-size:18px;">Did I Order This?</p><p style="margin:0 0 12px;color:var(--secondary);font-size:13px;line-height:18px;">The side panel reads only the Gmail thread that is open.</p><p style="margin:0 0 4px;font-size:12px;"><strong>From</strong> DHL Express Desk</p><p style="margin:0 0 14px;font-size:12px;"><strong>Subject</strong> Your parcel is held. Pay the release fee.</p><p class="btn btn-primary" style="margin:0 0 12px;">Check this email</p><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div></div></div>
+              <div class="tile-copy">
+                <h3>The extension never sends mail</h3>
+                <p>Cloud checks run on the hosted site, not in the side panel. Orders stay in chrome.storage.local.</p>
+              </div>
+            </article>
+          </div>
+        </div>
       </section>
 
-      <section class="page-prose">
-        <h2>How a check starts</h2>
-        <p>A check starts in on-device mode through Firebase AI Logic. The hosted site and the extension both use that path. Product code does not call the browser Prompt API directly.</p>
-        <h2>What the cloud model sees, if you agree</h2>
-        <p>If you consent to a cloud check, the text of that one email is sent to generate the structured claim. Official-domain and lure-template packs used in the verdict are public reference data compiled into the app, not your private mail. App Check debug tokens are not shipped in the production client. Preview deployments do not use the production reCAPTCHA key.</p>
-        <h2>What this product does not do</h2>
-        <ul>
-          <li>It does not read SMS, WhatsApp, or other phone messages.</li>
-          <li>It does not ask for a Gmail login on the hosted site.</li>
-          <li>It does not sell a list of your orders.</li>
-        </ul>
+      <section class="bleed is-ink" aria-label="What is never collected">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>What this product does not do</h2>
+            <p>It does not scan a mailbox. It does not ask for Gmail API access. It does not upload imported order-history files. Sample emails in the demo are fictional.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/faq/">Read the privacy questions</a>
+            <a class="btn btn-ghost" href="/extension/">See the extension</a>
+          </div>
+        </div>
       </section>
-
-      <section class="page-end">
-        <p class="related">
-          <a href="/how-it-works/">See a check, step by step</a>
-          <a href="/faq/">FAQ</a>
-        </p>
-      </section>
-
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

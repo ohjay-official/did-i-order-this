@@ -3,73 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Chrome extension | Did I Order This?</title>
-    <meta name="description" content="A side panel that checks the open Gmail thread on this device. Cloud checks run on the hosted site, not in the extension." />
+    <title>Chrome extension · Did I Order This?</title>
+    <meta name="description" content="A Chrome side panel that checks the Gmail thread you already have open, on this device." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/extension/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="Chrome extension | Did I Order This?" />
-    <meta property="og:description" content="A side panel that checks the open Gmail thread on this device. Cloud checks run on the hosted site, not in the extension." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="A Chrome side panel that checks the Gmail thread you already have open, on this device." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/extension/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Chrome extension | Did I Order This?" />
-    <meta name="twitter:description" content="A side panel that checks the open Gmail thread on this device. Cloud checks run on the hosted site, not in the extension." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="A Chrome side panel that checks the Gmail thread you already have open, on this device." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero">
+      <header class="page-hero">
         <p class="eyebrow">Chrome extension</p>
         <h1>Check the Gmail thread you already have open</h1>
         <p class="lede">The extension is a side panel for Chrome. It reads the email on screen, runs on-device AI, and keeps your orders in chrome.storage.local.</p>
-      </section>
+      </header>
 
-      <section class="panel-stage" data-reveal aria-label="Side panel preview">
-        <div class="panel-frame">
-          <p class="panel-wordmark">Did I Order This?</p>
-          <p class="panel-note">Open a Gmail thread. The side panel reads only the message that is open.</p>
-          <div class="panel-mail">
-            <p><strong>From</strong> DHL Express Desk</p>
-            <p><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
-          </div>
-          <p class="btn panel-btn" aria-hidden="true">Check this email</p>
-          <div class="panel-verdict result result-warning">
-            <p class="outcome">warning</p>
-            <p class="headline">You're not expecting any parcel right now.</p>
-            <p class="source-label">Checked on this device</p>
+      <div class="hero-visual-wrap">
+        <div class="bleed-inner" style="width:100%">
+          <div class="tile-visual is-ink" style="border-radius:24px;padding:28px;display:flex;justify-content:center"><div class="frame-panel"><div class="frame-body"><p style="margin:0 0 8px;font-family:var(--display);font-size:18px;">Did I Order This?</p><p style="margin:0 0 12px;color:var(--secondary);font-size:13px;line-height:18px;">The side panel reads only the Gmail thread that is open.</p><p style="margin:0 0 4px;font-size:12px;"><strong>From</strong> DHL Express Desk</p><p style="margin:0 0 14px;font-size:12px;"><strong>Subject</strong> Your parcel is held. Pay the release fee.</p><p class="btn btn-primary" style="margin:0 0 12px;">Check this email</p><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div></div></div>
+        </div>
+      </div>
+
+      <section class="bleed is-raised" aria-label="Not in the store yet">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Not in the Chrome Web Store yet</h2>
+            <p>You can try it today by sideloading the unpacked build. A store listing is planned and is not available now.</p>
           </div>
         </div>
-        <div class="panel-facts">
-          <h2>What it does</h2>
-          <p>A content script extracts text from the open Gmail thread. The side panel runs the same claim-and-order check as the hosted site, in on-device mode only. You can import order history and run a limited check if on-device AI is not available.</p>
-          <h2>What it does not do</h2>
-          <ul>
-            <li>It does not send mail to the cloud.</li>
-            <li>It does not request gmail.readonly or any other Gmail OAuth scope.</li>
-            <li>It does not scan the mailbox on install.</li>
-            <li>It is not listed in the Chrome Web Store yet. Sideloading the unpacked build is how it is loaded today.</li>
-          </ul>
+      </section>
+
+      <section class="bleed" aria-label="Install steps">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>How to sideload it</h2>
+            <p>These are the steps as they work in Chrome today.</p>
+          </div>
+          <div class="install">
+            <article class="install-step"><div><p class="num">01</p><h3>Get the unpacked build</h3><p>Use the extension folder from the public repository. There is no store button to click yet.</p></div><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">github.com/ohjay-official/did-i-order-this</span></div><div class="frame-body"><p class="subject" style="font-family:var(--display);margin:0 0 8px;">Unpacked extension build</p><p style="margin:0;color:var(--secondary);font-size:14px;line-height:20px;">The package is not in the Chrome Web Store yet. You sideload the unpacked build from the repository's extension folder.</p></div></div></article>
+            <article class="install-step"><div><p class="num">02</p><h3>Load it in chrome://extensions</h3><p>Turn on Developer mode, choose Load unpacked, and select that folder.</p></div><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">chrome://extensions</span></div><div class="frame-body"><p class="subject" style="font-family:var(--display);margin:0 0 8px;">Developer mode, then Load unpacked</p><p style="margin:0;color:var(--secondary);font-size:14px;line-height:20px;">Turn on Developer mode in the top right, choose Load unpacked, and select the extension folder.</p></div></div></article>
+            <article class="install-step"><div><p class="num">03</p><h3>Open a Gmail thread, then the panel</h3><p>The side panel reads only the message that is open. Cloud checks are not run here. Use the hosted site if you want to allow a cloud check.</p></div><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">mail.google.com</span></div><div class="frame-body"><p class="subject" style="font-family:var(--display);margin:0 0 8px;">Open a Gmail thread, then the side panel</p><p style="margin:0;color:var(--secondary);font-size:14px;line-height:20px;">The panel reads only the message that is on screen, as text. It does not use the Gmail API and does not scan the mailbox.</p></div></div></article>
+          </div>
         </div>
       </section>
 
-      <section class="page-prose">
-        <h2>If you want a cloud check</h2>
-        <p>Open the hosted site, agree to a cloud check there, and use the sample inbox or paste the email there. The extension will point you to <a href="https://did-i-order-this.vercel.app/app/">the hosted checker</a> instead of sending the thread itself.</p>
-        <p>On-device AI in Chrome needs a desktop browser that can run Gemini Nano, typically a machine with enough memory for the on-device model. The hosted sample inbox is the path that works without installing anything.</p>
+      <section class="bleed is-warm">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Or try the hosted inbox first</h2>
+            <p>The sample inbox does not require the extension.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-ghost" href="/privacy/">What the extension can access</a>
+          </div>
+        </div>
       </section>
-
-      <section class="page-end">
-        <p class="related">
-          <a href="/privacy/">Privacy details</a>
-          <a href="/app/">Try the hosted inbox now</a>
-        </p>
-      </section>
-
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

@@ -3,69 +3,146 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FAQ | Did I Order This?</title>
-    <meta name="description" content="Answers about on-device checks, cloud consent, import formats, the extension, and what the product does not do." />
+    <title>FAQ · Did I Order This?</title>
+    <meta name="description" content="Honest answers about on-device checks, cloud consent, imports, and the Chrome extension." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/faq/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="FAQ | Did I Order This?" />
-    <meta property="og:description" content="Answers about on-device checks, cloud consent, import formats, the extension, and what the product does not do." />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="Honest answers about on-device checks, cloud consent, imports, and the Chrome extension." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/faq/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FAQ | Did I Order This?" />
-    <meta name="twitter:description" content="Answers about on-device checks, cloud consent, import formats, the extension, and what the product does not do." />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="Honest answers about on-device checks, cloud consent, imports, and the Chrome extension." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
   </head>
-  <body class="inner-page">
+  <body>
     <header data-site-header></header>
     <main id="content">
-
-      <section class="page-hero">
+      <header class="page-hero">
         <p class="eyebrow">FAQ</p>
         <h1>Questions we can answer honestly</h1>
         <p class="lede">If a question is not here, it is probably because the product does not do that yet.</p>
-      </section>
-
-      <section class="faq-wrap">
-        <div class="faq-list">
+      </header>
+      <section class="bleed" aria-label="Questions">
+        <div class="bleed-inner">
+          <div class="faq-group">
+            <h2>Privacy and where a check runs</h2>
+            <div class="faq-list">
           <details class="faq-item" open>
             <summary>Does my email leave this device?</summary>
             <p>Not by default. A check starts on the device. On the hosted site, the email goes to the cloud only if on-device AI is unavailable and you agree. The extension does not send mail to the cloud.</p>
           </details>
           <details class="faq-item">
             <summary>What does "Checked on this device" mean?</summary>
-            <p>It is the label shown when Firebase AI Logic reports that the claim was read with on-device inference. "Checked in the cloud" means you agreed to a cloud read. "Limited check (no AI)" means code ran without a model. "Check not completed" means the AI read did not finish.</p>
+            <p>On-device inference through Firebase AI Logic produced the structured claim, and code on this device issued the verdict.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What does "Checked in the cloud" mean?</summary>
+            <p>On-device AI was not available, you agreed in the consent dialog, and the hosted site sent the text of that one email for cloud inference. This never happens in the Chrome extension.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What does "Limited check (no AI)" mean?</summary>
+            <p>No model ran. The product still compares obvious tracking-like numbers and the sender domain with the official-domain pack and with records stored on this device. It is not a full verdict.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What does "Check not completed" mean?</summary>
+            <p>The model did not return a usable claim, or the check stopped before a verdict. On the landing hero, a sample thread can still show a prepared claim, with a note that on-device AI did not run in that browser.</p>
           </details>
           <details class="faq-item">
             <summary>Why is the verdict not written by the model?</summary>
-            <p>The model is asked to read messy wording into a structured claim. Code then matches that claim to your orders, official domains, and known lure patterns. That keeps the Safe, Warning, and Neutral rules stable.</p>
+            <p>The model is only asked to read what the email claims: the party, the domain, cited numbers, and whether it asks you to pay or click. Deterministic code compares that claim with orders and tracking numbers stored on this device.</p>
+          </details>
+            </div>
+          </div>
+          <div class="faq-group">
+            <h2>How a verdict is decided</h2>
+            <div class="faq-list">
+          <details class="faq-item">
+            <summary>Why was a UPS email marked Warning?</summary>
+            <p>Carrier mail is judged by the cited tracking number, not by how official the domain looks. If that number is not an expected parcel stored on this device, the check is Warning. In the default sample, there are no expected parcels.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What is the official-domain pack?</summary>
+            <p>A public list of official carrier and store domains. It can add a reason to the verdict. It does not replace the tracking or order-number check.</p>
           </details>
           <details class="faq-item">
             <summary>What files can I import?</summary>
-            <p>An Amazon Retail.OrderHistory CSV or a ZIP that contains one, a PayPal activity CSV, or a generic CSV with common columns such as order id, tracking, merchant, date, and amount. The file stays in the browser. Jumia, Walmart, and Shopify customer exports are not promised.</p>
+            <p>An Amazon, PayPal, or generic order-history CSV or ZIP. Files are parsed in the browser and are not uploaded.</p>
+          </details>
+            </div>
+          </div>
+          <div class="faq-group">
+            <h2>Import, storage, and the inbox</h2>
+            <div class="faq-list">
+          <details class="faq-item">
+            <summary>Where are my orders stored?</summary>
+            <p>In this browser for the hosted app, or in chrome.storage.local for the extension. They are not kept on the project server.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does this scan my whole inbox?</summary>
+            <p>No. The hosted app checks a pasted email or a sample thread. The extension reads only the Gmail thread that is open, as text.</p>
           </details>
           <details class="faq-item">
             <summary>Do I need the Chrome extension to try this?</summary>
-            <p>No. Judges and anyone on a phone can use the hosted sample inbox. The extension is for checking an open Gmail thread on a laptop that can run on-device AI.</p>
+            <p>No. The hosted sample inbox is enough. The extension is for checking a Gmail thread you already have open.</p>
+          </details>
+            </div>
+          </div>
+          <div class="faq-group">
+            <h2>The extension and other limits</h2>
+            <div class="faq-list">
+          <details class="faq-item">
+            <summary>Is the extension in the Chrome Web Store?</summary>
+            <p>Not yet. You can sideload the unpacked build. A store listing is planned and is not available now.</p>
           </details>
           <details class="faq-item">
-            <summary>Does this work on iPhone or Android?</summary>
-            <p>The hosted site can be opened on a phone, and you can look at the sample inbox and the verdicts. On-device Gemini Nano is a desktop Chrome capability. A phone browser will usually be offered a cloud check, which still requires your agreement, or a limited check with no AI.</p>
+            <summary>Can I check a screenshot or a .eml file?</summary>
+            <p>Not today. There is no screenshot or .eml ingest. You can paste the email text, open a sample thread, import an order-history file, or use the extension on an open Gmail thread.</p>
           </details>
           <details class="faq-item">
-            <summary>Can it check SMS or WhatsApp lures?</summary>
-            <p>No. Delivery texts, MMS, and chat apps are out of scope. So are account-locked or "log in to your account" emails.</p>
+            <summary>What happens if I click Do not send?</summary>
+            <p>The email stays on the device. You can run a limited check with no AI, or try again later if on-device AI becomes available.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can I save a shipment after a check?</summary>
+            <p>Yes, when the product offers it, for example after a store shipment notice. You confirm first. The Save this shipment control is in the sample inbox.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does on-device AI work in every browser?</summary>
+            <p>No. It depends on Firebase AI Logic and on-device support in that browser. If it does not run, the hosted site may offer a cloud check after consent, or a limited check with no AI.</p>
           </details>
           <details class="faq-item">
             <summary>Is there a paid plan?</summary>
-            <p>Not today. The hosted checker and the extension, as they work now, are free to use. See the <a href="/pricing/">pricing page</a>.</p>
+            <p>No. There is no paid plan to buy today, and no subscription form on the pricing page.</p>
           </details>
+          <details class="faq-item">
+            <summary>Can I use this on my phone?</summary>
+            <p>The hosted site works in a mobile browser, including the sample inbox. The Chrome extension is for desktop Chrome with Gmail.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Who built this, and is a company endorsing it?</summary>
+            <p>It was built by Oh-Jay as an entry for #BuildHybridAI 2026, the Firebase AI Logic hybrid inference hackathon. No company has endorsed this product.</p>
+          </details>
+            </div>
+          </div>
         </div>
       </section>
-
+      <section class="bleed is-warm">
+        <div class="bleed-inner">
+          <div class="bleed-head">
+            <h2>Still want to see a check?</h2>
+            <p>The sample inbox is the shortest path.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-ghost" href="/privacy/">What stays on this device</a>
+          </div>
+        </div>
+      </section>
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>
