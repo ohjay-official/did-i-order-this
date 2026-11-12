@@ -6,33 +6,77 @@
     <style>
       :root {
         color-scheme: light;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        color: #1b1916;
-        background: #f3f1eb;
+        --bg: #f7f3ee;
+        --card: #fffaf5;
+        --ink: #1c1410;
+        --secondary: #5e534b;
+        --muted: #7a6e64;
+        --hairline: rgba(28, 20, 16, 0.1);
+        --accent: #c4451c;
+        --warning-bg: #fde4d4;
+        --warning-ink: #8b2a16;
+        --safe-bg: #e7efe8;
+        --safe-ink: #1c3d22;
+        --neutral-bg: #efe6dc;
+        --font: "Segoe UI", "Helvetica Neue", sans-serif;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
       }
-      body { margin: 16px; }
-      h1 { font-size: 1.3rem; margin: 0 0 8px; font-family: "Iowan Old Style", Palatino, serif; }
-      p, li { font-size: 0.95rem; }
-      .lede { color: #5c564c; margin: 0 0 16px; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: var(--bg); color: var(--ink); font: 400 14px/1.45 var(--font); }
+      #app { padding: 20px 16px 28px; }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+      .lede { margin: 0 0 16px; color: var(--secondary); }
       .btn {
-        font: inherit;
-        border: 1px solid #1b1916;
-        border-radius: 2px;
-        padding: 8px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff8f2;
+        font: 500 14px/1 var(--font);
         cursor: pointer;
-        background: #1b1916;
-        color: #fff;
       }
-      .btn-secondary { background: transparent; color: #1b1916; }
+      .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--hairline); }
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
       .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-      .email, .result { background: #fffdf8; border: 1px solid #cfc8ba; padding: 12px; margin-bottom: 12px; }
-      .email-body { white-space: pre-wrap; font: inherit; }
-      .source-label { color: #5c564c; }
-      .result-warning { background: #f6e6e2; }
-      .result-safe { background: #e8f0e8; }
-      .result-neutral, .result-limited { background: #eeeae2; }
-      .note { color: #5c564c; }
-      a { color: #1b1916; }
+      .email, .result {
+        background: var(--card);
+        border: 1px solid var(--hairline);
+        border-radius: 20px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+      .email-body { white-space: pre-wrap; font: inherit; margin: 0; }
+      .source-label {
+        display: inline-block;
+        margin: 0 0 10px;
+        padding: 3px 7px;
+        border: 1.5px solid var(--accent);
+        border-radius: 4px;
+        color: var(--accent);
+        font-size: 11px;
+        transform: rotate(-1.5deg);
+      }
+      .outcome { margin: 0 0 4px; font-size: 12px; text-transform: capitalize; }
+      .result h2 { margin: 0 0 10px; font-size: 18px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.2; }
+      .result-warning { background: var(--warning-bg); color: var(--warning-ink); }
+      .result-safe { background: var(--safe-bg); color: var(--safe-ink); }
+      .result-neutral, .result-limited { background: var(--neutral-bg); }
+      .result-error { background: var(--warning-bg); }
+      .note { color: var(--secondary); margin: 0 0 12px; }
+      .status { margin: 0; color: var(--secondary); }
+      a { color: var(--ink); }
+      ul { margin: 0; padding-left: 1.1rem; }
+      input[type="file"] { display: none; }
     </style>
   </head>
   <body>

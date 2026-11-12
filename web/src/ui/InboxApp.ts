@@ -18,6 +18,7 @@ import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { getOfficialPack } from "../packs/official.ts";
+import { extractFromDomain } from "../site/emailText.ts";
 
 type CheckState =
   | { status: "idle" }
@@ -38,6 +39,8 @@ export class InboxApp {
   private root: HTMLElement;
   private threads = sampleThreads;
   private selectedId = this.threads[0]?.id ?? "";
+  private pasteText = "";
+  private mode: "thread" | "paste" = "thread";
   private ledger: LedgerSnapshot = { orders: [], shipments: [], senders: [] };
   private check: CheckState = { status: "idle" };
   private note = "";
@@ -56,21 +59,54 @@ export class InboxApp {
     return this.threads.find((thread) => thread.id === this.selectedId);
   }
 
+  private expectedCount(): number {
+    return this.ledger.shipments.filter((item) => item.expected).length;
+  }
+
+  private currentEmail(): { text: string; fromDomain: string; subject: string; sample?: SampleThread } | null {
+    if (this.mode === "paste") {
+      const text = this.pasteText.trim();
+      if (!text) return null;
+      const sample = sampleThreads.find((thread) => formatEmailText(thread).trim() === text);
+      return {
+        text,
+        fromDomain: sample?.fromDomain ?? extractFromDomain(text),
+        subject: sample?.subject ?? (text.match(/^Subject:\s*(.+)$/im)?.[1] ?? "Pasted email"),
+        sample,
+      };
+    }
+    const thread = this.selected();
+    if (!thread) return null;
+    return {
+      text: formatEmailText(thread),
+      fromDomain: thread.fromDomain,
+      subject: thread.subject,
+      sample: thread,
+    };
+  }
+
   private render(): void {
     const thread = this.selected();
+    const expected = this.expectedCount();
+    const expectedLabel = expected === 1 ? "1 expected parcel" : `${expected} expected parcels`;
+    const orderLabel = this.ledger.orders.length === 1 ? "1 order" : `${this.ledger.orders.length} orders`;
+
     this.root.innerHTML = `
       <header class="app-header">
         <div>
-          <p class="kicker">Sample inbox</p>
-          <h1>Check this email against your ledger</h1>
-          <p class="lede">Check a delivery or billing email against the orders and tracking numbers stored on this device.</p>
+          <p class="eyebrow">Sample inbox</p>
+          <h1>Check an email against what you ordered</h1>
+          <p class="lede">Compare a delivery or billing email with the orders and tracking numbers stored on this device.</p>
         </div>
-        <div class="header-actions">
-          <label class="btn btn-secondary file-label">
-            Import order history
-            <input type="file" accept=".csv,.zip,text/csv,application/zip" data-action="import" hidden />
-          </label>
-          <button type="button" class="btn btn-secondary" data-action="reset">Reset demo ledger</button>
+        <div class="app-tools">
+          <p class="app-ledger">${escapeHtml(orderLabel)} and ${escapeHtml(expectedLabel)} are stored on this device.</p>
+          <div class="header-actions">
+            <label class="btn btn-secondary file-label">
+              Import order history
+              <input type="file" accept=".csv,.zip,text/csv,application/zip" data-action="import" hidden />
+            </label>
+            <button type="button" class="btn btn-secondary" data-action="reset">Reset demo data</button>
+          </div>
         </div>
       </header>
       ${this.importNote ? `<p class="note import-note">${escapeHtml(this.importNote)}</p>` : ""}
@@ -78,7 +114,7 @@ export class InboxApp {
         <aside class="thread-list" aria-label="Sample threads">
           ${this.threads
             .map((item) => {
-              const current = item.id === this.selectedId ? "is-current" : "";
+              const current = this.mode === "thread" && item.id === this.selectedId ? "is-current" : "";
               return `<button type="button" class="thread-item ${current}" data-thread="${item.id}">
                 <span class="thread-from">${escapeHtml(item.fromName)}</span>
                 <span class="thread-subject">${escapeHtml(item.subject)}</span>
@@ -86,9 +122,15 @@ export class InboxApp {
               </button>`;
             })
             .join("")}
+          <form class="paste-card ${this.mode === "paste" ? "is-current" : ""}" data-paste-form>
+            <h2>Paste an email</h2>
+            <label class="visually-hidden" for="app-paste">Paste the email you want to check</label>
+            <textarea id="app-paste" data-paste rows="5" placeholder="Paste the email">${escapeHtml(this.pasteText)}</textarea>
+            <button type="submit" class="btn" data-action="check-paste">Check pasted email</button>
+          </form>
         </aside>
         <section class="thread-pane">
-          ${thread ? this.renderThread(thread) : "<p>Select a thread.</p>"}
+          ${this.mode === "paste" ? this.renderPastePane() : thread ? this.renderThread(thread) : "<p class=\"empty-state\">Select a sample email, or paste one.</p>"}
         </section>
       </div>
       ${this.check.status === "consent" ? this.renderConsent() : ""}
@@ -106,6 +148,7 @@ export class InboxApp {
     for (const button of this.root.querySelectorAll<HTMLButtonElement>("[data-thread]")) {
       button.addEventListener("click", () => {
         this.selectedId = button.dataset.thread ?? "";
+        this.mode = "thread";
         this.check = { status: "idle" };
         this.note = "";
         this.render();
@@ -126,6 +169,33 @@ export class InboxApp {
     this.root.querySelector("[data-action=consent-no]")?.addEventListener("click", () => {
       this.consentResolver?.(false);
     });
+    const pasteForm = this.root.querySelector<HTMLFormElement>("[data-paste-form]");
+    const pasteInput = this.root.querySelector<HTMLTextAreaElement>("[data-paste]");
+    pasteInput?.addEventListener("input", () => {
+      this.pasteText = pasteInput.value;
+    });
+    pasteForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.pasteText = pasteInput?.value ?? this.pasteText;
+      this.mode = "paste";
+      void this.runCheck();
+    });
+  }
+
+  private renderPastePane(): string {
+    const text = this.pasteText.trim();
+    if (!text && this.check.status === "idle") {
+      return `<p class="empty-state">Paste an email on the left, then check it against the orders stored on this device.</p>${this.renderResult()}`;
+    }
+    return `
+      <article class="email">
+        <header class="email-header">
+          <p><strong>Pasted email</strong></p>
+        </header>
+        <pre class="email-body">${escapeHtml(text)}</pre>
+      </article>
+      ${this.renderResult()}
+    `;
   }
 
   private renderThread(thread: SampleThread): string {
@@ -147,16 +217,22 @@ export class InboxApp {
 
   private renderResult(): string {
     if (this.check.status === "idle") {
-      return this.note ? `<p class="note">${escapeHtml(this.note)}</p>` : "";
+      if (this.note) return `<p class="note">${escapeHtml(this.note)}</p>`;
+      if (this.mode === "thread") {
+        return `<p class="empty-state">Check this email to compare it with the orders stored on this device.</p>`;
+      }
+      return "";
     }
     if (this.check.status === "checking") {
-      return `<p class="note">Checking this email.</p>`;
+      return `<div class="result is-checking"><p class="status">Checking this email on this device</p></div>`;
     }
     if (this.check.status === "consent") {
       return "";
     }
     if (this.check.status === "error") {
-      return `<div class="result">
+      return `<div class="result result-error">
+        <p class="outcome">Error</p>
+        <h2 class="headline">The check could not finish</h2>
         <p class="note">${escapeHtml(this.check.message)}</p>
         ${
           this.check.canLimited
@@ -169,8 +245,9 @@ export class InboxApp {
       const { result } = this.check;
       return `
         <div class="result result-limited">
-          <p class="source-label">${escapeHtml(result.inferenceSourceLabel)}</p>
+          <p class="outcome">limited</p>
           <h2 class="headline">${escapeHtml(result.headline)}</h2>
+          <p class="source-label">${escapeHtml(result.inferenceSourceLabel)}</p>
           <ul class="reasons">
             ${result.findings.map((finding) => `<li>${escapeHtml(finding)}</li>`).join("")}
           </ul>
@@ -198,7 +275,7 @@ export class InboxApp {
         <p class="source-label">${escapeHtml(verdict.inferenceSourceLabel)}</p>
         ${
           usedSampleClaim
-            ? `<p class="note">On-device AI did not run in this browser. This ledger check used the structured claim prepared for this sample thread.</p>`
+            ? `<p class="note">On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.</p>`
             : ""
         }
         <ul class="reasons">
@@ -211,12 +288,12 @@ export class InboxApp {
         ${
           canSaveShipment && !saved
             ? `<div class="confirm-card">
-                <p>Save this shipment to the ledger on this device?</p>
-                <button type="button" class="btn btn-primary" data-action="save">Save to your ledger</button>
+                <p>Save this shipment to the orders stored on this device?</p>
+                <button type="button" class="btn btn-primary" data-action="save">Save this shipment</button>
               </div>`
             : ""
         }
-        ${saved ? `<p class="note">Saved to your ledger.</p>` : ""}
+        ${saved ? `<p class="note">Saved on this device.</p>` : ""}
       </div>
     `;
   }
@@ -252,7 +329,7 @@ export class InboxApp {
   private async resetLedger(): Promise<void> {
     this.ledger = await resetToDemoSeed();
     this.check = { status: "idle" };
-    this.note = "Demo ledger reset. There are no expected parcels.";
+    this.note = "Demo data reset. There are no expected parcels.";
     this.importNote = "";
     this.render();
   }
@@ -288,11 +365,11 @@ export class InboxApp {
   }
 
   private runLimited(): void {
-    const thread = this.selected();
-    if (!thread) return;
+    const current = this.currentEmail();
+    if (!current) return;
     const result = runLimitedCheck(
-      formatEmailText(thread),
-      { fromDomain: thread.fromDomain },
+      current.text,
+      { fromDomain: current.fromDomain },
       this.ledger,
       getOfficialPack(),
     );
@@ -318,11 +395,15 @@ export class InboxApp {
     this.render();
   }
 
-  private finishWithClaim(thread: SampleThread, claim: EmailClaim, inferenceSource?: InferenceSourceValue): void {
+  private finishWithClaim(
+    meta: { fromDomain: string; subject: string },
+    claim: EmailClaim,
+    inferenceSource?: InferenceSourceValue,
+  ): void {
     const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), inferenceSource);
     const shipment = ingestShipmentFromClaim(claim, {
-      fromDomain: thread.fromDomain,
-      subject: thread.subject,
+      fromDomain: meta.fromDomain,
+      subject: meta.subject,
     });
     this.check = {
       status: "done",
@@ -336,29 +417,37 @@ export class InboxApp {
   }
 
   private async runCheck(): Promise<void> {
-    const thread = this.selected();
-    if (!thread) return;
+    const current = this.currentEmail();
+    if (!current) return;
     this.check = { status: "checking" };
     this.note = "";
     this.render();
 
-    const emailText = formatEmailText(thread);
+    const emailText = current.text;
 
     if (!isFirebaseConfigured()) {
-      this.finishWithSampleClaim(thread);
+      if (current.sample) {
+        this.finishWithSampleClaim(current.sample);
+        return;
+      }
+      this.runLimited();
       return;
     }
 
     try {
       const first = await readClaim(emailText, "only_on_device");
-      this.finishWithClaim(thread, first.claim, first.inferenceSource);
+      this.finishWithClaim(current, first.claim, first.inferenceSource);
       return;
     } catch {
       // Continue to cloud consent or the no-key fallback.
     }
 
     if (!isCloudAiAvailable()) {
-      this.finishWithSampleClaim(thread);
+      if (current.sample) {
+        this.finishWithSampleClaim(current.sample);
+        return;
+      }
+      this.runLimited();
       return;
     }
 
@@ -375,7 +464,7 @@ export class InboxApp {
 
     try {
       const second = await readClaim(emailText, mode);
-      this.finishWithClaim(thread, second.claim, second.inferenceSource);
+      this.finishWithClaim(current, second.claim, second.inferenceSource);
     } catch (cloudError) {
       const cloudMessage = cloudError instanceof Error ? cloudError.message : "Cloud check failed.";
       this.check = {
@@ -389,17 +478,17 @@ export class InboxApp {
 
   private async saveShipment(): Promise<void> {
     if (this.check.status !== "done") return;
-    const thread = this.selected();
-    if (!thread) return;
+    const current = this.currentEmail();
+    if (!current) return;
     const shipment = ingestShipmentFromClaim(this.check.claim, {
-      fromDomain: thread.fromDomain,
-      subject: thread.subject,
+      fromDomain: current.fromDomain,
+      subject: current.subject,
     });
     if (!shipment) return;
     await saveShipment(shipment);
     const sender = ingestSenderFromClaim(this.check.claim, {
-      fromDomain: thread.fromDomain,
-      subject: thread.subject,
+      fromDomain: current.fromDomain,
+      subject: current.subject,
     });
     if (sender) await saveSender(sender);
     this.ledger = await loadLedger();

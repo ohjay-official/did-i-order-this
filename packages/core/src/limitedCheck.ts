@@ -49,11 +49,11 @@ export function runLimitedCheck(
       if (expected.includes(value)) {
         findings.push(`The number ${value} matches a shipment you are expecting.`);
       } else if (all.includes(value)) {
-        findings.push(`The number ${value} is in your ledger, but not as an expected parcel.`);
+        findings.push(`The number ${value} is stored on this device, but not as an expected parcel.`);
       } else if (all.length === 0) {
-        findings.push(`The number ${value} was found in the email. Your ledger has no saved tracking numbers to compare.`);
+        findings.push(`The number ${value} was found in the email. There are no saved tracking numbers on this device to compare.`);
       } else {
-        findings.push(`The number ${value} does not match a tracking number in your ledger.`);
+        findings.push(`The number ${value} does not match a tracking number stored on this device.`);
       }
     }
   }

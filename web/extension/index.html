@@ -18,30 +18,57 @@
     <meta name="twitter:title" content="Chrome extension | Did I Order This?" />
     <meta name="twitter:description" content="A side panel that checks the open Gmail thread on this device. Cloud checks run on the hosted site, not in the extension." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
-    
   </head>
   <body class="inner-page">
     <header data-site-header></header>
     <main id="content">
 
-      <article class="page">
+      <section class="page-hero">
         <p class="eyebrow">Chrome extension</p>
-        <h1>Check the open Gmail thread on this device</h1>
-        <p class="lede">The extension is a side panel for Chrome. It reads the email you already have open, runs on-device AI, and keeps the ledger in chrome.storage.local.</p>
-        <h2>What it does</h2>
-        <p>A content script extracts text from the open Gmail thread. The side panel runs the same claim-and-ledger check as the hosted site, in on-device mode only. You can import order history and run a limited check if on-device AI is not available.</p>
-        <h2>What it does not do</h2>
-        <ul>
-          <li>It does not send mail to the cloud.</li>
-          <li>It does not request gmail.readonly or any other Gmail OAuth scope.</li>
-          <li>It does not scan the mailbox on install.</li>
-          <li>It is not listed in the Chrome Web Store yet. Sideloading the unpacked build is how it is loaded today.</li>
-        </ul>
+        <h1>Check the Gmail thread you already have open</h1>
+        <p class="lede">The extension is a side panel for Chrome. It reads the email on screen, runs on-device AI, and keeps your orders in chrome.storage.local.</p>
+      </section>
+
+      <section class="panel-stage" data-reveal aria-label="Side panel preview">
+        <div class="panel-frame">
+          <p class="panel-wordmark">Did I Order This?</p>
+          <p class="panel-note">Open a Gmail thread. The side panel reads only the message that is open.</p>
+          <div class="panel-mail">
+            <p><strong>From</strong> DHL Express Desk</p>
+            <p><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
+          </div>
+          <p class="btn panel-btn" aria-hidden="true">Check this email</p>
+          <div class="panel-verdict result result-warning">
+            <p class="outcome">warning</p>
+            <p class="headline">You're not expecting any parcel right now.</p>
+            <p class="source-label">Checked on this device</p>
+          </div>
+        </div>
+        <div class="panel-facts">
+          <h2>What it does</h2>
+          <p>A content script extracts text from the open Gmail thread. The side panel runs the same claim-and-order check as the hosted site, in on-device mode only. You can import order history and run a limited check if on-device AI is not available.</p>
+          <h2>What it does not do</h2>
+          <ul>
+            <li>It does not send mail to the cloud.</li>
+            <li>It does not request gmail.readonly or any other Gmail OAuth scope.</li>
+            <li>It does not scan the mailbox on install.</li>
+            <li>It is not listed in the Chrome Web Store yet. Sideloading the unpacked build is how it is loaded today.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="page-prose">
         <h2>If you want a cloud check</h2>
-        <p>Open the hosted site, agree to a cloud check there, and use the sample inbox or paste the same question into that flow. The extension will point you to <a href="https://did-i-order-this.vercel.app/app/">the hosted checker</a> instead of sending the thread itself.</p>
+        <p>Open the hosted site, agree to a cloud check there, and use the sample inbox or paste the email there. The extension will point you to <a href="https://did-i-order-this.vercel.app/app/">the hosted checker</a> instead of sending the thread itself.</p>
         <p>On-device AI in Chrome needs a desktop browser that can run Gemini Nano, typically a machine with enough memory for the on-device model. The hosted sample inbox is the path that works without installing anything.</p>
-        <p><a href="/privacy/">Privacy details</a>, or <a href="/app/">try the hosted inbox now</a>.</p>
-      </article>
+      </section>
+
+      <section class="page-end">
+        <p class="related">
+          <a href="/privacy/">Privacy details</a>
+          <a href="/app/">Try the hosted inbox now</a>
+        </p>
+      </section>
 
     </main>
     <footer data-site-footer></footer>

@@ -18,34 +18,57 @@
     <meta name="twitter:title" content="Privacy and security | Did I Order This?" />
     <meta name="twitter:description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
-    
   </head>
   <body class="inner-page">
     <header data-site-header></header>
     <main id="content">
 
-      <article class="page">
+      <section class="page-hero">
         <p class="eyebrow">Privacy and security</p>
-        <h1>On-device first, and honest about the cloud</h1>
-        <p class="lede">The product exists so a delivery email can be checked without sending your inbox to a server. Here is exactly what stays here, and what can leave.</p>
-        <h2>What stays on this device</h2>
-        <p>Your ledger lives in this browser or in the extension's local storage. Imported CSV and ZIP files are read locally and are not uploaded. The Chrome extension's content script sends only the open thread's text to the side panel, over extension messaging. It does not use the Gmail API or the gmail.readonly scope. It does not scan the rest of the mailbox.</p>
+        <h1>What stays here. What can leave.</h1>
+        <p class="lede">The product exists so a delivery email can be checked without sending your inbox to a server. Here is exactly what stays on this device, and what can leave.</p>
+      </section>
+
+      <section class="trust-split" aria-label="Where data stays">
+        <article class="trust-col is-stay" data-reveal>
+          <h2>Stays on this device</h2>
+          <ul>
+            <li>Your orders, shipments, and known senders, in this browser or in the extension's local storage</li>
+            <li>Imported CSV and ZIP files, which are read locally and are not uploaded</li>
+            <li>The open Gmail thread, read as text only by the extension, with no Gmail API access and no mailbox scan</li>
+            <li>On-device inference through Firebase AI Logic, which is how every check starts</li>
+          </ul>
+        </article>
+        <article class="trust-col is-leave" data-reveal>
+          <h2>Leaves only if you agree</h2>
+          <ul>
+            <li>The text of that one email, and only on the hosted site, after a consent dialog</li>
+            <li>Nothing, if you choose Do not send. You can still run a limited check with no AI</li>
+            <li>Nothing from the Chrome extension, which never sends mail to the cloud</li>
+            <li>App Check with reCAPTCHA Enterprise protects production cloud calls on did-i-order-this.vercel.app</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="page-prose">
         <h2>How a check starts</h2>
         <p>A check starts in on-device mode through Firebase AI Logic. The hosted site and the extension both use that path. Product code does not call the browser Prompt API directly.</p>
-        <h2>When something can go to the cloud</h2>
-        <p>If on-device AI is not available on the hosted site, you see a consent dialog: Check this email in the cloud, or Do not send. The email is sent off the device only if you agree. If you refuse, you can run a limited check that uses no AI. The extension never sends mail to the cloud. If you want a cloud check, you open the hosted site and agree there.</p>
-        <h2>App Check</h2>
-        <p>Cloud AI calls from the production site go through Firebase App Check with reCAPTCHA Enterprise, registered for did-i-order-this.vercel.app. App Check debug tokens are not shipped in the production client. Preview deployments do not use the production reCAPTCHA key.</p>
         <h2>What the cloud model sees, if you agree</h2>
-        <p>If you consent to a cloud check, the text of that one email is sent to generate the structured claim. Official-domain and lure-template packs used in the verdict are public reference data compiled into the app, not your private mail.</p>
+        <p>If you consent to a cloud check, the text of that one email is sent to generate the structured claim. Official-domain and lure-template packs used in the verdict are public reference data compiled into the app, not your private mail. App Check debug tokens are not shipped in the production client. Preview deployments do not use the production reCAPTCHA key.</p>
         <h2>What this product does not do</h2>
         <ul>
           <li>It does not read SMS, WhatsApp, or other phone messages.</li>
           <li>It does not ask for a Gmail login on the hosted site.</li>
           <li>It does not sell a list of your orders.</li>
         </ul>
-        <p><a href="/how-it-works/">See the check, step by step</a>, or read the <a href="/faq/">FAQ</a>.</p>
-      </article>
+      </section>
+
+      <section class="page-end">
+        <p class="related">
+          <a href="/how-it-works/">See a check, step by step</a>
+          <a href="/faq/">FAQ</a>
+        </p>
+      </section>
 
     </main>
     <footer data-site-footer></footer>

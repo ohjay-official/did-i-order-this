@@ -182,7 +182,7 @@ describe("decideVerdict: store order / receipt / shipment notice", () => {
     };
     const verdict = decideVerdict(claim, emptyLedger, pack, "on_device");
     expect(verdict.outcome).toBe("safe");
-    expect(verdict.headline).toBe("This number matches an order in your ledger.");
+    expect(verdict.headline).toBe("This number matches an order stored on this device.");
   });
 
   it("is Warning when the merchant is known but the order number is not in the ledger", () => {
@@ -198,7 +198,7 @@ describe("decideVerdict: store order / receipt / shipment notice", () => {
     };
     const verdict = decideVerdict(claim, emptyLedger, pack);
     expect(verdict.outcome).toBe("warning");
-    expect(verdict.headline).toBe("You have history with this sender, but this number is not in your ledger.");
+    expect(verdict.headline).toBe("You have history with this sender, but this number is not in your stored orders.");
   });
 
   it("is Neutral when there is no history with the merchant", () => {

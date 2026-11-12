@@ -45,13 +45,13 @@ function escapeHtml(value: string): string {
 function render(): void {
   root.innerHTML = `
     <h1>Did I Order This?</h1>
-    <p class="lede">This side panel checks the open Gmail thread on this device. Cloud checks run on the hosted site, not in the extension.</p>
+    <p class="lede">Check the open Gmail thread on this device. Cloud checks run on the hosted site, not here.</p>
     <div class="actions">
       <label class="btn btn-secondary">
         Import order history
         <input type="file" accept=".csv,.zip,text/csv,application/zip" data-action="import" hidden />
       </label>
-      <button type="button" class="btn btn-secondary" data-action="clear">Clear ledger</button>
+      <button type="button" class="btn btn-secondary" data-action="clear">Clear saved orders</button>
     </div>
     ${importNote ? `<p class="note">${escapeHtml(importNote)}</p>` : ""}
     <section class="email">
@@ -75,7 +75,7 @@ function render(): void {
   root.querySelector("[data-action=clear]")?.addEventListener("click", () => {
     void (async () => {
       ledger = await clearLedger();
-      importNote = "Ledger cleared on this device.";
+      importNote = "Saved orders were cleared on this device.";
       render();
     })();
   });
@@ -92,9 +92,9 @@ function render(): void {
 
 function renderResult(): string {
   if (view.status === "idle") return "";
-  if (view.status === "checking") return `<p class="note">Checking this email on the device.</p>`;
+  if (view.status === "checking") return `<p class="status">Checking this email on this device</p>`;
   if (view.status === "error") {
-    return `<div class="result"><p class="note">${escapeHtml(view.message)}</p></div>`;
+    return `<div class="result result-error"><p class="outcome">Error</p><p class="note">${escapeHtml(view.message)}</p></div>`;
   }
   if (view.status === "limited") {
     return `<div class="result result-limited">
@@ -112,10 +112,10 @@ function renderResult(): string {
     <p>Claims to be: ${escapeHtml(claim.claimed_party.name)} (${escapeHtml(claim.claimed_party.role)})</p>
     ${
       canSave && !saved
-        ? `<button type="button" class="btn" data-action="save">Save to your ledger</button>`
+        ? `<button type="button" class="btn" data-action="save">Save this shipment</button>`
         : ""
     }
-    ${saved ? `<p class="note">Saved to your ledger.</p>` : ""}
+    ${saved ? `<p class="note">Saved on this device.</p>` : ""}
   </div>`;
 }
 
@@ -217,13 +217,25 @@ function applyEmailMessage(message: EmailTextMessage): void {
 }
 
 async function start(): Promise<void> {
-  ledger = await loadLedger();
-  const current = (await chrome.runtime.sendMessage({ type: MESSAGE.GET_EMAIL })) as EmailTextMessage | undefined;
-  if (current?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage(current);
-  else render();
-  chrome.runtime.onMessage.addListener((message: EmailTextMessage) => {
-    if (message?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage(message);
-  });
+  try {
+    ledger = await loadLedger();
+  } catch {
+    ledger = { orders: [], shipments: [], senders: [] };
+  }
+  try {
+    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      const current = (await chrome.runtime.sendMessage({ type: MESSAGE.GET_EMAIL })) as EmailTextMessage | undefined;
+      if (current?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage(current);
+      else render();
+      chrome.runtime.onMessage.addListener((message: EmailTextMessage) => {
+        if (message?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage(message);
+      });
+      return;
+    }
+  } catch {
+    // Paint the idle panel if the extension APIs are not available.
+  }
+  render();
 }
 
 void start();

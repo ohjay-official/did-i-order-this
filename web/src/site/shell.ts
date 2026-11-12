@@ -27,7 +27,6 @@ export function mountShell(doc: Document, options: ShellOptions): void {
   const footer = doc.querySelector("[data-site-footer]");
 
   if (header) {
-    const isLanding = current === "/";
     header.innerHTML = `
       <a class="skip-link" href="#content">Skip to content</a>
       <div class="site-bar">
@@ -35,34 +34,57 @@ export function mountShell(doc: Document, options: ShellOptions): void {
           <span class="wordmark-mark" aria-hidden="true"></span>
           <span class="wordmark-text">Did I Order This?</span>
         </a>
-        ${
-          isLanding
-            ? ""
-            : `<button type="button" class="menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>`
-        }
-        <nav id="site-nav" class="site-nav${isLanding ? " is-landing" : ""}" data-site-nav aria-label="Primary">
-          ${
-            isLanding
-              ? ""
-              : NAV.map((item) => {
-                  const active = isActive(item.href, current);
-                  return `<a href="${item.href}"${active ? ' aria-current="page"' : ""}>${item.label}</a>`;
-                }).join("")
-          }
+        <div class="site-bar-actions">
+          <button type="button" class="menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="site-menu">
+            Menu
+          </button>
           <a class="nav-action" href="/app/">Sample inbox</a>
-        </nav>
+        </div>
+      </div>
+      <div class="menu-overlay" id="site-menu" data-menu-overlay hidden>
+        <div class="menu-sheet">
+          <p class="menu-kicker">Did I Order This?</p>
+          <nav class="menu-nav" aria-label="Site">
+            <a href="/"${current === "/" ? ' aria-current="page"' : ""}>Home</a>
+            ${NAV.map((item) => {
+              const active = isActive(item.href, current);
+              return `<a href="${item.href}"${active ? ' aria-current="page"' : ""}>${item.label}</a>`;
+            }).join("")}
+          </nav>
+          <a class="btn menu-cta" href="/app/">Open the sample inbox</a>
+        </div>
       </div>
     `;
 
     const toggle = header.querySelector<HTMLButtonElement>("[data-menu-toggle]");
-    const nav = header.querySelector<HTMLElement>("[data-site-nav]");
+    const overlay = header.querySelector<HTMLElement>("[data-menu-overlay]");
+    const bar = header.querySelector(".site-bar");
+
+    const setOpen = (open: boolean) => {
+      toggle?.setAttribute("aria-expanded", open ? "true" : "false");
+      if (toggle) toggle.textContent = open ? "Close" : "Menu";
+      if (overlay) {
+        overlay.hidden = !open;
+        overlay.classList.toggle("is-open", open);
+      }
+      doc.body.classList.toggle("menu-open", open);
+    };
+
     toggle?.addEventListener("click", () => {
       const open = toggle.getAttribute("aria-expanded") === "true";
-      toggle.setAttribute("aria-expanded", open ? "false" : "true");
-      nav?.classList.toggle("is-open", !open);
+      setOpen(!open);
     });
 
-    const bar = header.querySelector(".site-bar");
+    overlay?.addEventListener("click", (event) => {
+      if (event.target === overlay) setOpen(false);
+    });
+
+    doc.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && toggle?.getAttribute("aria-expanded") === "true") {
+        setOpen(false);
+      }
+    });
+
     const syncScroll = () => {
       bar?.classList.toggle("is-scrolled", window.scrollY > 12);
     };
@@ -75,7 +97,7 @@ export function mountShell(doc: Document, options: ShellOptions): void {
       <div class="footer-inner">
         <div class="footer-brand">
           <p class="footer-name">Did I Order This?</p>
-          <p class="footer-tag">A delivery-scam guard that checks an email against the parcels stored on this device.</p>
+          <p class="footer-tag">A delivery-scam guard for email. It checks a claim against the orders and tracking numbers stored on this device.</p>
         </div>
         <div class="footer-cols">
           <div>
@@ -94,7 +116,7 @@ export function mountShell(doc: Document, options: ShellOptions): void {
           </div>
         </div>
       </div>
-      <p class="footer-meta">Apache License 2.0. Built for the #BuildHybridAI 2026 event. Inference runs through Firebase AI Logic.</p>
+      <p class="footer-meta">Apache License 2.0. Built for the #BuildHybridAI 2026 event. Inference runs through Firebase AI Logic. Visual craft follows unslop by Damir Sokolovsky, CC BY 4.0.</p>
     `;
   }
 }

@@ -182,7 +182,7 @@ export function decideVerdict(
       reasons.push(`Cited tracking number: ${cited.join(", ")}.`);
     }
     if (match) {
-      reasons.push("This tracking number matches a shipment in your ledger.");
+      reasons.push("This tracking number matches a shipment stored on this device.");
       reasons.push(...packReasons(claim, pack));
       return {
         outcome: "safe",
@@ -192,7 +192,7 @@ export function decideVerdict(
       };
     }
     if (!hasExpectedParcel(ledger)) {
-      reasons.push("Your ledger has no expected parcels right now.");
+      reasons.push("There are no expected parcels stored on this device right now.");
       reasons.push(...packReasons(claim, pack));
       return {
         outcome: "warning",
@@ -201,7 +201,7 @@ export function decideVerdict(
         inferenceSourceLabel,
       };
     }
-    reasons.push("This tracking number is not one of the shipments in your ledger.");
+    reasons.push("This tracking number is not one of the shipments stored on this device.");
     reasons.push(...packReasons(claim, pack));
     return {
       outcome: "warning",
@@ -215,21 +215,21 @@ export function decideVerdict(
     const { match } = findMatchingOrder(claim, ledger.orders);
     const reasons: string[] = [];
     if (match) {
-      reasons.push("This shipment notice cites an order in your ledger.");
-      reasons.push("Confirm to save the tracking number to your ledger.");
+      reasons.push("This shipment notice cites an order stored on this device.");
+      reasons.push("Confirm to save the tracking number on this device.");
       reasons.push(...packReasons(claim, pack));
       return {
         outcome: "safe",
-        headline: "This shipment notice matches an order in your ledger.",
+        headline: "This shipment notice matches an order stored on this device.",
         reasons,
         inferenceSourceLabel,
       };
     }
-    reasons.push("Confirm to save this shipment to your ledger.");
+    reasons.push("Confirm to save this shipment on this device.");
     reasons.push(...packReasons(claim, pack));
     return {
       outcome: "neutral",
-      headline: "This looks like a shipment notice. Confirm to save it to your ledger.",
+      headline: "This looks like a shipment notice. Confirm to save it on this device.",
       reasons,
       inferenceSourceLabel,
     };
@@ -241,21 +241,21 @@ export function decideVerdict(
     const reasons: string[] = [];
     if (cited.length) reasons.push(`Cited number: ${cited.join(", ")}.`);
     if (match) {
-      reasons.push("This number matches an order in your ledger.");
+      reasons.push("This number matches an order stored on this device.");
       reasons.push(...packReasons(claim, pack));
       return {
         outcome: "safe",
-        headline: "This number matches an order in your ledger.",
+        headline: "This number matches an order stored on this device.",
         reasons,
         inferenceSourceLabel,
       };
     }
     if (known) {
-      reasons.push("You have ordered from this sender before, but this number is not in your ledger.");
+      reasons.push("You have ordered from this sender before, but this number is not in your stored orders.");
       reasons.push(...packReasons(claim, pack));
       return {
         outcome: "warning",
-        headline: "You have history with this sender, but this number is not in your ledger.",
+        headline: "You have history with this sender, but this number is not in your stored orders.",
         reasons,
         inferenceSourceLabel,
       };
@@ -275,8 +275,8 @@ export function decideVerdict(
   if (orderMatch || shipmentMatch) {
     return {
       outcome: "safe",
-      headline: "A cited number matches an item in your ledger.",
-      reasons: ["A cited number matched a ledger entry.", ...packReasons(claim, pack)],
+      headline: "A cited number matches an item stored on this device.",
+      reasons: ["A cited number matched a stored order or shipment.", ...packReasons(claim, pack)],
       inferenceSourceLabel,
     };
   }
@@ -284,7 +284,7 @@ export function decideVerdict(
     outcome: "neutral",
     headline: "You have no history with this sender.",
     reasons: [
-      "This email could not be classified as a known store, carrier, or billing claim, and no cited number matched your ledger.",
+      "This email could not be classified as a known store, carrier, or billing claim, and no cited number matched an order or shipment stored on this device.",
       ...packReasons(claim, pack),
     ],
     inferenceSourceLabel,

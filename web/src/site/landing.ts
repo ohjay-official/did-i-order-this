@@ -5,6 +5,7 @@ import { loadLedger } from "../ledger/store.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
 import { mountStage } from "./stage.ts";
+import { extractFromDomain } from "./emailText.ts";
 
 type Mode = "device" | "cloud";
 
@@ -27,15 +28,6 @@ function escapeHtml(value: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-}
-
-export function extractFromDomain(emailText: string): string {
-  const angled = emailText.match(/From:\s*[^<\n]*<[^>@]+@([^>\s]+)>/i);
-  if (angled?.[1]) return angled[1].trim().toLowerCase();
-  const bare = emailText.match(/From:\s*([^\s@<>]+@([^\s>]+))/i);
-  if (bare?.[2]) return bare[2].trim().toLowerCase();
-  const any = emailText.match(/[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})/i);
-  return any?.[1] ? any[1].trim().toLowerCase() : "";
 }
 
 function matchSample(emailText: string): SampleThread | undefined {
@@ -127,7 +119,7 @@ async function runChecker(emailText: string, mode: Mode): Promise<HeroResult> {
       sourceLabel: verdict.inferenceSourceLabel,
       reasons: verdict.reasons,
       sampleNote:
-        "On-device AI did not run in this browser. This ledger check used the structured claim prepared for this sample.",
+        "On-device AI did not run in this browser. This check used the structured claim prepared for this sample.",
     };
   }
 
@@ -204,7 +196,7 @@ export function mountLanding(root: ParentNode = document): void {
     showStatus(
       mode === "cloud"
         ? "Trying on this device first. Cloud is allowed if that is unavailable."
-        : "Checking against the ledger on this device",
+        : "Checking against the orders stored on this device",
     );
     try {
       const result = await runChecker(trimmed, mode);

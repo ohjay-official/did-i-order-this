@@ -4,63 +4,92 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>How it works | Did I Order This?</title>
-    <meta name="description" content="On-device AI reads what an email claims. Code checks that claim against a ledger kept on this device." />
+    <meta name="description" content="On-device AI reads what an email claims. Code checks that claim against the orders and tracking numbers stored on this device." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/how-it-works/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
     <meta property="og:title" content="How it works | Did I Order This?" />
-    <meta property="og:description" content="On-device AI reads what an email claims. Code checks that claim against a ledger kept on this device." />
+    <meta property="og:description" content="On-device AI reads what an email claims. Code checks that claim against the orders and tracking numbers stored on this device." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/how-it-works/" />
     <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="How it works | Did I Order This?" />
-    <meta name="twitter:description" content="On-device AI reads what an email claims. Code checks that claim against a ledger kept on this device." />
+    <meta name="twitter:description" content="On-device AI reads what an email claims. Code checks that claim against the orders and tracking numbers stored on this device." />
     <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
-    
   </head>
   <body class="inner-page">
     <header data-site-header></header>
     <main id="content">
 
-      <article class="page">
+      <section class="page-hero">
         <p class="eyebrow">How it works</p>
-        <h1>The AI reads the claim. Code checks the ledger</h1>
-        <p class="lede">A delivery email can look official and still be a lure. This product splits the work on purpose: a model reads messy wording, and deterministic code decides the verdict.</p>
-        <div class="steps">
-          <div class="step">
-            <p class="step-num">01</p>
-            <div>
-              <h3>Keep a ledger on this device</h3>
-              <p>The sample inbox starts with a small demo ledger. You can also import an Amazon order-history CSV or ZIP, a PayPal activity CSV, or a generic CSV with common columns. The file is parsed in the browser and is not uploaded.</p>
-            </div>
+        <h1>A parcel email, taken apart</h1>
+        <p class="lede">A delivery message can look official and still be a lure. The product splits the work on purpose: a model reads the wording, and code decides the verdict.</p>
+      </section>
+
+      <section class="story" aria-label="A sample check, step by step">
+        <article class="story-scene" data-reveal>
+          <p class="story-num">01</p>
+          <div class="story-copy">
+            <h2>The email arrives</h2>
+            <p>This is the sample DHL hold used in the demo. It cites a tracking number and asks for a $2.99 release fee.</p>
           </div>
-          <div class="step">
-            <p class="step-num">02</p>
-            <div>
-              <h3>Open the email you want to check</h3>
-              <p>On the hosted site, pick a sample thread. In the Chrome extension, the side panel reads the open Gmail thread as text only. There is no Gmail API access and no mailbox scan.</p>
-            </div>
+          <div class="story-mail">
+            <p><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p>
+            <p><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
+            <p>Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p>
           </div>
-          <div class="step">
-            <p class="step-num">03</p>
-            <div>
-              <h3>Try on-device AI first</h3>
-              <p>A check starts in on-device mode. The model returns a structured claim: who the email claims to be, what it wants you to do, and which number it cites. If on-device AI is not available, the site asks before sending the email to the cloud. If you refuse, you can run a limited check with no AI.</p>
-            </div>
+        </article>
+
+        <article class="story-scene" data-reveal>
+          <p class="story-num">02</p>
+          <div class="story-copy">
+            <h2>The model reads the claim</h2>
+            <p>On-device AI, through Firebase AI Logic, turns the wording into a structured claim. It does not issue Safe, Warning, or Neutral.</p>
           </div>
-          <div class="step">
-            <p class="step-num">04</p>
-            <div>
-              <h3>Code issues the verdict</h3>
-              <p>The model does not decide Safe, Warning, or Neutral. Code matches the claim to your ledger. For a carrier email, a matching tracking number is Safe and a miss is Warning. If you have no expected parcels, the headline is exactly: You're not expecting any parcel right now.</p>
-            </div>
+          <dl class="claim-board">
+            <div><dt>Claims to be</dt><dd>DHL, as a carrier, at dhl-parcel-desk.example</dd></div>
+            <div><dt>Asks you to</dt><dd>Pay a release fee</dd></div>
+            <div><dt>Cites</dt><dd>Tracking GM123456789012345</dd></div>
+          </dl>
+        </article>
+
+        <article class="story-scene" data-reveal>
+          <p class="story-num">03</p>
+          <div class="story-copy">
+            <h2>Code looks at what you actually ordered</h2>
+            <p>The comparison uses the orders and tracking numbers stored on this device. Imports are parsed in the browser and are not uploaded. On the default demo set you are not expecting any parcel.</p>
           </div>
-        </div>
-        <p>Every verdict shows a source label: Checked on this device, Checked in the cloud, Limited check (no AI), or Check not completed.</p>
-        <p><a href="/privacy/">Read what stays on the device, and what can go to the cloud</a>. Then <a href="/app/">try the sample inbox</a>.</p>
-      </article>
+          <div class="ledger-board">
+            <p class="ledger-empty">Expected parcels on this device</p>
+            <p class="ledger-zero">None</p>
+            <p>The claimed domain dhl-parcel-desk.example is not in the official-domain pack.</p>
+          </div>
+        </article>
+
+        <article class="story-scene is-verdict" data-reveal>
+          <p class="story-num">04</p>
+          <div class="story-copy">
+            <h2>A stamp, then the verdict</h2>
+            <p>Matching tracking is marked safe. No match is a warning. The source label always says where the check ran: on this device, in the cloud after you agreed, as a limited check with no AI, or not completed.</p>
+          </div>
+          <div class="story-verdict result result-warning">
+            <p class="outcome">warning</p>
+            <h3 class="headline">You're not expecting any parcel right now.</h3>
+            <p class="source-label">Checked on this device</p>
+            <p>The model only reads the claim. Deterministic code issues the verdict.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="page-end">
+        <p class="related">
+          <a href="/privacy/">What stays on this device</a>
+          <a href="/app/">Try the sample inbox</a>
+        </p>
+      </section>
 
     </main>
     <footer data-site-footer></footer>
