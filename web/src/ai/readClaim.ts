@@ -5,6 +5,7 @@ import {
   InferenceSource,
   getAI,
   getGenerativeModel,
+  type GenerativeModel,
   type HybridParams,
 } from "firebase/ai";
 import { getFirebaseApp } from "../firebase/app.ts";
@@ -25,11 +26,21 @@ function mapInferenceSource(value: unknown): InferenceSourceValue {
   throw new Error("The model response did not include a usable inferenceSource.");
 }
 
+// Firebase defaults expectedInputs to text+image. This product only sends
+// email text, so request the text model. The image-capable model is often
+// unavailable (availability() === "unavailable") on machines that can still
+// run text Nano.
+export const ON_DEVICE_CREATE_OPTIONS = {
+  expectedInputs: [{ type: "text" as const, languages: ["en"] }],
+  expectedOutputs: [{ type: "text" as const, languages: ["en"] }],
+};
+
 function hybridParams(mode: ReadClaimMode): HybridParams {
   const schema = getClaimSchema();
   return {
     mode: MODE_MAP[mode],
     onDeviceParams: {
+      createOptions: ON_DEVICE_CREATE_OPTIONS,
       promptOptions: {
         responseConstraint: schema,
       },
@@ -53,7 +64,7 @@ async function generateClaim(emailText: string, mode: ReadClaimMode): Promise<{
   const model = getGenerativeModel(ai, hybridParams(mode));
 
   if (mode !== "only_in_cloud") {
-    await model.initializeDeviceModel();
+    await initializeOnDevice(model);
   }
 
   const prompt = `${CLAIM_PROMPT}\n\n---\n${emailText}\n---`;
@@ -61,6 +72,25 @@ async function generateClaim(emailText: string, mode: ReadClaimMode): Promise<{
   const claim = parseClaimResponse(result.response.text());
   const inferenceSource = mapInferenceSource(result.response.inferenceSource);
   return { claim, inferenceSource };
+}
+
+async function initializeOnDevice(model: GenerativeModel): Promise<void> {
+  // Chrome can report the Prompt API as unavailable for a few seconds after
+  // launch, before the on-device backend is ready. Retry that transient case
+  // instead of immediately falling back to cloud consent.
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      await model.initializeDeviceModel();
+      return;
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes("not available in this environment")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+  throw lastError;
 }
 
 export async function readClaim(

@@ -42,9 +42,12 @@ if (!existsSync(localStatePath)) {
 }
 
 const fixtureHtml = await readFile(path.join(here, "gmail-fixture.html"));
+const warmupHtml = await readFile(path.join(here, "warmup.html"));
 const server = createServer((req, res) => {
+  const url = req.url || "/";
+  const body = url.startsWith("/warmup") ? warmupHtml : fixtureHtml;
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-  res.end(fixtureHtml);
+  res.end(body);
 });
 await new Promise((resolve) => server.listen(8123, "127.0.0.1", resolve));
 
@@ -141,6 +144,57 @@ async function waitForCdpPort() {
   throw new Error("Chrome DevTools port 9222 never came up");
 }
 
+async function snap(page, name) {
+  const dest = path.join(outDir, name);
+  try {
+    await page.screenshot({ path: dest, fullPage: true, timeout: 8_000 });
+  } catch {
+    try {
+      await page.screenshot({ path: dest, fullPage: false, timeout: 5_000 });
+    } catch (error) {
+      result.screenshotErrors = result.screenshotErrors || [];
+      result.screenshotErrors.push({ name, error: String(error && (error.message || error)) });
+    }
+  }
+}
+
+async function readAvailability(page) {
+  return page.evaluate(async () => {
+    if (!("LanguageModel" in self)) return { present: false };
+    const textOnly = {
+      expectedInputs: [{ type: "text", languages: ["en"] }],
+      expectedOutputs: [{ type: "text", languages: ["en"] }],
+    };
+    const withImage = {
+      expectedInputs: [{ type: "text", languages: ["en"] }, { type: "image" }],
+      expectedOutputs: [{ type: "text", languages: ["en"] }],
+    };
+    try {
+      return {
+        present: true,
+        textOnly: await LanguageModel.availability(textOnly),
+        withImage: await LanguageModel.availability(withImage),
+      };
+    } catch (error) {
+      return { present: true, error: String(error && (error.message || error)) };
+    }
+  });
+}
+
+function attachLogs(page, bucket) {
+  const cap = 40;
+  const push = (line) => {
+    result[bucket] = result[bucket] || [];
+    if (result[bucket].length < cap) result[bucket].push(redact(line).slice(0, 400));
+  };
+  page.on("console", (msg) => {
+    push(`${msg.type()}: ${msg.text()}`);
+  });
+  page.on("pageerror", (err) => {
+    push(`pageerror: ${String(err && (err.message || err))}`);
+  });
+}
+
 async function readCheck(page) {
   return page.evaluate(() => {
     const text = document.body?.innerText || "";
@@ -155,20 +209,41 @@ async function readCheck(page) {
   });
 }
 
+function isTerminalCheck(state) {
+  if (!state) return false;
+  if (state.label || state.consentShown || state.usedSample) return true;
+  const text = state.bodySnippet || "";
+  return (
+    text.includes("could not run") ||
+    text.includes("not available in this environment") ||
+    text.includes("On-device AI is not configured")
+  );
+}
+
 async function waitForCheck(page, deadline, snapPrefix) {
   let lastSnap = 0;
   while (Date.now() < deadline) {
     const state = await readCheck(page);
-    if (state.label || state.consentShown || (state.bodySnippet || "").includes("could not run")) {
-      return state;
-    }
+    if (isTerminalCheck(state)) return state;
     if (Date.now() - lastSnap > 120_000) {
-      await page.screenshot({ path: path.join(outDir, `${snapPrefix}-progress-${Date.now()}.png`) });
+      await snap(page, `${snapPrefix}-progress-${Date.now()}.png`);
       lastSnap = Date.now();
     }
     await new Promise((r) => setTimeout(r, 2000));
   }
   return readCheck(page);
+}
+
+async function screenshotInternals(context) {
+  try {
+    const internals = await context.newPage();
+    await internals.goto("chrome://on-device-internals");
+    await new Promise((r) => setTimeout(r, 2000));
+    await snap(internals, "on-device-internals.png");
+    await internals.close().catch(() => {});
+  } catch (error) {
+    result.internalsError = String(error && (error.message || error));
+  }
 }
 
 const result = {
@@ -190,14 +265,61 @@ try {
   const context = browser.contexts()[0];
   const page = context.pages()[0] || (await context.newPage());
 
+  // Same proven sequence as nano-probe: start the text model download from a
+  // user gesture, then run the live-site and extension checks in this profile.
+  await page.goto("http://127.0.0.1:8123/warmup", { waitUntil: "domcontentloaded", timeout: 30_000 });
+  await page.click("#go");
+  const warmupDeadline = Date.now() + timeoutMs;
+  let lastWarmupSnap = 0;
+  while (Date.now() < warmupDeadline) {
+    const state = await page.evaluate(() => window.__probe);
+    if (state?.done) break;
+    if (Date.now() - lastWarmupSnap > 120_000) {
+      await snap(page, `warmup-progress-${Date.now()}.png`);
+      lastWarmupSnap = Date.now();
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  result.warmup = await page.evaluate(() => {
+    const probe = window.__probe || {};
+    return {
+      result: probe.result || null,
+      availabilityBefore: probe.availabilityBefore || null,
+      availabilityWithImage: probe.availabilityWithImage || null,
+      availabilityAfter: probe.availabilityAfter || null,
+      createMs: probe.createMs || null,
+      promptMs: probe.promptMs || null,
+      answer: probe.answer || null,
+      error: probe.error || null,
+    };
+  });
+  await snap(page, "nano-warmup.png");
+  console.log(
+    "WARMUP:",
+    result.warmup.result,
+    "text=",
+    result.warmup.availabilityBefore,
+    "image=",
+    result.warmup.availabilityWithImage,
+    "after=",
+    result.warmup.availabilityAfter,
+  );
+  if (result.warmup.result !== "on-device-ok") {
+    await screenshotInternals(context);
+    throw new Error("Nano warmup failed: " + (result.warmup.result || "timeout") + (result.warmup.error ? " " + result.warmup.error : ""));
+  }
+
   await page.goto(siteUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  attachLogs(page, "hostedConsole");
   await page.waitForSelector("[data-action=check]", { timeout: 30_000 });
+  result.hostedAvailability = await readAvailability(page);
+  console.log("HOSTED AVAILABILITY:", JSON.stringify(result.hostedAvailability));
   const dhl = page.locator('[data-thread="thread-1-carrier-lure"]');
   if (await dhl.count()) await dhl.click();
   await page.click("[data-action=check]");
-  const hostedDeadline = Date.now() + timeoutMs;
+  const hostedDeadline = Date.now() + Math.min(timeoutMs, 6 * 60_000);
   result.hosted = await waitForCheck(page, hostedDeadline, "hosted");
-  await page.screenshot({ path: path.join(outDir, "hosted-inbox.png"), fullPage: true });
+  await snap(page, "hosted-inbox.png");
   console.log("HOSTED LABEL:", result.hosted.label || "(none)");
   if (result.hosted.headline) console.log("HOSTED HEADLINE:", result.hosted.headline);
   if (result.hosted.outcome) console.log("HOSTED OUTCOME:", result.hosted.outcome);
@@ -208,6 +330,7 @@ try {
     await fixture.waitForSelector("h2.hP");
     await new Promise((r) => setTimeout(r, 1500));
     const panel = await context.newPage();
+    attachLogs(panel, "extensionConsole");
     await panel.goto(`chrome-extension://${result.extensionId}/sidepanel.html`, {
       waitUntil: "domcontentloaded",
     });
@@ -220,19 +343,23 @@ try {
       { timeout: 20_000 },
     ).then(() => true).catch(() => false);
     result.extensionReady = ready;
+    result.extensionAvailability = await readAvailability(panel);
+    console.log("EXTENSION AVAILABILITY:", JSON.stringify(result.extensionAvailability));
     if (ready) {
       await panel.click("[data-action=check]");
-      const extDeadline = Date.now() + Math.min(timeoutMs, 8 * 60_000);
+      const extDeadline = Date.now() + Math.min(timeoutMs, 4 * 60_000);
       result.extension = await waitForCheck(panel, extDeadline, "extension");
     } else {
       result.extension = await readCheck(panel);
       result.extensionError = "Side panel did not receive the fixture email text.";
     }
-    await panel.screenshot({ path: path.join(outDir, "extension-sidepanel.png"), fullPage: true });
-    await fixture.screenshot({ path: path.join(outDir, "gmail-fixture.png"), fullPage: true });
+    await snap(panel, "extension-sidepanel.png");
+    await snap(fixture, "gmail-fixture.png");
     console.log("EXTENSION LABEL:", result.extension?.label || "(none)");
     if (result.extension?.headline) console.log("EXTENSION HEADLINE:", result.extension.headline);
   }
+
+  await screenshotInternals(context);
 } catch (error) {
   result.fatal = String(error && (error.stack || error));
   console.log(result.fatal);
