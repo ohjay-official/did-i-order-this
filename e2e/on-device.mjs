@@ -52,33 +52,9 @@ const server = createServer((req, res) => {
 await new Promise((resolve) => server.listen(8123, "127.0.0.1", resolve));
 
 const wantExtension = Boolean(extensionDir && existsSync(path.join(extensionDir, "manifest.json")));
-const chromeArgs = [
-  `--user-data-dir=${profileDir}`,
-  "--remote-debugging-port=9222",
-  "--no-first-run",
-  "--no-default-browser-check",
-  "--window-size=1280,800",
-  "--window-position=0,0",
-];
-if (wantExtension) {
-  chromeArgs.unshift("--remote-debugging-pipe", "--enable-unsafe-extension-debugging");
-}
-chromeArgs.push("about:blank");
-
-const chrome = spawn(chromeBin, chromeArgs, {
-  stdio: wantExtension ? ["ignore", "pipe", "pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
-});
 
 let chromeLog = "";
-chrome.stdout?.on("data", (d) => {
-  chromeLog += d;
-});
-chrome.stderr?.on("data", (d) => {
-  chromeLog += d;
-});
-chrome.on("exit", (code, signal) => {
-  chromeLog += `\n[chrome exit code=${code} signal=${signal}]\n`;
-});
+let chrome = null;
 
 function redact(s) {
   return String(s)
@@ -87,9 +63,62 @@ function redact(s) {
     .replace(/6L[0-9A-Za-z\-_]{20,}/g, "[redacted]");
 }
 
-async function loadUnpacked(absPath) {
-  const cdpIn = chrome.stdio[3];
-  const cdpOut = chrome.stdio[4];
+function launchChrome({ withExtension }) {
+  const chromeArgs = [
+    `--user-data-dir=${profileDir}`,
+    "--remote-debugging-port=9222",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--window-size=1280,800",
+    "--window-position=0,0",
+  ];
+  if (withExtension) {
+    chromeArgs.unshift("--remote-debugging-pipe", "--enable-unsafe-extension-debugging");
+  }
+  chromeArgs.push("about:blank");
+  const child = spawn(chromeBin, chromeArgs, {
+    stdio: withExtension ? ["ignore", "pipe", "pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
+  });
+  child.stdout?.on("data", (d) => {
+    chromeLog += d;
+  });
+  child.stderr?.on("data", (d) => {
+    chromeLog += d;
+  });
+  child.on("exit", (code, signal) => {
+    chromeLog += `\n[chrome exit code=${code} signal=${signal}]\n`;
+  });
+  return child;
+}
+
+async function stopChrome(child, browser) {
+  if (browser) await browser.close().catch(() => {});
+  if (!child) return;
+  await new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolve();
+    }, 5000);
+    child.once("exit", () => {
+      clearTimeout(timer);
+      resolve();
+    });
+    child.kill("SIGTERM");
+  });
+  for (let i = 0; i < 20; i += 1) {
+    try {
+      const res = await fetch("http://127.0.0.1:9222/json/version");
+      if (!res.ok) break;
+    } catch {
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+}
+
+async function loadUnpacked(child, absPath) {
+  const cdpIn = child.stdio[3];
+  const cdpOut = child.stdio[4];
   if (!cdpIn || !cdpOut) {
     throw new Error("Chrome did not receive pipe fds 3 and 4 for Extensions.loadUnpacked.");
   }
@@ -234,12 +263,12 @@ async function waitForCheck(page, deadline, snapPrefix) {
   return readCheck(page);
 }
 
-async function screenshotInternals(context) {
+async function screenshotInternals(context, name = "on-device-internals.png") {
   try {
     const internals = await context.newPage();
     await internals.goto("chrome://on-device-internals");
     await new Promise((r) => setTimeout(r, 2000));
-    await snap(internals, "on-device-internals.png");
+    await snap(internals, name);
     await internals.close().catch(() => {});
   } catch (error) {
     result.internalsError = String(error && (error.message || error));
@@ -253,20 +282,15 @@ const result = {
 };
 let browser;
 try {
-  if (wantExtension) {
-    result.extensionId = await loadUnpacked(extensionDir);
-    result.loadUnpacked = "ok";
-    console.log("Loaded unpacked extension");
-  }
+  // Session 1: same Chrome flags and launch as nano-probe. Do not load the
+  // extension yet. Download the text model into this profile first.
+  chrome = launchChrome({ withExtension: false });
   result.version = await waitForCdpPort();
   if (result.version?.Browser) console.log("CHROME:", result.version.Browser);
-
   browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
-  const context = browser.contexts()[0];
-  const page = context.pages()[0] || (await context.newPage());
+  let context = browser.contexts()[0];
+  let page = context.pages()[0] || (await context.newPage());
 
-  // Same proven sequence as nano-probe: start the text model download from a
-  // user gesture, then run the live-site and extension checks in this profile.
   await page.goto("http://127.0.0.1:8123/warmup", { waitUntil: "domcontentloaded", timeout: 30_000 });
   await page.click("#go");
   const warmupDeadline = Date.now() + timeoutMs;
@@ -304,10 +328,26 @@ try {
     "after=",
     result.warmup.availabilityAfter,
   );
+  await screenshotInternals(context, "on-device-internals-warmup.png");
   if (result.warmup.result !== "on-device-ok") {
-    await screenshotInternals(context);
     throw new Error("Nano warmup failed: " + (result.warmup.result || "timeout") + (result.warmup.error ? " " + result.warmup.error : ""));
   }
+
+  await stopChrome(chrome, browser);
+  chrome = null;
+  browser = null;
+
+  // Session 2: same profile, now with the unpacked extension if requested.
+  chrome = launchChrome({ withExtension: wantExtension });
+  if (wantExtension) {
+    result.extensionId = await loadUnpacked(chrome, extensionDir);
+    result.loadUnpacked = "ok";
+    console.log("Loaded unpacked extension");
+  }
+  result.version = await waitForCdpPort();
+  browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+  context = browser.contexts()[0];
+  page = context.pages()[0] || (await context.newPage());
 
   await page.goto(siteUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
   attachLogs(page, "hostedConsole");
@@ -335,13 +375,16 @@ try {
       waitUntil: "domcontentloaded",
     });
     await panel.waitForSelector("[data-action=check]", { timeout: 30_000 });
-    const ready = await panel.waitForFunction(
-      () => {
-        const btn = document.querySelector("[data-action=check]");
-        return btn && !btn.hasAttribute("disabled") && (document.body.innerText || "").includes("GM123456789012345");
-      },
-      { timeout: 20_000 },
-    ).then(() => true).catch(() => false);
+    const ready = await panel
+      .waitForFunction(
+        () => {
+          const btn = document.querySelector("[data-action=check]");
+          return btn && !btn.hasAttribute("disabled") && (document.body.innerText || "").includes("GM123456789012345");
+        },
+        { timeout: 20_000 },
+      )
+      .then(() => true)
+      .catch(() => false);
     result.extensionReady = ready;
     result.extensionAvailability = await readAvailability(panel);
     console.log("EXTENSION AVAILABILITY:", JSON.stringify(result.extensionAvailability));
@@ -359,7 +402,7 @@ try {
     if (result.extension?.headline) console.log("EXTENSION HEADLINE:", result.extension.headline);
   }
 
-  await screenshotInternals(context);
+  await screenshotInternals(context, "on-device-internals.png");
 } catch (error) {
   result.fatal = String(error && (error.stack || error));
   console.log(result.fatal);
@@ -367,8 +410,7 @@ try {
   result.finishedAt = new Date().toISOString();
   await writeFile(path.join(outDir, "result.json"), JSON.stringify(result, null, 2));
   await writeFile(path.join(outDir, "chrome.log"), redact(chromeLog).slice(-20000));
-  if (browser) await browser.close().catch(() => {});
-  chrome.kill("SIGTERM");
+  await stopChrome(chrome, browser).catch(() => {});
   server.close();
 }
 
