@@ -40,7 +40,8 @@ export function mountShell(doc: Document, options: ShellOptions): void {
         <nav id="site-nav" class="site-nav" data-site-nav aria-label="Primary">
           ${NAV.map((item) => {
             const active = isActive(item.href, current);
-            return `<a href="${item.href}"${active ? ' aria-current="page"' : ""}>${item.label}</a>`;
+            const extra = item.href === "/how-it-works/" || item.href === "/privacy/" ? "" : " nav-extra";
+            return `<a class="${extra.trim()}" href="${item.href}"${active ? ' aria-current="page"' : ""}>${item.label}</a>`;
           }).join("")}
           <a class="nav-action" href="/app/">Open the sample inbox</a>
         </nav>

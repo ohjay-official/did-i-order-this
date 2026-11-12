@@ -1,4 +1,6 @@
-import "../styles.css";
 import { mountShell } from "./shell.ts";
+import { mountLanding } from "./landing.ts";
+import "../styles.css";
 
-mountShell(document, { current: document.location.pathname });
+mountShell(document, { current: location.pathname });
+mountLanding(document);
