@@ -27,6 +27,7 @@ export function mountShell(doc: Document, options: ShellOptions): void {
   const footer = doc.querySelector("[data-site-footer]");
 
   if (header) {
+    const isLanding = current === "/";
     header.innerHTML = `
       <a class="skip-link" href="#content">Skip to content</a>
       <div class="site-bar">
@@ -34,16 +35,21 @@ export function mountShell(doc: Document, options: ShellOptions): void {
           <span class="wordmark-mark" aria-hidden="true"></span>
           <span class="wordmark-text">Did I Order This?</span>
         </a>
-        <button type="button" class="menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="site-nav">
-          Menu
-        </button>
-        <nav id="site-nav" class="site-nav" data-site-nav aria-label="Primary">
-          ${NAV.map((item) => {
-            const active = isActive(item.href, current);
-            const extra = item.href === "/how-it-works/" || item.href === "/privacy/" ? "" : " nav-extra";
-            return `<a class="${extra.trim()}" href="${item.href}"${active ? ' aria-current="page"' : ""}>${item.label}</a>`;
-          }).join("")}
-          <a class="nav-action" href="/app/">Open the sample inbox</a>
+        ${
+          isLanding
+            ? ""
+            : `<button type="button" class="menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>`
+        }
+        <nav id="site-nav" class="site-nav${isLanding ? " is-landing" : ""}" data-site-nav aria-label="Primary">
+          ${
+            isLanding
+              ? ""
+              : NAV.map((item) => {
+                  const active = isActive(item.href, current);
+                  return `<a href="${item.href}"${active ? ' aria-current="page"' : ""}>${item.label}</a>`;
+                }).join("")
+          }
+          <a class="nav-action" href="/app/">Sample inbox</a>
         </nav>
       </div>
     `;
@@ -55,6 +61,13 @@ export function mountShell(doc: Document, options: ShellOptions): void {
       toggle.setAttribute("aria-expanded", open ? "false" : "true");
       nav?.classList.toggle("is-open", !open);
     });
+
+    const bar = header.querySelector(".site-bar");
+    const syncScroll = () => {
+      bar?.classList.toggle("is-scrolled", window.scrollY > 12);
+    };
+    syncScroll();
+    window.addEventListener("scroll", syncScroll, { passive: true });
   }
 
   if (footer) {

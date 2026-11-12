@@ -22,37 +22,41 @@
   <body class="landing-page">
     <header data-site-header></header>
     <main id="content">
-      <section class="hero" aria-label="Introduction">
-        <div class="hero-stage" aria-hidden="true"></div>
+      <section class="hero" data-hero aria-label="Introduction">
+        <canvas class="hero-stage" data-stage aria-hidden="true"></canvas>
         <div class="hero-copy">
           <h1>
-            <span class="hero-line">A fake DHL desk</span>
-            <span class="hero-line">just asked for a <br class="phone-break" />release fee</span>
+            <span class="hero-line">Got a parcel email?</span>
+            <span class="hero-line hero-accent">Check your ledger.</span>
           </h1>
-          <p class="lede">The checker reads the claim, then code compares the tracking number with the ledger on this device.</p>
         </div>
-        <div class="demo" data-demo>
-          <div class="demo-pane" data-demo-pane aria-live="polite"></div>
-          <div class="demo-try">
-            <p class="demo-try-label">Try a sample</p>
-            <div class="demo-chips" role="group" aria-label="Sample checks">
-              <button type="button" class="demo-chip is-current" data-demo-chip="thread-1-carrier-lure" aria-pressed="true">Fake DHL hold</button>
-              <button type="button" class="demo-chip" data-demo-chip="thread-3-safe-carrier" aria-pressed="false">Official UPS update</button>
-              <button type="button" class="demo-chip" data-demo-chip="thread-4-neutral-renewal" aria-pressed="false">Streamhut invoice</button>
+        <div class="hero-tool">
+          <form class="prompt" data-prompt>
+            <label class="visually-hidden" for="email-paste">Paste the email</label>
+            <textarea id="email-paste" class="prompt-input" data-prompt-input rows="1" placeholder="Paste the email"></textarea>
+            <button type="submit" class="prompt-go">Check</button>
+          </form>
+          <div class="mode-switch" role="group" aria-label="Where the check may run">
+            <button type="button" class="mode-chip is-current" data-mode="device" aria-pressed="true">On this device</button>
+            <button type="button" class="mode-chip" data-mode="cloud" aria-pressed="false">Allow cloud</button>
+          </div>
+          <div class="try-row">
+            <span class="try-label">Try</span>
+            <div class="try-chips" role="group" aria-label="Sample checks">
+              <button type="button" class="try-chip" data-try="thread-1-carrier-lure" aria-pressed="false">Fake DHL release fee</button>
+              <button type="button" class="try-chip" data-try="thread-3-safe-carrier" aria-pressed="false">Real UPS update</button>
+              <button type="button" class="try-chip" data-try="thread-4-neutral-renewal" aria-pressed="false">Streamhut renewal</button>
             </div>
           </div>
-          <div class="actions">
-            <a class="btn" href="/app/">Open the sample inbox</a>
-            <a class="btn btn-secondary" href="/how-it-works/">How it works</a>
-          </div>
-          <p class="preview-caption">These are the real demo verdicts for the sample ledger, which starts with no expected parcels. This preview is not a live model call.</p>
+          <div class="hero-result" data-result aria-live="polite"></div>
+          <p class="hero-caption">The sample ledger starts with no expected parcels. Allow cloud only if you want the email sent when on-device AI is unavailable.</p>
         </div>
       </section>
 
       <section class="compare" aria-label="How the check decides">
         <div class="compare-inner">
           <h2>The email can look official. The ledger is what counts.</h2>
-          <p class="lede">On the default sample ledger you are not expecting any parcel. The official UPS domain does not change that.</p>
+          <p class="lede">On the default sample ledger you are not expecting any parcel. An official UPS domain does not change that.</p>
           <div class="compare-grid">
             <article class="compare-card">
               <h3>What the email claims</h3>
@@ -84,12 +88,12 @@
             <li>
               <span class="beat-num">02</span>
               <h3>Open the email you want to check</h3>
-              <p>Pick a sample thread here, or read an open Gmail thread as text in the Chrome extension.</p>
+              <p>Paste it above, pick a sample, or read an open Gmail thread as text in the Chrome extension.</p>
             </li>
             <li>
               <span class="beat-num">03</span>
               <h3>Try on-device AI first</h3>
-              <p>A check starts on the device through Firebase AI Logic. Cloud inference happens only after you agree, and only on the hosted site.</p>
+              <p>A check starts on the device through Firebase AI Logic. Cloud inference happens only after you allow it, and only on the hosted site.</p>
             </li>
             <li>
               <span class="beat-num">04</span>

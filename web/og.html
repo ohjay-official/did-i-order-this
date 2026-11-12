@@ -7,45 +7,41 @@
     <title>Open graph image</title>
     <link rel="stylesheet" href="/src/styles.css" />
     <style>
-      html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #f1f0eb; }
-      .og { position: relative; width: 1200px; height: 630px; padding: 56px 64px; box-sizing: border-box; }
+      html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #f7f3ee; }
+      .og { position: relative; width: 1200px; height: 630px; padding: 56px 64px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
       .og-stage {
-        position: absolute; inset: 0; pointer-events: none;
-        background: radial-gradient(56% 48% at 70% 80%, rgba(180, 164, 140, 0.32), transparent 70%);
+        position: absolute; inset: auto 0 0 0; height: 42%; pointer-events: none;
+        background:
+          radial-gradient(60% 80% at 30% 100%, rgba(196, 69, 28, 0.88), transparent 70%),
+          radial-gradient(70% 90% at 75% 110%, rgba(240, 161, 74, 0.85), transparent 72%),
+          linear-gradient(180deg, transparent, rgba(232, 93, 58, 0.7));
       }
-      .og-copy { position: relative; z-index: 1; max-width: 900px; }
+      .og-copy { position: relative; z-index: 1; }
       .og-mark {
         margin: 0 0 36px;
         font-family: Syne, sans-serif;
         font-size: 22px;
         font-weight: 500;
         letter-spacing: -0.03em;
-        color: #141312;
+        color: #1c1410;
       }
       .og-copy h1 {
-        margin: 0 0 28px;
+        margin: 0;
         font-family: Syne, sans-serif;
         font-weight: 400;
-        font-size: 58px;
+        font-size: 72px;
         line-height: 1.02;
         letter-spacing: -0.045em;
-        color: #141312;
-        max-width: 14ch;
+        color: #1c1410;
       }
-      .og-verdict {
-        display: inline-block;
-        padding: 16px 20px;
-        background: #f0e2de;
-        color: #8b2a22;
-        border-radius: 8px;
-      }
-      .og-verdict .headline {
-        margin: 8px 0 0;
-        font-family: Syne, sans-serif;
-        font-size: 24px;
+      .og-accent {
+        display: block;
+        background-image: linear-gradient(90deg, #8b1e12 0%, #e24a2b 38%, #f08a3c 68%, #f0b14a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
         font-weight: 500;
-        letter-spacing: -0.03em;
-        line-height: 1.15;
       }
     </style>
   </head>
@@ -54,11 +50,7 @@
       <div class="og-stage" aria-hidden="true"></div>
       <div class="og-copy">
         <p class="og-mark">Did I Order This?</p>
-        <h1>A fake DHL desk<br>just asked for a release fee</h1>
-        <div class="og-verdict">
-          <p class="source-label">Checked on this device</p>
-          <p class="headline">You're not expecting any parcel right now.</p>
-        </div>
+        <h1>Got a parcel email?<span class="og-accent">Check your ledger.</span></h1>
       </div>
     </div>
   </body>
