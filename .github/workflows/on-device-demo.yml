@@ -1,6 +1,9 @@
 name: on-device-demo
 
 # Manual only. Private-repo minutes count against the plan, so this does not run on push.
+# GitHub-hosted ubuntu-latest on a private repo is 2 vCPU / 7.7 GB. The proven
+# Nano path from ohjay-official/nano-probe needs the public-repo runner size
+# (4 vCPU / 16 GB). This workflow exits early on the small runner.
 on:
   workflow_dispatch:
 
@@ -19,6 +22,12 @@ jobs:
         run: |
           echo "cpus: $(nproc)"; free -h; df -h / /mnt || true
           google-chrome --version
+          if [ "$(nproc)" -lt 4 ]; then
+            echo "This runner has $(nproc) vCPU and cannot load Gemini Nano."
+            echo "The proven nano-probe path needs a 4 vCPU / 16 GB runner, which GitHub gives to public repos."
+            echo "Re-run this job from a public repo, or on a larger runner."
+            exit 1
+          fi
 
       - name: Free disk space
         run: |
