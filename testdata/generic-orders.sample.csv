@@ -1,0 +1,3 @@
+order_id,merchant,date,amount,currency,tracking,domain
+GEN-100,Harbor Goods,2026-08-01,19.50,USD,9400111899562537874999,harbor-goods.example
+GEN-101,Harbor Goods,2026-08-03,8.00,USD,,harbor-goods.example

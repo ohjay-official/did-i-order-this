@@ -6,11 +6,12 @@
   "license": "Apache-2.0",
   "workspaces": [
     "packages/core",
-    "web"
+    "web",
+    "extension"
   ],
   "scripts": {
     "test": "npm test --workspaces --if-present",
-    "build": "npm run build --workspace=web",
+    "build": "npm run build --workspace=web && npm run build --workspace=@did-i-order-this/extension",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "check:no-languagemodel": "node scripts/check-no-languagemodel.mjs"
   },

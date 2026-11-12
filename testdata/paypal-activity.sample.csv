@@ -1,0 +1,3 @@
+Date,Time,TimeZone,Name,Type,Status,Currency,Gross,Fee,Net,From Email Address,To Email Address,Transaction ID,Item Title,Invoice Number
+09/20/2026,12:00:00,PST,Northwind Outfitters,Express Checkout Payment,Completed,USD,-42.00,-1.23,-43.23,buyer@example.com,orders@shop.northwind-outfitters.example,9AB12345678901234,Wool socks,NW-20001
+09/21/2026,09:00:00,PST,Bank,General Withdrawal,Completed,USD,-20.00,0.00,-20.00,buyer@example.com,buyer@example.com,9AB99999999999999,,

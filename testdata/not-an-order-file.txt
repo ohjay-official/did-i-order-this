@@ -1,0 +1,3 @@
+This is a leftover shopping list, not an order history file.
+milk
+bread

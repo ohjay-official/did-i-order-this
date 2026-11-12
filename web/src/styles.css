@@ -234,3 +234,23 @@ h1 {
     flex-direction: column;
   }
 }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.file-label {
+  display: inline-block;
+}
+
+.import-note {
+  margin: 0 0 16px;
+}
+
+.result-limited {
+  background: var(--neutral-bg);
+  color: var(--neutral-ink);
+}

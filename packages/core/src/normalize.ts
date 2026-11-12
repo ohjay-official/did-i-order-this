@@ -16,6 +16,7 @@ export function looksLikeTracking(value: string): boolean {
   if (/^1Z[A-Z0-9]{16}$/.test(n)) return true;
   if (/^[0-9]{12,22}$/.test(n)) return true;
   if (/^[A-Z]{2}[0-9]{9}[A-Z]{2}$/.test(n)) return true;
+  if (/^[A-Z]{2}[0-9]{8,20}$/.test(n)) return true;
   if (/^[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}$/.test(value.trim())) return true;
   return false;
 }

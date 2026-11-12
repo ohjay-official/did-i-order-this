@@ -1,17 +1,22 @@
 import {
+  OrderHistoryParseError,
   decideVerdict,
   ingestSenderFromClaim,
   ingestShipmentFromClaim,
+  parseOrderHistoryFile,
+  runLimitedCheck,
   type EmailClaim,
   type InferenceSourceValue,
+  type LedgerSender,
   type LedgerSnapshot,
+  type LimitedCheckResult,
   type Verdict,
 } from "@did-i-order-this/core";
 import { readClaim } from "../ai/readClaim.ts";
 import { chooseInferenceMode } from "../consent.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
-import { isFirebaseConfigured } from "../firebase/app.ts";
-import { loadLedger, resetToDemoSeed, saveSender, saveShipment } from "../ledger/store.ts";
+import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
+import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { getOfficialPack } from "../packs/official.ts";
 
 type CheckState =
@@ -26,7 +31,8 @@ type CheckState =
       canSaveShipment: boolean;
       saved: boolean;
     }
-  | { status: "error"; message: string };
+  | { status: "limited"; result: LimitedCheckResult }
+  | { status: "error"; message: string; canLimited: boolean };
 
 export class InboxApp {
   private root: HTMLElement;
@@ -35,6 +41,7 @@ export class InboxApp {
   private ledger: LedgerSnapshot = { orders: [], shipments: [], senders: [] };
   private check: CheckState = { status: "idle" };
   private note = "";
+  private importNote = "";
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -58,8 +65,15 @@ export class InboxApp {
           <h1>Did I Order This?</h1>
           <p class="lede">Check a delivery or billing email against the orders and tracking numbers stored on this device.</p>
         </div>
-        <button type="button" class="btn btn-secondary" data-action="reset">Reset demo ledger</button>
+        <div class="header-actions">
+          <label class="btn btn-secondary file-label">
+            Import order history
+            <input type="file" accept=".csv,.zip,text/csv,application/zip" data-action="import" hidden />
+          </label>
+          <button type="button" class="btn btn-secondary" data-action="reset">Reset demo ledger</button>
+        </div>
       </header>
+      ${this.importNote ? `<p class="note import-note">${escapeHtml(this.importNote)}</p>` : ""}
       <div class="workspace">
         <aside class="thread-list" aria-label="Sample threads">
           ${this.threads
@@ -83,6 +97,12 @@ export class InboxApp {
     this.root.querySelector("[data-action=reset]")?.addEventListener("click", () => {
       void this.resetLedger();
     });
+    this.root.querySelector<HTMLInputElement>("[data-action=import]")?.addEventListener("change", (event) => {
+      const input = event.target as HTMLInputElement;
+      const file = input.files?.[0];
+      input.value = "";
+      if (file) void this.importFile(file);
+    });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>("[data-thread]")) {
       button.addEventListener("click", () => {
         this.selectedId = button.dataset.thread ?? "";
@@ -96,6 +116,9 @@ export class InboxApp {
     });
     this.root.querySelector("[data-action=save]")?.addEventListener("click", () => {
       void this.saveShipment();
+    });
+    this.root.querySelector("[data-action=limited]")?.addEventListener("click", () => {
+      this.runLimited();
     });
     this.root.querySelector("[data-action=consent-yes]")?.addEventListener("click", () => {
       this.consentResolver?.(true);
@@ -133,7 +156,26 @@ export class InboxApp {
       return "";
     }
     if (this.check.status === "error") {
-      return `<div class="result"><p class="note">${escapeHtml(this.check.message)}</p></div>`;
+      return `<div class="result">
+        <p class="note">${escapeHtml(this.check.message)}</p>
+        ${
+          this.check.canLimited
+            ? `<div class="actions"><button type="button" class="btn btn-secondary" data-action="limited">Run a limited check (no AI)</button></div>`
+            : ""
+        }
+      </div>`;
+    }
+    if (this.check.status === "limited") {
+      const { result } = this.check;
+      return `
+        <div class="result result-limited">
+          <p class="source-label">${escapeHtml(result.inferenceSourceLabel)}</p>
+          <h2 class="headline">${escapeHtml(result.headline)}</h2>
+          <ul class="reasons">
+            ${result.findings.map((finding) => `<li>${escapeHtml(finding)}</li>`).join("")}
+          </ul>
+        </div>
+      `;
     }
 
     const { verdict, claim, usedSampleClaim, canSaveShipment, saved } = this.check;
@@ -211,6 +253,85 @@ export class InboxApp {
     this.ledger = await resetToDemoSeed();
     this.check = { status: "idle" };
     this.note = "Demo ledger reset. There are no expected parcels.";
+    this.importNote = "";
+    this.render();
+  }
+
+  private async importFile(file: File): Promise<void> {
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const parsed = parseOrderHistoryFile({ name: file.name, bytes });
+      for (const order of parsed.orders) {
+        await saveOrder(order);
+        const sender: LedgerSender = {
+          domain: order.senderDomain,
+          displayName: order.merchant,
+          role: "merchant",
+          firstSeenAt: order.confirmedAt,
+          confirmedAt: order.confirmedAt,
+        };
+        await saveSender(sender);
+      }
+      for (const shipment of parsed.shipments) await saveShipment(shipment);
+      this.ledger = await loadLedger();
+      const shipmentText =
+        parsed.shipments.length === 1 ? "1 shipment" : `${parsed.shipments.length} shipments`;
+      this.importNote = `Imported ${parsed.orders.length} orders and ${shipmentText} on this device. The file was not uploaded.`;
+    } catch (error) {
+      const message =
+        error instanceof OrderHistoryParseError
+          ? error.message
+          : "This file could not be imported. It was not uploaded.";
+      this.importNote = message;
+    }
+    this.render();
+  }
+
+  private runLimited(): void {
+    const thread = this.selected();
+    if (!thread) return;
+    const result = runLimitedCheck(
+      formatEmailText(thread),
+      { fromDomain: thread.fromDomain },
+      this.ledger,
+      getOfficialPack(),
+    );
+    this.check = { status: "limited", result };
+    this.render();
+  }
+
+  private finishWithSampleClaim(thread: SampleThread): void {
+    const claim = thread.expectedClaim;
+    const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), undefined);
+    const shipment = ingestShipmentFromClaim(claim, {
+      fromDomain: thread.fromDomain,
+      subject: thread.subject,
+    });
+    this.check = {
+      status: "done",
+      verdict,
+      claim,
+      usedSampleClaim: true,
+      canSaveShipment: shipment !== null,
+      saved: false,
+    };
+    this.render();
+  }
+
+  private finishWithClaim(thread: SampleThread, claim: EmailClaim, inferenceSource?: InferenceSourceValue): void {
+    const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), inferenceSource);
+    const shipment = ingestShipmentFromClaim(claim, {
+      fromDomain: thread.fromDomain,
+      subject: thread.subject,
+    });
+    this.check = {
+      status: "done",
+      verdict,
+      claim,
+      usedSampleClaim: false,
+      canSaveShipment: shipment !== null,
+      saved: false,
+    };
     this.render();
   }
 
@@ -222,59 +343,48 @@ export class InboxApp {
     this.render();
 
     const emailText = formatEmailText(thread);
-    let claim: EmailClaim;
-    let inferenceSource: InferenceSourceValue | undefined;
-    let usedSampleClaim = false;
 
-    if (isFirebaseConfigured()) {
-      try {
-        const first = await readClaim(emailText, "only_on_device");
-        claim = first.claim;
-        inferenceSource = first.inferenceSource;
-      } catch (error) {
-        const mode = await chooseInferenceMode(false, () => this.askForCloudConsent());
-        if (mode === "cancelled") {
-          this.check = {
-            status: "error",
-            message: "The AI read could not run. The email was not sent to the cloud.",
-          };
-          this.render();
-          return;
-        }
-        try {
-          const second = await readClaim(emailText, mode);
-          claim = second.claim;
-          inferenceSource = second.inferenceSource;
-        } catch (cloudError) {
-          const firstMessage = error instanceof Error ? error.message : "On-device check failed.";
-          const cloudMessage = cloudError instanceof Error ? cloudError.message : "Cloud check failed.";
-          this.check = {
-            status: "error",
-            message: `The AI read could not run. ${firstMessage} ${cloudMessage}`,
-          };
-          this.render();
-          return;
-        }
-      }
-    } else {
-      claim = thread.expectedClaim;
-      usedSampleClaim = true;
+    if (!isFirebaseConfigured()) {
+      this.finishWithSampleClaim(thread);
+      return;
     }
 
-    const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), inferenceSource);
-    const shipment = ingestShipmentFromClaim(claim, {
-      fromDomain: thread.fromDomain,
-      subject: thread.subject,
-    });
-    this.check = {
-      status: "done",
-      verdict,
-      claim,
-      usedSampleClaim,
-      canSaveShipment: shipment !== null,
-      saved: false,
-    };
-    this.render();
+    try {
+      const first = await readClaim(emailText, "only_on_device");
+      this.finishWithClaim(thread, first.claim, first.inferenceSource);
+      return;
+    } catch {
+      // Continue to cloud consent or the no-key fallback.
+    }
+
+    if (!isCloudAiAvailable()) {
+      this.finishWithSampleClaim(thread);
+      return;
+    }
+
+    const mode = await chooseInferenceMode(false, () => this.askForCloudConsent());
+    if (mode === "cancelled") {
+      this.check = {
+        status: "error",
+        message: "The AI read could not run. The email was not sent to the cloud.",
+        canLimited: true,
+      };
+      this.render();
+      return;
+    }
+
+    try {
+      const second = await readClaim(emailText, mode);
+      this.finishWithClaim(thread, second.claim, second.inferenceSource);
+    } catch (cloudError) {
+      const cloudMessage = cloudError instanceof Error ? cloudError.message : "Cloud check failed.";
+      this.check = {
+        status: "error",
+        message: `The AI read could not run. ${cloudMessage}`,
+        canLimited: true,
+      };
+      this.render();
+    }
   }
 
   private async saveShipment(): Promise<void> {

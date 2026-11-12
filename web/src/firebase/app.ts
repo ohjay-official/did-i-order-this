@@ -1,5 +1,9 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+  ReCaptchaV3Provider,
+} from "firebase/app-check";
 
 export type FirebaseWebConfig = {
   apiKey: string;
@@ -9,6 +13,8 @@ export type FirebaseWebConfig = {
   messagingSenderId: string;
   appId: string;
 };
+
+export type RecaptchaProviderType = "v3" | "enterprise";
 
 let app: FirebaseApp | null = null;
 let appCheckReady = false;
@@ -31,8 +37,20 @@ export function recaptchaSiteKeyFromEnv(): string | null {
   return key ? key : null;
 }
 
+export function recaptchaProviderTypeFromEnv(raw?: string | null): RecaptchaProviderType {
+  const value = (raw ?? import.meta.env.VITE_FIREBASE_RECAPTCHA_PROVIDER ?? "").trim().toLowerCase();
+  if (value === "enterprise" || value === "recaptcha-enterprise" || value === "recaptchaenterprise") {
+    return "enterprise";
+  }
+  return "v3";
+}
+
 export function isFirebaseConfigured(): boolean {
   return firebaseConfigFromEnv() !== null;
+}
+
+export function isCloudAiAvailable(): boolean {
+  return isFirebaseConfigured() && recaptchaSiteKeyFromEnv() !== null;
 }
 
 export function getFirebaseApp(): FirebaseApp {
@@ -44,8 +62,12 @@ export function getFirebaseApp(): FirebaseApp {
   app = initializeApp(config);
   const recaptchaKey = recaptchaSiteKeyFromEnv();
   if (recaptchaKey && !appCheckReady) {
+    const provider =
+      recaptchaProviderTypeFromEnv() === "enterprise"
+        ? new ReCaptchaEnterpriseProvider(recaptchaKey)
+        : new ReCaptchaV3Provider(recaptchaKey);
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(recaptchaKey),
+      provider,
       isTokenAutoRefreshEnabled: true,
     });
     appCheckReady = true;
