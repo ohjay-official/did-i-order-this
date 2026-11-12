@@ -1,0 +1,20 @@
+{
+  "name": "did-i-order-this",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Did I Order This?",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/core",
+    "web"
+  ],
+  "scripts": {
+    "test": "npm test --workspaces --if-present",
+    "build": "npm run build --workspace=web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check:no-languagemodel": "node scripts/check-no-languagemodel.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
