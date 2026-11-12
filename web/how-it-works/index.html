@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How it works | Did I Order This?</title>
+    <meta name="description" content="On-device AI reads what an email claims. Code checks that claim against a ledger kept on this device." />
+    <link rel="canonical" href="https://did-i-order-this.vercel.app/how-it-works/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Did I Order This?" />
+    <meta property="og:title" content="How it works | Did I Order This?" />
+    <meta property="og:description" content="On-device AI reads what an email claims. Code checks that claim against a ledger kept on this device." />
+    <meta property="og:url" content="https://did-i-order-this.vercel.app/how-it-works/" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How it works | Did I Order This?" />
+    <meta name="twitter:description" content="On-device AI reads what an email claims. Code checks that claim against a ledger kept on this device." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    
+  </head>
+  <body class="inner-page">
+    <header data-site-header></header>
+    <main id="content">
+
+      <article class="page">
+        <p class="eyebrow">How it works</p>
+        <h1>The AI reads the claim. Code checks the ledger</h1>
+        <p class="lede">A delivery email can look official and still be a lure. This product splits the work on purpose: a model reads messy wording, and deterministic code decides the verdict.</p>
+        <div class="steps">
+          <div class="step">
+            <p class="step-num">01</p>
+            <div>
+              <h3>Keep a ledger on this device</h3>
+              <p>The sample inbox starts with a small demo ledger. You can also import an Amazon order-history CSV or ZIP, a PayPal activity CSV, or a generic CSV with common columns. The file is parsed in the browser and is not uploaded.</p>
+            </div>
+          </div>
+          <div class="step">
+            <p class="step-num">02</p>
+            <div>
+              <h3>Open the email you want to check</h3>
+              <p>On the hosted site, pick a sample thread. In the Chrome extension, the side panel reads the open Gmail thread as text only. There is no Gmail API access and no mailbox scan.</p>
+            </div>
+          </div>
+          <div class="step">
+            <p class="step-num">03</p>
+            <div>
+              <h3>Try on-device AI first</h3>
+              <p>A check starts in on-device mode. The model returns a structured claim: who the email claims to be, what it wants you to do, and which number it cites. If on-device AI is not available, the site asks before sending the email to the cloud. If you refuse, you can run a limited check with no AI.</p>
+            </div>
+          </div>
+          <div class="step">
+            <p class="step-num">04</p>
+            <div>
+              <h3>Code issues the verdict</h3>
+              <p>The model does not decide Safe, Warning, or Neutral. Code matches the claim to your ledger. For a carrier email, a matching tracking number is Safe and a miss is Warning. If you have no expected parcels, the headline is exactly: You're not expecting any parcel right now.</p>
+            </div>
+          </div>
+        </div>
+        <p>Every verdict shows a source label: Checked on this device, Checked in the cloud, Limited check (no AI), or Check not completed.</p>
+        <p><a href="/privacy/">Read what stays on the device, and what can go to the cloud</a>. Then <a href="/app/">try the sample inbox</a>.</p>
+      </article>
+
+    </main>
+    <footer data-site-footer></footer>
+    <script type="module" src="/src/site/main.ts"></script>
+  </body>
+</html>

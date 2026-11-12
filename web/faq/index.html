@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FAQ | Did I Order This?</title>
+    <meta name="description" content="Answers about on-device checks, cloud consent, import formats, the extension, and what the product does not do." />
+    <link rel="canonical" href="https://did-i-order-this.vercel.app/faq/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Did I Order This?" />
+    <meta property="og:title" content="FAQ | Did I Order This?" />
+    <meta property="og:description" content="Answers about on-device checks, cloud consent, import formats, the extension, and what the product does not do." />
+    <meta property="og:url" content="https://did-i-order-this.vercel.app/faq/" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FAQ | Did I Order This?" />
+    <meta name="twitter:description" content="Answers about on-device checks, cloud consent, import formats, the extension, and what the product does not do." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    
+  </head>
+  <body class="inner-page">
+    <header data-site-header></header>
+    <main id="content">
+
+      <article class="page">
+        <p class="eyebrow">FAQ</p>
+        <h1>Questions we can answer honestly</h1>
+        <p class="lede">If a question is not here, it is probably because the product does not do that yet.</p>
+        <div class="faq-list">
+          <details class="faq-item" open>
+            <summary>Does my email leave this device?</summary>
+            <p>Not by default. A check starts on the device. On the hosted site, the email goes to the cloud only if on-device AI is unavailable and you agree. The extension does not send mail to the cloud.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What does "Checked on this device" mean?</summary>
+            <p>It is the label shown when Firebase AI Logic reports that the claim was read with on-device inference. "Checked in the cloud" means you agreed to a cloud read. "Limited check (no AI)" means code ran without a model. "Check not completed" means the AI read did not finish.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Why is the verdict not written by the model?</summary>
+            <p>The model is asked to read messy wording into a structured claim. Code then matches that claim to your ledger, official domains, and known lure patterns. That keeps the Safe, Warning, and Neutral rules stable.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What files can I import?</summary>
+            <p>An Amazon Retail.OrderHistory CSV or a ZIP that contains one, a PayPal activity CSV, or a generic CSV with common columns such as order id, tracking, merchant, date, and amount. The file stays in the browser. Jumia, Walmart, and Shopify customer exports are not promised.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Do I need the Chrome extension to try this?</summary>
+            <p>No. Judges and anyone on a phone can use the hosted sample inbox. The extension is for checking an open Gmail thread on a laptop that can run on-device AI.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does this work on iPhone or Android?</summary>
+            <p>The hosted site can be opened on a phone, and you can look at the sample inbox and the verdicts. On-device Gemini Nano is a desktop Chrome capability. A phone browser will usually be offered a cloud check, which still requires your agreement, or a limited check with no AI.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can it check SMS or WhatsApp lures?</summary>
+            <p>No. Delivery texts, MMS, and chat apps are out of scope. So are account-locked or "log in to your account" emails.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Is there a paid plan?</summary>
+            <p>Not today. The hosted checker and the extension, as they work now, are free to use. See the <a href="/pricing/">pricing page</a>.</p>
+          </details>
+        </div>
+      </article>
+
+    </main>
+    <footer data-site-footer></footer>
+    <script type="module" src="/src/site/main.ts"></script>
+  </body>
+</html>

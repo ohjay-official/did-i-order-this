@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Features | Did I Order This?</title>
+    <meta name="description" content="Ledger checks, a carrier rule, on-device import, a hybrid source label, and a Chrome side panel for Gmail." />
+    <link rel="canonical" href="https://did-i-order-this.vercel.app/features/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Did I Order This?" />
+    <meta property="og:title" content="Features | Did I Order This?" />
+    <meta property="og:description" content="Ledger checks, a carrier rule, on-device import, a hybrid source label, and a Chrome side panel for Gmail." />
+    <meta property="og:url" content="https://did-i-order-this.vercel.app/features/" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Features | Did I Order This?" />
+    <meta name="twitter:description" content="Ledger checks, a carrier rule, on-device import, a hybrid source label, and a Chrome side panel for Gmail." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    
+  </head>
+  <body class="inner-page">
+    <header data-site-header></header>
+    <main id="content">
+
+      <article class="page">
+        <p class="eyebrow">Features</p>
+        <h1>What you can do today</h1>
+        <p class="lede">These are the features that ship now. Nothing here is a roadmap item presented as a finished product.</p>
+        <div class="feature-grid">
+          <section class="feature">
+            <h3>A ledger on this device</h3>
+            <p>Orders, shipments, and known senders stay in IndexedDB in this browser, or in chrome.storage.local in the extension. The demo ledger can be reset. You can save a shipment after a check.</p>
+          </section>
+          <section class="feature">
+            <h3>Carrier and store rules</h3>
+            <p>Carrier emails are checked by tracking number. Store, invoice, and renewal emails are checked by the cited order or invoice number. The verdict comes from code, not from a scam score.</p>
+          </section>
+          <section class="feature">
+            <h3>On-device import</h3>
+            <p>Import an Amazon Retail.OrderHistory CSV or ZIP, a PayPal activity CSV, or a generic CSV. Parsing happens locally. Jumia, Walmart, and Shopify customer exports are not supported.</p>
+          </section>
+          <section class="feature">
+            <h3>A visible hybrid label</h3>
+            <p>Each finished check shows whether it ran on the device, in the cloud after you agreed, as a limited check with no AI, or was not completed.</p>
+          </section>
+          <section class="feature">
+            <h3>Consent before cloud inference</h3>
+            <p>The default is on-device only. If Nano is missing, the hosted site asks before sending the email off the device. The extension does not send mail to the cloud.</p>
+          </section>
+          <section class="feature">
+            <h3>A Chrome side panel for Gmail</h3>
+            <p>The extension reads the open Gmail thread as text and runs on-device AI only. Cloud checks go through the hosted site after you agree. The extension is not in the Chrome Web Store yet.</p>
+          </section>
+        </div>
+        <p style="margin-top:40px"><a href="/extension/">How the extension works</a>, or <a href="/app/">open the sample inbox</a>.</p>
+      </article>
+
+    </main>
+    <footer data-site-footer></footer>
+    <script type="module" src="/src/site/main.ts"></script>
+  </body>
+</html>

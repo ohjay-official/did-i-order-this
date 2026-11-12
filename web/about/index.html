@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About | Did I Order This?</title>
+    <meta name="description" content="A delivery-scam guard built by Oh-Jay for #BuildHybridAI 2026, using Firebase AI Logic for on-device and consented cloud inference." />
+    <link rel="canonical" href="https://did-i-order-this.vercel.app/about/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Did I Order This?" />
+    <meta property="og:title" content="About | Did I Order This?" />
+    <meta property="og:description" content="A delivery-scam guard built by Oh-Jay for #BuildHybridAI 2026, using Firebase AI Logic for on-device and consented cloud inference." />
+    <meta property="og:url" content="https://did-i-order-this.vercel.app/about/" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="About | Did I Order This?" />
+    <meta name="twitter:description" content="A delivery-scam guard built by Oh-Jay for #BuildHybridAI 2026, using Firebase AI Logic for on-device and consented cloud inference." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    
+  </head>
+  <body class="inner-page">
+    <header data-site-header></header>
+    <main id="content">
+
+      <article class="page">
+        <p class="eyebrow">About</p>
+        <h1>Built to check a parcel claim against your own ledger</h1>
+        <p class="lede">Did I Order This? is a delivery-scam guard for email. It was built by Oh-Jay as an entry for #BuildHybridAI 2026, the Firebase AI Logic hybrid inference hackathon.</p>
+        <h2>The problem</h2>
+        <p>A delivery, renewal, invoice, or refund email can ask you to pay a fee or click a link. Without a way to check that claim against purchases and tracking numbers that never leave your laptop, a fake parcel message looks like a real one.</p>
+        <h2>The approach</h2>
+        <p>On-device AI reads what the email claims. Deterministic code checks that claim against a ledger kept on the device. Cloud inference is a fallback you can refuse. All model calls go through Firebase AI Logic, not through a raw browser Prompt API in the product.</p>
+        <h2>Who it is for</h2>
+        <p>Anyone who gets carrier and billing email in a browser, including judges who need to try a demo without a Gmail login. The hosted sample inbox is the public path. The Chrome extension is for an open Gmail thread on a laptop that can run on-device AI.</p>
+        <h2>License and credits</h2>
+        <p>The product is released under the Apache License 2.0. The site's visual craft follows unslop by Damir Sokolovsky, licensed under CC BY 4.0. DHL, UPS, Amazon, and PayPal are named only as examples of email types and import formats. They have not endorsed this product.</p>
+        <p><a href="/privacy/">How privacy is handled</a>, and <a href="/how-it-works/">how a check runs</a>.</p>
+      </article>
+
+    </main>
+    <footer data-site-footer></footer>
+    <script type="module" src="/src/site/main.ts"></script>
+  </body>
+</html>

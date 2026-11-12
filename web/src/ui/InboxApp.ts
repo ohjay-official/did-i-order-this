@@ -59,10 +59,10 @@ export class InboxApp {
   private render(): void {
     const thread = this.selected();
     this.root.innerHTML = `
-      <header class="site-header">
+      <header class="app-header">
         <div>
           <p class="kicker">Sample inbox</p>
-          <h1>Did I Order This?</h1>
+          <h1>Check this email against your ledger</h1>
           <p class="lede">Check a delivery or billing email against the orders and tracking numbers stored on this device.</p>
         </div>
         <div class="header-actions">

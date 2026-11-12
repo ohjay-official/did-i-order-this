@@ -4,9 +4,97 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Did I Order This?</title>
+    <meta name="description" content="Check a delivery or billing email against the orders and tracking numbers stored on this device." />
+    <link rel="canonical" href="https://did-i-order-this.vercel.app/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Did I Order This?" />
+    <meta property="og:title" content="Did I Order This?" />
+    <meta property="og:description" content="Check a delivery or billing email against the orders and tracking numbers stored on this device." />
+    <meta property="og:url" content="https://did-i-order-this.vercel.app/" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Did I Order This?" />
+    <meta name="twitter:description" content="Check a delivery or billing email against the orders and tracking numbers stored on this device." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    
   </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+  <body class="hero-page">
+    <main id="content">
+
+      <section class="hero" aria-label="Introduction">
+        <div class="hero-scene">
+          <img
+            src="/hero-desk.webp"
+            alt="A closed kraft parcel with a blank manila tag and a wax seal, sitting on a wooden inspection desk"
+            width="1280"
+            height="720"
+            fetchpriority="high"
+          />
+          <div class="hero-fade" aria-hidden="true"></div>
+        </div>
+        <div data-site-header></div>
+        <div class="hero-copy">
+          <h1>A fake DHL desk just asked for a release fee</h1>
+          <p class="lede">The checker reads what the email claims, then code compares the tracking number with the ledger on this device. When you are not expecting a parcel, it says so.</p>
+          <div class="actions">
+            <a class="btn" href="/app/">Open the sample inbox</a>
+            <a class="btn btn-secondary" href="/how-it-works/">How it works</a>
+          </div>
+        </div>
+        <div class="hero-preview-wrap">
+          <div class="hero-preview" aria-label="Sample check of a fake DHL hold email">
+            <aside class="preview-list">
+              <div class="preview-item is-current">
+                <span class="preview-from">DHL Express Desk</span>
+                <span class="preview-subject">Your parcel is held. Pay the release fee.</span>
+                <span class="preview-date">12 Nov 2026</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-from">Northwind Outfitters</span>
+                <span class="preview-subject">Your order has shipped</span>
+                <span class="preview-date">11 Nov 2026</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-from">UPS</span>
+                <span class="preview-subject">UPS delivery update for 1Z999AA10123456784</span>
+                <span class="preview-date">12 Nov 2026</span>
+              </div>
+            </aside>
+            <div class="preview-thread">
+              <p><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;</p>
+              <p><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
+              <p>Your parcel could not be delivered and is being held at a DHL facility.</p>
+              <p class="preview-track">Tracking number: GM123456789012345</p>
+              <p>A customs release fee of $2.99 is due.</p>
+              <div class="preview-verdict">
+                <p class="outcome">warning</p>
+                <h2 class="headline">You're not expecting any parcel right now.</h2>
+                <p class="source-label">Checked on this device</p>
+                <ul class="reasons">
+                  <li>Cited tracking number: GM123456789012345.</li>
+                  <li>Your ledger has no expected parcels right now.</li>
+                  <li>The claimed domain dhl-parcel-desk.example is not in the official-domain pack.</li>
+                  <li>The wording asks for a payment, which is common in parcel-hold lures.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <aside class="hero-note">
+        <div class="hero-note-inner">
+          <p class="preview-caption">The sample DHL hold thread, and the verdict the checker gives when the ledger has no expected parcels. This preview is the real demo result, not a live model call.</p>
+          <p class="related">
+            <a href="/how-it-works/">How the check works</a>
+            <a href="/privacy/">What stays on this device</a>
+          </p>
+        </div>
+      </aside>
+
+    </main>
+    <footer data-site-footer></footer>
+    <script type="module" src="/src/site/main.ts"></script>
   </body>
 </html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=1200" />
+    <title>Open graph image</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #f7f4ee; }
+      .og {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+      }
+      .og-scene { position: absolute; inset: 0; }
+      .og-scene img { width: 100%; height: 100%; object-fit: cover; object-position: 78% 50%; }
+      .og-fade {
+        position: absolute; inset: 0;
+        background:
+          linear-gradient(90deg, #f7f4ee 0%, rgba(247,244,238,0.92) 34%, rgba(247,244,238,0.2) 58%, transparent 72%),
+          linear-gradient(180deg, rgba(247,244,238,0.35) 0%, transparent 30%);
+      }
+      .og-copy {
+        position: relative;
+        z-index: 1;
+        padding: 48px 56px;
+        max-width: 620px;
+      }
+      .og-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 28px;
+        font-family: "Newsreader", serif;
+        font-size: 22px;
+        font-weight: 500;
+        color: #1f1b16;
+      }
+      .og-mark .og-glyph {
+        display: inline-block;
+        width: 22px;
+        height: 18px;
+        border: 1.5px solid #7a241e;
+        border-radius: 3px;
+        box-shadow: inset 0 0 0 1.5px #f7f4ee, inset 0 0 0 2.5px #7a241e;
+        font-style: normal;
+      }
+      .og-copy h1 {
+        margin: 0 0 20px;
+        font-family: "Newsreader", serif;
+        font-weight: 400;
+        font-size: 56px;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: #1f1b16;
+        max-width: 14ch;
+      }
+      .og-verdict {
+        margin-top: 8px;
+        padding: 16px 20px;
+        background: #f3e4e0;
+        color: #7a241e;
+        border-radius: 8px;
+        max-width: 28rem;
+      }
+      .og-verdict .headline {
+        margin: 8px 0 0;
+        font-family: "Newsreader", serif;
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1.15;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="og">
+      <div class="og-scene">
+        <img src="/hero-desk.webp" alt="" width="1280" height="720" />
+        <div class="og-fade" aria-hidden="true"></div>
+      </div>
+      <div class="og-copy">
+        <p class="og-mark"><span class="og-glyph" aria-hidden="true"></span> Did I Order This?</p>
+        <h1>A fake DHL desk just asked for a release fee</h1>
+        <div class="og-verdict">
+          <p class="source-label">Checked on this device</p>
+          <p class="headline">You're not expecting any parcel right now.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

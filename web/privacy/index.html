@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy and security | Did I Order This?</title>
+    <meta name="description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
+    <link rel="canonical" href="https://did-i-order-this.vercel.app/privacy/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Did I Order This?" />
+    <meta property="og:title" content="Privacy and security | Did I Order This?" />
+    <meta property="og:description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
+    <meta property="og:url" content="https://did-i-order-this.vercel.app/privacy/" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Privacy and security | Did I Order This?" />
+    <meta name="twitter:description" content="On-device first. Cloud inference happens only after consent. Import stays local. App Check protects cloud AI calls." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    
+  </head>
+  <body class="inner-page">
+    <header data-site-header></header>
+    <main id="content">
+
+      <article class="page">
+        <p class="eyebrow">Privacy and security</p>
+        <h1>On-device first, and honest about the cloud</h1>
+        <p class="lede">The product exists so a delivery email can be checked without sending your inbox to a server. Here is exactly what stays here, and what can leave.</p>
+        <h2>What stays on this device</h2>
+        <p>Your ledger lives in this browser or in the extension's local storage. Imported CSV and ZIP files are read locally and are not uploaded. The Chrome extension's content script sends only the open thread's text to the side panel, over extension messaging. It does not use the Gmail API or the gmail.readonly scope. It does not scan the rest of the mailbox.</p>
+        <h2>How a check starts</h2>
+        <p>A check starts in on-device mode through Firebase AI Logic. The hosted site and the extension both use that path. Product code does not call the browser Prompt API directly.</p>
+        <h2>When something can go to the cloud</h2>
+        <p>If on-device AI is not available on the hosted site, you see a consent dialog: Check this email in the cloud, or Do not send. The email is sent off the device only if you agree. If you refuse, you can run a limited check that uses no AI. The extension never sends mail to the cloud. If you want a cloud check, you open the hosted site and agree there.</p>
+        <h2>App Check</h2>
+        <p>Cloud AI calls from the production site go through Firebase App Check with reCAPTCHA Enterprise, registered for did-i-order-this.vercel.app. App Check debug tokens are not shipped in the production client. Preview deployments do not use the production reCAPTCHA key.</p>
+        <h2>What the cloud model sees, if you agree</h2>
+        <p>If you consent to a cloud check, the text of that one email is sent to generate the structured claim. Official-domain and lure-template packs used in the verdict are public reference data compiled into the app, not your private mail.</p>
+        <h2>What this product does not do</h2>
+        <ul>
+          <li>It does not read SMS, WhatsApp, or other phone messages.</li>
+          <li>It does not ask for a Gmail login on the hosted site.</li>
+          <li>It does not sell a list of your orders.</li>
+        </ul>
+        <p><a href="/how-it-works/">See the check, step by step</a>, or read the <a href="/faq/">FAQ</a>.</p>
+      </article>
+
+    </main>
+    <footer data-site-footer></footer>
+    <script type="module" src="/src/site/main.ts"></script>
+  </body>
+</html>
