@@ -13,9 +13,25 @@
     "test": "npm test --workspaces --if-present",
     "build": "npm run build --workspace=web && npm run build --workspace=@did-i-order-this/extension",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "check:no-languagemodel": "node scripts/check-no-languagemodel.mjs"
+    "check:no-languagemodel": "node scripts/check-no-languagemodel.mjs",
+    "package:extension": "npm run build --workspace=@did-i-order-this/extension && node extension/package.mjs",
+    "lint": "eslint .",
+    "coverage": "npm run coverage --workspace=@did-i-order-this/core",
+    "verify": "node scripts/verify.mjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@vitest/coverage-v8": "^4.1.12",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "typescript-eslint": "^8.72.2"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   }
 }

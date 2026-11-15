@@ -112,7 +112,7 @@ function parseTrackingField(raw: string): { carrier?: string; trackingNumber?: s
       trackingNumber: normalizeTracking(parenthetical[2]),
     };
   }
-  const prefixed = value.match(/^([A-Za-z][A-Za-z0-9 .-]*?)\s*[:\-]\s*(.+)$/);
+  const prefixed = value.match(/^([A-Za-z][A-Za-z0-9 .-]*?)\s*[:-]\s*(.+)$/);
   if (prefixed && looksLikeTracking(prefixed[2])) {
     return { carrier: prefixed[1].trim(), trackingNumber: normalizeTracking(prefixed[2]) };
   }

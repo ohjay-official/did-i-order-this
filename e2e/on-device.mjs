@@ -167,7 +167,9 @@ async function waitForCdpPort() {
     try {
       const res = await fetch("http://127.0.0.1:9222/json/version");
       if (res.ok) return res.json();
-    } catch {}
+    } catch {
+      // Chrome is not listening yet; retry.
+    }
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error("Chrome DevTools port 9222 never came up");
