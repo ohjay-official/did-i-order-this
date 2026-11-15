@@ -33,12 +33,68 @@
   <body>
     <header data-site-header></header>
     <main id="content">
-      <header class="page-hero">
-        <p class="eyebrow">How it works</p>
-        <h1>A parcel email, taken apart</h1>
-        <p class="lede">A delivery message can look official and still be a lure. The product splits the work on purpose: a model reads the wording, and code decides the verdict.</p>
-        <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="/features/">See the features</a></div>
-      </header>
+      <section class="hiw-stage" data-hiw aria-labelledby="hiw-title">
+        <div class="hiw-field" aria-hidden="true"></div>
+        <div class="hiw-masthead">
+          <h1 id="hiw-title" class="hiw-headline">
+            <span class="hiw-line">Read by AI.</span>
+            <span class="hiw-line">Decided by <span class="dot-word" data-dots="CODE" role="img" aria-label="code"></span></span>
+          </h1>
+          <p class="hiw-intro">The model reads what an email claims. Plain code checks that claim against the orders and tracking numbers stored on this device, then says where the check ran.</p>
+        </div>
+        <section class="hiw-cards" aria-label="The three steps of a check">
+          <article class="hc hc--read">
+            <div class="hc-grain" aria-hidden="true"></div>
+            <h2 class="hc-title">Step 1<br />Read the claim</h2>
+            <svg class="hc-gauge" viewBox="0 0 326 326" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="hcArc" gradientUnits="userSpaceOnUse" x1="7" y1="136" x2="312" y2="109"><stop offset="0" stop-color="#ffd2a8" stop-opacity=".06"/><stop offset=".34" stop-color="#ffb37a" stop-opacity=".94"/><stop offset=".58" stop-color="#ffb37a"/><stop offset=".82" stop-color="#fff1e4" stop-opacity=".74"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+                <radialGradient id="hcBeam" cx="163" cy="163" r="145" gradientUnits="userSpaceOnUse"><stop offset=".3" stop-color="#5a1608" stop-opacity="0"/><stop offset=".7" stop-color="#5a1608" stop-opacity=".2"/><stop offset="1" stop-color="#5a1608" stop-opacity=".12"/></radialGradient>
+                <filter id="hcSoft"><feGaussianBlur stdDeviation="1.35"/></filter>
+              </defs>
+              <path d="M6.91 135.48A158.5 158.5 0 0 1 311.94 108.79" fill="none" stroke="url(#hcArc)" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M19.22 137.65A146 146 0 0 1 236 36.56" fill="none" stroke="rgba(255,214,180,.34)" stroke-width="1.15"/>
+              <g class="hc-sweep"><path d="M238 33.1A150 150 0 0 1 277.9 66.6L199.8 119.5A55 55 0 0 0 190.5 115.4Z" fill="url(#hcBeam)" filter="url(#hcSoft)"/><path d="M238 33.1L190.5 115.4" stroke="rgba(255,236,220,.5)" stroke-width="1.25" stroke-linecap="round"/></g>
+              <g data-ticks></g>
+            </svg>
+            <p class="hc-metric"><span class="dot-number" data-dots="5" role="img" aria-label="5"></span><span class="hc-unit">fields</span></p>
+            <p class="hc-caption">Party, domain, action,<br />numbers and kind</p>
+            <a class="hc-more" href="#scene-2">See step 1</a>
+          </article>
+          <article class="hc hc--ledger">
+            <div class="hc-grain" aria-hidden="true"></div>
+            <h2 class="hc-title">Step 2<br />Check what you ordered</h2>
+            <div class="hc-window" aria-hidden="true">
+              <p class="hc-row"><span>Cited</span><b>GM123456789012345</b></p>
+              <p class="hc-row"><span>Expected</span><b>None on this device</b></p>
+              <p class="hc-row is-miss"><span>Result</span><b>No match</b></p>
+            </div>
+            <p class="hc-metric"><span class="dot-number" data-dots="0" role="img" aria-label="0"></span><span class="hc-unit">matches</span></p>
+            <p class="hc-caption">Expected parcels for<br />the fake DHL hold</p>
+            <a class="hc-more" href="#scene-3">See step 2</a>
+          </article>
+          <article class="hc hc--stamp">
+            <div class="hc-grain" aria-hidden="true"></div>
+            <h2 class="hc-title">Step 3<br />Stamp the verdict</h2>
+            <svg class="hc-map" viewBox="0 0 429 238" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="#fff" stroke-width="1">
+                <path opacity=".2" d="M0 5H128c27 0 36 7 39 26 2 16 9 22 24 22h106c16 0 23-8 25-25 2-16 10-23 31-23h76"/>
+                <path opacity=".3" d="M0 117h46c15 0 22 8 26 25 5 23 12 31 31 31h174c18 0 25-8 30-31 4-17 11-25 26-25h96"/>
+                <path opacity=".34" d="M0 173h87c15 0 22 7 27 25 4 15 11 22 28 22h140c17 0 25-7 29-22 5-18 12-25 28-25h90"/>
+                <path opacity=".26" d="M0 5H429M0 61H429M0 117H429"/>
+              </g>
+              <g fill="none" stroke="#fff8dd" stroke-width="1.15">
+                <path opacity=".52" d="M0 61h95c14 0 22-6 27-20 4-13 12-20 27-20h115c15 0 23 6 27 20 5 14 13 20 28 20h110"/>
+                <path opacity=".94" d="M0 117h88c15 0 22-8 25-25 4-24 12-31 31-31h129c20 0 27 7 31 31 3 17 10 25 26 25h99"/>
+              </g>
+              <circle cx="45" cy="117" r="6.5" fill="#fff"/><circle cx="133" cy="61" r="6.5" fill="#fff4a7"/><circle cx="319" cy="61" r="6.5" fill="#fff4a6"/><circle cx="319" cy="117" r="6.5" fill="#fff2a0"/>
+            </svg>
+            <p class="hc-metric"><span class="dot-number" data-dots="3" role="img" aria-label="3"></span><span class="hc-unit">outcomes</span></p>
+            <p class="hc-caption">Safe, Warning<br />or Neutral</p>
+            <a class="hc-more" href="#scene-4">See step 3</a>
+          </article>
+        </section>
+      </section>
 
       <section class="bleed is-raised" id="scene-1" aria-label="The email arrives">
         <div class="bleed-inner">

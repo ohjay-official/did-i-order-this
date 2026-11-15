@@ -114,7 +114,7 @@ export function mountFreight(root: HTMLElement): void {
     letters.style.transform = `translate3d(${(vw - r * (lettersW + vw)).toFixed(1)}px,0,0)`;
     for (const card of cards) {
       const left = card.getBoundingClientRect().left;
-      const s = clamp((0.98 - left / vw) / 0.3, -0.4, 1.6) * 100;
+      const s = clamp((0.98 - left / vw) / 0.14, -0.4, 1.6) * 100;
       card.style.setProperty("--s", `${s.toFixed(1)}%`);
     }
     let moving = false;

@@ -33,42 +33,37 @@
   <body>
     <header data-site-header></header>
     <main id="content">
-      <header class="page-hero">
-        <p class="eyebrow">Pricing</p>
-        <h1>There is no paid plan to buy today</h1>
-        <p class="lede">This is a public product you can try during the #BuildHybridAI 2026 period. No subscription form is attached to this page, and no company has endorsed this product.</p>
-        <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="/features/">What is free today</a></div>
-      </header>
-      <section class="bleed">
-        <div class="bleed-inner">
-          <div class="price-grid">
-            <article class="price-card is-live">
-              <p class="price-kicker">Available now</p>
-              <p class="amount">Free</p>
-              <p class="lede">No account is required for the sample inbox.</p>
-              <ul>
-                <li>The hosted sample inbox, including the DHL hold thread and the other demo messages</li>
-                <li>On-device import of an Amazon, PayPal, or generic order-history file</li>
-                <li>A cloud check only after you agree, when on-device AI is not available</li>
-                <li>The Chrome extension, when you sideload it, for on-device checks of an open Gmail thread</li>
-              </ul>
-              <div class="cta-row">
-                <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
-              </div>
-            </article>
-            <article class="price-card is-planned">
-              <p class="price-kicker">Planned, not live</p>
-              <p class="amount">Store listing</p>
-              <p class="lede">A Chrome Web Store listing is planned. It is not available today. You sideload the unpacked build instead.</p>
-              <ul>
-                <li>Chrome Web Store listing <span class="badge-planned">Planned</span></li>
-                <li>Screenshot or .eml ingest is not available today and is not listed as a live feature</li>
-                <li>There is no paid Pro plan to announce</li>
-              </ul>
-            </article>
-          </div>
+      <section class="slip-hero" aria-labelledby="slip-title">
+        <div class="slip-intro">
+          <p class="eyebrow">Pricing</p>
+          <h1 id="slip-title">Here is the order slip.<br /><span>Check it twice.</span></h1>
+          <p class="lede">There is no paid plan to buy today. This is a public product you can try during the #BuildHybridAI 2026 period. No subscription form is attached to this page, and no company has endorsed this product.</p>
+          <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="/faq/">Pricing questions</a></div>
+        </div>
+        <div class="slip-wrap">
+          <article class="slip" aria-label="Everything included, and what it costs">
+            <header class="slip-head">
+              <p class="slip-brand">Did I Order This?</p>
+              <p class="slip-meta"><span>Order slip</span><span>No order number</span></p>
+              <p class="slip-meta"><span>Account needed</span><span>None</span></p>
+            </header>
+            <ul class="slip-lines">
+              <li><span>Hosted sample inbox, all five demo threads</span><i></i><b>$0.00</b></li>
+              <li><span>On-device check through Firebase AI Logic</span><i></i><b>$0.00</b></li>
+              <li><span>Order-history import: Amazon, PayPal or a generic CSV, read in the browser</span><i></i><b>$0.00</b></li>
+              <li><span>Cloud check, only after you agree<sup>*</sup></span><i></i><b>$0.00</b></li>
+              <li><span>Chrome extension, sideloaded</span><i></i><b>$0.00</b></li>
+              <li class="is-planned"><span>Chrome Web Store listing</span><i></i><b>Planned</b></li>
+              <li class="is-planned"><span>Paid Pro plan</span><i></i><b>None</b></li>
+            </ul>
+            <p class="slip-total"><span>Total</span><b>$0.00</b></p>
+            <p class="slip-foot"><sup>*</sup>The cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it.</p>
+            <p class="slip-stamp" aria-hidden="true">Nothing<br />to pay</p>
+            <div class="slip-tear" aria-hidden="true"></div>
+          </article>
         </div>
       </section>
+
       <section class="bleed is-raised">
         <div class="bleed-inner">
           <div class="bleed-head">

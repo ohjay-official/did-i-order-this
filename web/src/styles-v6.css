@@ -557,6 +557,8 @@ body {
   color: #efe5da;
   mix-blend-mode: darken;
   pointer-events: none;
+  /* Hidden: the truck cut the letters into unreadable fragments. Kept in the DOM for freight.ts. */
+  display: none;
   transform: translate3d(100vw, 0, 0);
   will-change: transform;
 }
@@ -608,15 +610,15 @@ body {
 }
 
 .freight-lead-copy {
-  width: calc(250 * var(--u));
-  min-width: 200px;
+  width: calc(340 * var(--u));
+  min-width: 280px;
 }
 
 .freight-lead-copy p {
-  margin: 0 0 12px;
-  color: rgba(253, 241, 230, 0.62);
-  font-size: max(12px, calc(12 * var(--u)));
-  line-height: 1.5;
+  margin: 0 0 14px;
+  color: rgba(253, 241, 230, 0.86);
+  font-size: max(15px, calc(16 * var(--u)));
+  line-height: 1.55;
 }
 
 .freight-lead-copy a {
@@ -632,8 +634,8 @@ body {
 
 .fc {
   --s: -40%;
-  width: calc(270 * var(--u));
-  min-width: 220px;
+  width: calc(300 * var(--u));
+  min-width: 250px;
   padding: 0 calc(30 * var(--u));
   border-left: 1px solid rgba(253, 241, 230, 0.12);
 }
@@ -654,7 +656,7 @@ body {
 .fc-title,
 .fc-body {
   margin: 0;
-  background-image: linear-gradient(90deg, #fdf1e6 calc(var(--s) - 34%), #f08a3c calc(var(--s) - 6%), transparent calc(var(--s) + 26%));
+  background-image: linear-gradient(90deg, #fdf1e6 calc(var(--s) - 34%), #f08a3c calc(var(--s) - 12%), rgba(253, 241, 230, 0.14) calc(var(--s) + 10%));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -675,8 +677,8 @@ body {
 }
 
 .fc-body {
-  font-size: max(13px, calc(12.4 * var(--u)));
-  line-height: 1.5;
+  font-size: max(15px, calc(15.5 * var(--u)));
+  line-height: 1.55;
 }
 
 .freight-pill {
@@ -733,11 +735,11 @@ body {
 }
 
 .freight.is-narrow .freight-lead-copy p {
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .freight.is-narrow .fc {
-  width: calc(250 * var(--u));
+  width: calc(280 * var(--u));
 }
 
 /* Reduced motion: the settled frame, then the strip as plain content on the band. */

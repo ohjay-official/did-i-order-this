@@ -33,40 +33,57 @@
   <body>
     <header data-site-header></header>
     <main id="content">
-      <header class="page-hero">
-        <p class="eyebrow">Chrome extension</p>
-        <h1>Check the Gmail thread you already have open</h1>
-        <p class="lede">The extension is a side panel for Chrome. It reads the email on screen, runs on-device AI, and keeps your orders in chrome.storage.local.</p>
-        <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="/faq/">Extension questions</a></div>
-      </header>
-
-      <div class="hero-visual-wrap">
-        <div class="bleed-inner" style="width:100%">
-          <div class="tile-visual is-ink" style="border-radius:24px;padding:28px;display:flex;justify-content:center"><div class="frame-panel"><div class="frame-body"><p style="margin:0 0 8px;font-family:var(--display);font-size:18px;">Did I Order This?</p><p style="margin:0 0 12px;color:var(--secondary);font-size:13px;line-height:18px;">The side panel reads only the Gmail thread that is open.</p><p style="margin:0 0 4px;font-size:12px;"><strong>From</strong> DHL Express Desk</p><p style="margin:0 0 14px;font-size:12px;"><strong>Subject</strong> Your parcel is held. Pay the release fee.</p><p class="btn btn-primary" style="margin:0 0 12px;">Check this email</p><div class="mock-verdict is-warning"><p class="kicker">Warning</p><p class="headline">You're not expecting any parcel right now.</p><span class="stamp">Checked on this device</span></div></div></div></div>
-        </div>
-      </div>
-
-      <section class="bleed is-raised" aria-label="Not in the store yet">
-        <div class="bleed-inner">
-          <div class="bleed-head">
-            <h2>Not in the Chrome Web Store yet</h2>
-            <p>You can try it today by sideloading the unpacked build. A store listing is planned and is not available now.</p>
+      <section class="xt-hero" aria-labelledby="xt-title">
+        <div class="xt-copy">
+          <p class="xt-badge">Chrome extension · preview build 0.1.0</p>
+          <h1 id="xt-title">Check the Gmail thread<br /><span>you already have open.</span></h1>
+          <p class="xt-lede">A side panel for desktop Chrome. It reads only the email on screen, runs on-device AI through Firebase AI Logic, and keeps your orders in the extension's local storage. It never calls the cloud.</p>
+          <div class="xt-ctas">
+            <a class="xt-btn is-solid" href="/downloads/did-i-order-this-extension-0.1.0.zip" download>Download the extension (.zip)</a>
+            <a class="xt-btn" href="/app/">Try the sample inbox instead</a>
           </div>
+          <p class="xt-fine">Not in the Chrome Web Store yet. A store listing is planned. Today you load the unzipped build yourself, in four steps below.</p>
+        </div>
+        <div class="xt-stage" aria-hidden="true">
+          <div class="xt-window">
+            <div class="xt-bar"><span></span><span></span><span></span><p>mail.google.com</p></div>
+            <div class="xt-body">
+              <div class="xt-mail">
+                <p class="xt-mail-from"><b>DHL Express Desk</b> &lt;alerts@dhl-parcel-desk.example&gt;</p>
+                <p class="xt-mail-subject">Your parcel is held. Pay the release fee.</p>
+                <p class="xt-mail-line">Your parcel could not be delivered and is being held at a DHL facility.</p>
+                <p class="xt-mail-line">Tracking number: GM123456789012345</p>
+                <p class="xt-mail-line">A customs release fee of $2.99 is due.</p>
+                <span class="xt-mail-cta">Pay $2.99 now</span>
+              </div>
+              <div class="xt-panel">
+                <p class="xt-panel-name">Did I Order This?</p>
+                <p class="xt-panel-note">Reads only the open thread.</p>
+                <span class="xt-panel-btn">Check this email</span>
+                <div class="xt-verdict">
+                  <p class="xt-verdict-kicker">Warning</p>
+                  <p class="xt-verdict-head">You're not expecting any parcel right now.</p>
+                  <span class="xt-verdict-stamp">Checked on this device</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="xt-caption">Illustration of the side panel next to the sample DHL hold.</p>
         </div>
       </section>
 
-      <section class="bleed" aria-label="Install steps">
-        <div class="bleed-inner">
-          <div class="bleed-head">
-            <h2>How to sideload it</h2>
-            <p>These are the steps as they work in Chrome today.</p>
-          </div>
-          <div class="install">
-            <article class="install-step"><div><p class="num">01</p><h3>Get the unpacked build</h3><p>Use the extension folder from the public repository. There is no store button to click yet.</p></div><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">github.com/ohjay-official/did-i-order-this</span></div><div class="frame-body"><p class="subject" style="font-family:var(--display);margin:0 0 8px;">Unpacked extension build</p><p style="margin:0;color:var(--secondary);font-size:14px;line-height:20px;">The package is not in the Chrome Web Store yet. You sideload the unpacked build from the repository's extension folder.</p></div></div></article>
-            <article class="install-step"><div><p class="num">02</p><h3>Load it in chrome://extensions</h3><p>Turn on Developer mode, choose Load unpacked, and select that folder.</p></div><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">chrome://extensions</span></div><div class="frame-body"><p class="subject" style="font-family:var(--display);margin:0 0 8px;">Developer mode, then Load unpacked</p><p style="margin:0;color:var(--secondary);font-size:14px;line-height:20px;">Turn on Developer mode in the top right, choose Load unpacked, and select the extension folder.</p></div></div></article>
-            <article class="install-step"><div><p class="num">03</p><h3>Open a Gmail thread, then the panel</h3><p>The side panel reads only the message that is open. Cloud checks are not run here. Use the hosted site if you want to allow a cloud check.</p></div><div class="frame-browser"><div class="frame-bar"><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-url">mail.google.com</span></div><div class="frame-body"><p class="subject" style="font-family:var(--display);margin:0 0 8px;">Open a Gmail thread, then the side panel</p><p style="margin:0;color:var(--secondary);font-size:14px;line-height:20px;">The panel reads only the message that is on screen, as text. It does not use the Gmail API and does not scan the mailbox.</p></div></div></article>
-          </div>
+      <section class="xt-steps-wrap" aria-labelledby="xt-steps-title">
+        <div class="xt-steps-head">
+          <p class="eyebrow">Install</p>
+          <h2 id="xt-steps-title">Four steps, about a minute</h2>
         </div>
+        <ol class="xt-steps">
+          <li><span class="xt-num">01</span><h3>Download</h3><p>Get <a href="/downloads/did-i-order-this-extension-0.1.0.zip" download>did-i-order-this-extension-0.1.0.zip</a> from this page.</p></li>
+          <li><span class="xt-num">02</span><h3>Unzip it</h3><p>Extract the zip to a folder you will keep. Chrome loads the extension from that folder.</p></li>
+          <li><span class="xt-num">03</span><h3>Load unpacked</h3><p>Open <code>chrome://extensions</code>, turn on Developer mode, choose Load unpacked, and pick the unzipped folder.</p></li>
+          <li><span class="xt-num">04</span><h3>Open a thread</h3><p>Open a Gmail thread, then the side panel. It reads only that message, with no Gmail API access and no mailbox scan.</p></li>
+        </ol>
+        <p class="xt-steps-note">Desktop Chrome only. On-device AI needs a computer that can run Gemini Nano in Chrome. Phones can use the hosted sample inbox, which asks before any cloud check.</p>
       </section>
 
       <section class="bleed is-warm">

@@ -33,24 +33,29 @@
   <body>
     <header data-site-header></header>
     <main id="content">
-      <header class="page-hero">
-        <p class="eyebrow">Features</p>
-        <h1>What you can do today</h1>
-        <p class="lede">These are the features that ship now. Nothing here is a roadmap item presented as finished.</p>
-        <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="/how-it-works/">How it works</a></div>
-      </header>
-
-      <div class="hero-visual-wrap">
-        <div class="bleed-inner" style="width:100%">
-          <article class="bento-tile is-wide" style="min-height:0">
-            <div class="tile-visual is-warm"><div class="match"><div class="match-col"><p>Cited in the email</p><p class="num is-miss">GM123456789012345</p></div><p class="match-result">No match</p><div class="match-col"><p>Expected parcels on this device</p><p class="num is-empty">None</p></div></div></div>
-            <div class="tile-copy">
-              <h2 class="tile-h">A carrier email is judged by the tracking number you already have, not by how official it looks.</h2>
-              <p>If the number matches an expected parcel, code marks the check Safe. If it does not, the check is Warning, even when the domain looks official.</p>
-            </div>
-          </article>
+      <section class="belt-hero" data-belt data-outcome="reading" aria-labelledby="belt-title">
+        <div class="belt-copy">
+          <div>
+            <p class="belt-eyebrow">Features</p>
+            <h1 id="belt-title">Written to look official.<br /><em>Read by code.</em></h1>
+          </div>
+          <div>
+            <p class="belt-lede">Each sample email crosses the check. What reaches the verdict is not the logo or the styling. It is the claim: who the email says it is, what it wants, and which number it cites.</p>
+            <a class="belt-btn" href="/app/">Open the sample inbox</a>
+          </div>
         </div>
-      </div>
+        <div class="belt-badge" aria-live="off">
+          <p class="belt-badge-label">Claim fields read</p>
+          <p class="belt-pill"><span class="belt-pill-num" data-badge-num>0 of 5 fields</span><span class="belt-pill-out" data-badge-out>reading</span></p>
+        </div>
+        <div class="belt-scan" aria-hidden="true"><i></i><b></b></div>
+        <div class="belt" aria-label="The five sample emails, drag to scrub">
+          <div class="belt-codes"></div>
+          <div class="belt-cards"></div>
+          <canvas class="belt-fx" aria-hidden="true"></canvas>
+        </div>
+        <p class="belt-note">Left of the line is the structured claim each sample email is prepared with. The verdict on the badge comes from the same code the inbox uses, with the default sample ledger.</p>
+      </section>
 
       <section class="bleed" aria-label="Product surfaces">
         <div class="bleed-inner">

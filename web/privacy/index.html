@@ -33,12 +33,51 @@
   <body>
     <header data-site-header></header>
     <main id="content">
-      <header class="page-hero">
-        <p class="eyebrow">Privacy and security</p>
-        <h1>What stays here. What can leave.</h1>
-        <p class="lede">The product exists so a delivery email can be checked without sending your inbox to a server. Here is exactly what stays on this device, and what can leave.</p>
-        <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="#policy">Read the privacy policy</a></div>
-      </header>
+      <div class="priv" data-priv>
+        <canvas class="priv-canvas" aria-hidden="true"></canvas>
+        <section class="priv-sec" aria-labelledby="priv-title">
+          <div class="priv-top">
+            <ul class="priv-list">
+              <li>/ Read on this device</li>
+              <li>/ Cloud only after you agree</li>
+              <li>/ No account, no mailbox scan</li>
+            </ul>
+            <p class="priv-intro">Your orders and tracking numbers stay in this browser. Nothing is sent anywhere unless you say yes.</p>
+          </div>
+          <div class="priv-bottom">
+            <div>
+              <p class="priv-badge">Privacy and security</p>
+              <h1 id="priv-title">Local. Consented.<br />Checked.</h1>
+            </div>
+            <figure class="priv-consent">
+              <figcaption>The dialog you see before any cloud check</figcaption>
+              <p class="priv-consent-title">Check this email in the cloud?</p>
+              <p>No on-device AI is available. Checking in the cloud would send this email off the device.</p>
+              <p>The cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it.</p>
+              <p class="priv-consent-actions" aria-hidden="true"><span class="is-yes">Check in the cloud</span><span>Do not send</span></p>
+            </figure>
+          </div>
+        </section>
+        <div class="priv-spacer" aria-hidden="true"></div>
+        <section class="priv-sec" aria-labelledby="priv-title-2">
+          <div class="priv-top">
+            <p class="priv-badge">What stays here</p>
+            <p class="priv-intro">The extension reads only the Gmail thread that is open. It never scans the mailbox and never calls the cloud.</p>
+          </div>
+          <div class="priv-bottom is-split">
+            <div class="priv-copy">
+              <h2 id="priv-title-2">Your inbox<br />stays yours.</h2>
+              <p>Every check starts on the device. On the hosted site, the text of one email can leave only after you choose Check in the cloud. Choose Do not send and nothing leaves.</p>
+              <div class="priv-ctas"><a class="priv-btn is-solid" href="/app/">Open the sample inbox</a><a class="priv-btn" href="#policy">Read the privacy policy</a></div>
+            </div>
+            <ol class="priv-panel">
+              <li><span>01</span><div><h3>On this device</h3><p>Orders, tracking numbers and sender history, stored in this browser or in the extension's local storage.</p></div></li>
+              <li><span>02</span><div><h3>Leaves only if you agree</h3><p>The text of that one email, on the hosted site, after the consent dialog.</p></div></li>
+              <li><span>03</span><div><h3>Never</h3><p>Gmail API access, mailbox scans, accounts, or cloud calls from the extension.</p></div></li>
+            </ol>
+          </div>
+        </section>
+      </div>
 
       <section class="bleed" aria-labelledby="flow-title">
 <h2 id="flow-title" class="visually-hidden">Data flow</h2>
