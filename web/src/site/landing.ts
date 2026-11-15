@@ -6,6 +6,7 @@ import { getOfficialPack } from "../packs/official.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
 import { mountStage } from "./stage.ts";
 import { extractFromDomain } from "./emailText.ts";
+import { describeAiError } from "../ai/aiError.ts";
 
 type Mode = "device" | "cloud";
 
@@ -96,7 +97,7 @@ async function runChecker(emailText: string, mode: Mode): Promise<HeroResult> {
           reasons: verdict.reasons,
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : "The cloud check could not run.";
+        const message = `The cloud check could not run. ${describeAiError(error)}`;
         if (!sample) {
           const limited = runLimitedCheck(emailText, { fromDomain }, ledger, pack);
           return {
@@ -212,7 +213,7 @@ export function mountLanding(root: ParentNode = document): void {
       }, 280);
     } catch (error) {
       if (current !== token) return;
-      const message = error instanceof Error ? error.message : "The check could not run.";
+      const message = describeAiError(error);
       showResult({
         kind: "error",
         headline: "The check could not finish.",

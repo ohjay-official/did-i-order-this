@@ -14,6 +14,7 @@ import {
 } from "@did-i-order-this/core";
 import { readClaim } from "../ai/readClaim.ts";
 import { chooseInferenceMode } from "../consent.ts";
+import { describeAiError } from "../ai/aiError.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
@@ -310,6 +311,7 @@ export class InboxApp {
         <div class="consent-card">
           <h2 id="consent-title">Check this email in the cloud?</h2>
           <p>No on-device AI is available. Checking in the cloud would send this email off the device.</p>
+          <p>The cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it.</p>
           <div class="actions">
             <button type="button" class="btn btn-primary" data-action="consent-yes">Check in the cloud</button>
             <button type="button" class="btn btn-secondary" data-action="consent-no">Do not send</button>
@@ -472,7 +474,8 @@ export class InboxApp {
       const second = await readClaim(emailText, mode);
       this.finishWithClaim(current, second.claim, second.inferenceSource);
     } catch (cloudError) {
-      const cloudMessage = cloudError instanceof Error ? cloudError.message : "Cloud check failed.";
+      console.warn("Cloud read failed", cloudError);
+      const cloudMessage = describeAiError(cloudError);
       this.check = {
         status: "error",
         message: `The AI read could not run. ${cloudMessage}`,
