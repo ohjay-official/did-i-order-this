@@ -1,5 +1,4 @@
 import { mountFreight } from "./freight.ts";
-import { mountGlobe } from "./globe.ts";
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -41,7 +40,24 @@ function mountSlider(root: HTMLElement): void {
 
 export function mountFlow(doc: Document): void {
   const globe = doc.querySelector<HTMLElement>("[data-globe]");
-  if (globe) mountGlobe(globe);
+  if (globe) {
+    // three.js is only fetched when the globe gets close to the viewport.
+    const load = () => void import("./globe.ts").then((m) => m.mountGlobe(globe));
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            load();
+          }
+        },
+        { rootMargin: "900px 0px" },
+      );
+      io.observe(globe);
+    } else {
+      load();
+    }
+  }
   const slider = doc.querySelector<HTMLElement>("[data-slider]");
   if (slider) mountSlider(slider);
   const freight = doc.querySelector<HTMLElement>("[data-freight]");

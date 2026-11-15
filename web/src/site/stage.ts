@@ -59,8 +59,21 @@ export function mountStage(canvas: HTMLCanvasElement): () => void {
   const octx = off.getContext("2d", { willReadFrequently: true });
   if (!octx) return () => {};
 
+  // Precomputed tone map: grey level -> warm RGBA (threshold 58, feather 26).
+  const lut = new Uint8ClampedArray(256 * 4);
+  for (let v = 0; v < 256; v += 1) {
+    if (v < 58) continue;
+    const tone = Math.min(1, (v - 58) / (255 - 58));
+    const [r, g, b] = colorize(tone);
+    lut[v * 4] = r;
+    lut[v * 4 + 1] = g;
+    lut[v * 4 + 2] = b;
+    lut[v * 4 + 3] = Math.min(255, Math.round(((v - 58) / 26) * 255));
+  }
+
   let frame = 0;
   let running = true;
+  let onScreen = true;
   let last = 0;
 
   const resize = () => {
@@ -76,7 +89,7 @@ export function mountStage(canvas: HTMLCanvasElement): () => void {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     const t = prefersReducedMotion() ? 0 : time / 1000;
-    const scale = 0.5;
+    const scale = 0.3;
     const ow = Math.max(1, Math.floor(width * scale));
     const oh = Math.max(1, Math.floor(height * scale));
     if (off.width !== ow || off.height !== oh) {
@@ -105,42 +118,30 @@ export function mountStage(canvas: HTMLCanvasElement): () => void {
 
     const img = octx.getImageData(0, 0, ow, oh);
     const data = img.data;
-    const threshold = 58;
-    const feather = 26;
     for (let i = 0; i < data.length; i += 4) {
-      const v = data[i];
-      if (v < threshold) {
-        data[i] = 0;
-        data[i + 1] = 0;
-        data[i + 2] = 0;
-        data[i + 3] = 0;
-        continue;
-      }
-      const tone = Math.min(1, (v - threshold) / (255 - threshold));
-      const [r, g, b] = colorize(tone);
-      const alpha = Math.min(255, Math.round(((v - threshold) / feather) * 255));
-      data[i] = r;
-      data[i + 1] = g;
-      data[i + 2] = b;
-      data[i + 3] = alpha;
+      const j = data[i] * 4;
+      data[i] = lut[j];
+      data[i + 1] = lut[j + 1];
+      data[i + 2] = lut[j + 2];
+      data[i + 3] = lut[j + 3];
     }
     octx.putImageData(img, 0, 0);
 
     ctx.clearRect(0, 0, width, height);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.filter = "blur(3.5px)";
+    ctx.filter = "blur(5px)";
     ctx.drawImage(off, 0, 0, width, height);
     ctx.filter = "none";
   };
 
   const loop = (now: number) => {
     if (!running) return;
-    if (document.hidden) {
+    if (document.hidden || !onScreen) {
       frame = window.requestAnimationFrame(loop);
       return;
     }
-    if (now - last > 48) {
+    if (now - last > 66) {
       paint(now);
       last = now;
     }
@@ -157,10 +158,21 @@ export function mountStage(canvas: HTMLCanvasElement): () => void {
     }
   };
   document.addEventListener("visibilitychange", onVis);
-  if (!prefersReducedMotion()) frame = window.requestAnimationFrame(loop);
+  const io = new IntersectionObserver((entries) => {
+    onScreen = entries.some((entry) => entry.isIntersecting);
+  });
+  io.observe(canvas);
+  // Start the drift after the page has settled, so first load stays responsive.
+  const start = () => {
+    if (!prefersReducedMotion() && running) frame = window.requestAnimationFrame(loop);
+  };
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  if (idle) idle(start, { timeout: 2500 });
+  else window.setTimeout(start, 1200);
 
   return () => {
     running = false;
+    io.disconnect();
     window.cancelAnimationFrame(frame);
     window.removeEventListener("resize", resize);
     document.removeEventListener("visibilitychange", onVis);

@@ -141,7 +141,8 @@
   padding: 20px 22px 22px;
 }
 
-.bento-tile .tile-copy h3 {
+.bento-tile .tile-copy h3,
+.bento-tile .tile-copy h2.tile-h {
   margin: 0 0 6px;
   font-family: var(--display);
   font-weight: 400;
