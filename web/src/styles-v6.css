@@ -1635,3 +1635,197 @@ body:has(main > .bleed.is-raised:last-child) .fx-cta {
   mask-image: linear-gradient(90deg, #000 0%, #000 90%, transparent);
   padding-left: max(20px, calc((100vw - 1080px) / 2));
 }
+
+/* ---------- v6.2: brand mark, header contrast, focus ---------- */
+.wordmark-mark {
+  display: block;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.wordmark-q {
+  color: var(--accent);
+}
+
+.fx-brand .footer-name .wordmark-mark {
+  width: 30px;
+  height: 30px;
+}
+
+.fx-brand .footer-name .wordmark-q {
+  color: #f08a3c;
+}
+
+.fx-wordmark .wordmark-q {
+  color: #8f2a12;
+}
+
+/* Every page: once scrolled, the bar gets a solid cream backing, so the name never sits on the red footer. */
+.site-bar.is-scrolled {
+  background: rgba(247, 243, 238, 0.94);
+  border-bottom-color: var(--hairline);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  z-index: 100;
+}
+
+/* ---------- Privacy policy prose ---------- */
+.policy {
+  padding: clamp(56px, 9vw, 120px) clamp(20px, 5vw, 40px);
+  background: var(--bg);
+  scroll-margin-top: 72px;
+}
+
+.policy-inner {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.policy h2 {
+  margin: 8px 0 8px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(32px, 6vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.policy-meta {
+  margin: 0 0 32px;
+  font-family: var(--mono, "IBM Plex Mono", monospace);
+  font-size: 13px;
+  color: #6b5a4e;
+}
+
+.policy h3 {
+  margin: 36px 0 10px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.policy p,
+.policy li {
+  font-size: 16px;
+  line-height: 26px;
+  color: #3a2c24;
+}
+
+.policy ul,
+.policy ol {
+  padding-left: 1.2em;
+  margin: 0 0 12px;
+}
+
+.policy li {
+  margin: 0 0 8px;
+}
+
+.policy a {
+  color: var(--ember);
+  text-underline-offset: 3px;
+}
+
+.policy code {
+  font-size: 0.9em;
+}
+
+/* ---------- Loading states ---------- */
+.is-loading::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 0.05em;
+  animation: dio-pulse 1s ease-in-out infinite alternate;
+}
+
+.globe.is-loading::before {
+  display: none;
+}
+
+@keyframes dio-pulse {
+  from { opacity: 0.25; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.globe-loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  margin: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 250, 245, 0.9);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #6b5a4e;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+
+.globe.is-loading .globe-loading {
+  opacity: 1;
+}
+
+.globe:not(.is-loading) .globe-loading {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-loading::before {
+    animation: none;
+  }
+}
+
+/* CTA above the fold on every inner page */
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* ---------- Contrast fixes (Lighthouse) ---------- */
+:root {
+  --muted: #685c52;
+}
+
+.mock-verdict .stamp {
+  color: var(--ember);
+  border-color: currentColor;
+}
+
+svg.fx-wordmark {
+  display: block;
+  width: 96%;
+  height: auto;
+  margin: 0 auto;
+  fill: #5a3418;
+  font-size: initial;
+  transform: translateY(26%);
+}
+
+svg.fx-wordmark .q {
+  fill: #8f2a12;
+}

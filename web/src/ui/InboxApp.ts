@@ -230,7 +230,7 @@ export class InboxApp {
       return "";
     }
     if (this.check.status === "checking") {
-      return `<div class="result is-checking"><p class="status">Checking this email on this device</p></div>`;
+      return `<div class="result is-checking" aria-busy="true"><p class="status is-loading">Checking this email on this device</p></div>`;
     }
     if (this.check.status === "consent") {
       return "";

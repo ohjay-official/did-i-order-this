@@ -175,11 +175,15 @@ async function start(root: HTMLElement, canvas: HTMLCanvasElement): Promise<void
     wide ? "/media/globe-atlas.webp" : "/media/globe-atlas-1024.webp",
     () => {
       textureReady = true;
+      root.classList.remove("is-loading");
+      root.removeAttribute("aria-busy");
       schedule();
     },
     undefined,
     () => {
       textureReady = true;
+      root.classList.remove("is-loading");
+      root.removeAttribute("aria-busy");
       schedule();
     },
   );
@@ -394,6 +398,8 @@ async function start(root: HTMLElement, canvas: HTMLCanvasElement): Promise<void
         introRequested = true;
         window.setTimeout(() => {
           textureReady = true;
+      root.classList.remove("is-loading");
+      root.removeAttribute("aria-busy");
           schedule();
         }, 4000);
       }
@@ -404,5 +410,9 @@ async function start(root: HTMLElement, canvas: HTMLCanvasElement): Promise<void
   io.observe(root);
 
   root.classList.add("is-live");
+  if (!textureReady) {
+    root.classList.add("is-loading");
+    root.setAttribute("aria-busy", "true");
+  }
   schedule();
 }

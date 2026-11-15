@@ -163,11 +163,13 @@ export function mountLanding(root: ParentNode = document): void {
 
   const showStatus = (text: string) => {
     hero.classList.add("has-result");
-    resultNode.innerHTML = `<p class="hero-status">${escapeHtml(text)}</p>`;
+    resultNode.setAttribute("aria-busy", "true");
+    resultNode.innerHTML = `<p class="hero-status is-loading">${escapeHtml(text)}</p>`;
   };
 
   const showResult = (result: HeroResult) => {
     hero.classList.add("has-result");
+    resultNode.setAttribute("aria-busy", "false");
     if (prefersReducedMotion()) {
       resultNode.innerHTML = renderResult(result, true);
       return;

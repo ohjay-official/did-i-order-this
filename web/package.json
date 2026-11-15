@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@did-i-order-this/core": "*",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
     "firebase": "13.2.0",
     "three": "0.160.0"
   },

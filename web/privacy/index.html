@@ -3,21 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Privacy · Did I Order This?</title>
-    <meta name="description" content="What stays on this device, and what can leave, after you agree." />
+    <title>Privacy policy | Did I Order This?</title>
+    <meta name="description" content="The privacy policy: what is stored on this device, what can reach Google&#x27;s cloud after you agree, cookie-free analytics, and how to reach us." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/privacy/" />
+    <meta name="theme-color" content="#f7f3ee" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="Did I Order This?" />
-    <meta property="og:description" content="What stays on this device, and what can leave, after you agree." />
+    <meta property="og:locale" content="en" />
+    <meta property="og:title" content="Privacy policy | Did I Order This?" />
+    <meta property="og:description" content="The privacy policy: what is stored on this device, what can reach Google&#x27;s cloud after you agree, cookie-free analytics, and how to reach us." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/privacy/" />
-    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og/privacy.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Privacy policy: What stays on this device." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Did I Order This?" />
-    <meta name="twitter:description" content="What stays on this device, and what can leave, after you agree." />
-    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:site" content="@Oh_Jay0" />
+    <meta name="twitter:title" content="Privacy policy | Did I Order This?" />
+    <meta name="twitter:description" content="The privacy policy: what is stored on this device, what can reach Google&#x27;s cloud after you agree, cookie-free analytics, and how to reach us." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og/privacy.jpg" />
   </head>
 
   <body>
@@ -27,9 +37,11 @@
         <p class="eyebrow">Privacy and security</p>
         <h1>What stays here. What can leave.</h1>
         <p class="lede">The product exists so a delivery email can be checked without sending your inbox to a server. Here is exactly what stays on this device, and what can leave.</p>
+        <div class="hero-cta"><a class="btn btn-primary" href="/app/">Open the sample inbox</a><a class="btn btn-ghost" href="#policy">Read the privacy policy</a></div>
       </header>
 
-      <section class="bleed" aria-label="Data flow">
+      <section class="bleed" aria-labelledby="flow-title">
+<h2 id="flow-title" class="visually-hidden">Data flow</h2>
         <div class="bleed-inner">
           <div class="flow">
             <div class="flow-col is-stay">
@@ -83,6 +95,54 @@
           </div>
         </div>
       </section>
+<section class="policy" id="policy" aria-labelledby="policy-title">
+  <div class="policy-inner">
+    <p class="eyebrow">Privacy policy</p>
+    <h2 id="policy-title">Privacy policy</h2>
+    <p class="policy-meta">Last updated: 15 November 2026. Applies to did-i-order-this.vercel.app and the sideloaded Chrome extension.</p>
+
+    <h3>Who runs this</h3>
+    <p>Did I Order This? is a hackathon project built by Oh-Jay for #BuildHybridAI 2026. There is no company behind it, no account system, and nothing to buy.</p>
+
+    <h3>What is collected</h3>
+    <ul>
+      <li><strong>Orders, tracking numbers and senders you save.</strong> Stored only on your device: in this browser's IndexedDB on the website, or in <code>chrome.storage.local</code> in the extension. They are never uploaded.</li>
+      <li><strong>Files you import</strong> (CSV or ZIP order history). Read in the browser and turned into saved orders. The files are not uploaded.</li>
+      <li><strong>Email text you paste or open.</strong> Read on your device. It leaves the device only in the cloud case below.</li>
+      <li><strong>Usage analytics.</strong> Page views and performance numbers, described under Analytics. No email text, no saved orders, no names.</li>
+    </ul>
+    <p>We do not ask for a name, an email address, a phone number or a payment card, and we do not use the Gmail API or scan a mailbox.</p>
+
+    <h3>On-device and cloud data flow</h3>
+    <ol>
+      <li>Every check starts on your device, using Chrome's built-in model through Firebase AI Logic.</li>
+      <li>If on-device AI is not available, the hosted site asks first. Only if you choose <em>Send this email</em> does the text of that one email go to the cloud. You can choose <em>Do not send</em> or run a limited check with no AI instead.</li>
+      <li>The Chrome extension never sends email text to the cloud.</li>
+      <li>The verdict is computed on your device by comparing the model's reading with the orders you saved.</li>
+    </ol>
+
+    <h3>Firebase and Google processing</h3>
+    <p>Cloud reads go through Google's Firebase AI Logic to the Gemini Developer API. Requests are protected by Firebase App Check with reCAPTCHA, which Google loads when you run a check on the hosted site, to tell real visitors from scripts. reCAPTCHA may set its own security cookie. Google processes these requests under its own terms and the <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</p>
+    <p>The project uses the free quota of the Gemini API. Under Google's <a href="https://ai.google.dev/gemini-api/terms" rel="noopener">Gemini API Additional Terms</a>, Google may use content sent to the unpaid quota, and the responses, to improve its products, and human reviewers may read it after it is disconnected from the project. In the EEA, Switzerland and the UK, Google applies its paid-service terms instead. Do not send an email that holds information you would not share with Google.</p>
+
+    <h3>Analytics</h3>
+    <p>The website uses Vercel Web Analytics and Vercel Speed Insights. Both are cookie-free: they set no cookies and do not track you across sites. They record the page path (we strip query strings), referrer, browser, operating system, device type, country and page speed numbers. Vercel identifies a visit with a hash that resets daily and does not store your IP address. Because nothing here sets a tracking cookie, there is no cookie banner. The only cookie you may see is reCAPTCHA's security cookie, and only after you run a check.</p>
+
+    <h3>Retention</h3>
+    <ul>
+      <li>Saved orders and senders stay on your device until you clear them, clear site data, or remove the extension.</li>
+      <li>We keep no server copy of anything you check. This site has no database.</li>
+      <li>Google keeps cloud requests according to its Gemini API terms, linked above.</li>
+      <li>Vercel keeps aggregated analytics according to its plan limits, then deletes them.</li>
+    </ul>
+
+    <h3>Your choices</h3>
+    <p>Keep everything on your device by choosing <em>Do not send</em>, or by using the extension only. Clear saved orders by clearing this site's data in your browser settings. Block analytics with any content blocker; the checker still works.</p>
+
+    <h3>Contact</h3>
+    <p>Questions or requests: message <a href="https://x.com/Oh_Jay0" rel="noopener">@Oh_Jay0 on X</a>. Changes to this policy will be posted here with a new date.</p>
+  </div>
+</section>
     </main>
     <footer data-site-footer></footer>
     <script type="module" src="/src/site/main.ts"></script>

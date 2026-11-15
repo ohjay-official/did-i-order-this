@@ -3,21 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Did I Order This?</title>
-    <meta name="description" content="Check a delivery or billing email against the orders and tracking numbers stored on this device." />
+    <title>Did I Order This? | Check a parcel email against your orders</title>
+    <meta name="description" content="Paste a delivery or billing email and see if it matches an order or tracking number you saved. The read runs on this device first." />
     <link rel="canonical" href="https://did-i-order-this.vercel.app/" />
+    <meta name="theme-color" content="#f7f3ee" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Did I Order This?" />
-    <meta property="og:title" content="Did I Order This?" />
-    <meta property="og:description" content="Check a delivery or billing email against the orders and tracking numbers stored on this device." />
+    <meta property="og:locale" content="en" />
+    <meta property="og:title" content="Did I Order This? | Check a parcel email against your orders" />
+    <meta property="og:description" content="Paste a delivery or billing email and see if it matches an order or tracking number you saved. The read runs on this device first." />
     <meta property="og:url" content="https://did-i-order-this.vercel.app/" />
-    <meta property="og:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta property="og:image" content="https://did-i-order-this.vercel.app/og/home.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Delivery-scam checker: Got a parcel email? See if it&#x27;s yours." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Did I Order This?" />
-    <meta name="twitter:description" content="Check a delivery or billing email against the orders and tracking numbers stored on this device." />
-    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og.jpg" />
+    <meta name="twitter:site" content="@Oh_Jay0" />
+    <meta name="twitter:title" content="Did I Order This? | Check a parcel email against your orders" />
+    <meta name="twitter:description" content="Paste a delivery or billing email and see if it matches an order or tracking number you saved. The read runs on this device first." />
+    <meta name="twitter:image" content="https://did-i-order-this.vercel.app/og/home.jpg" />
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Did I Order This?", "url": "https://did-i-order-this.vercel.app/", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Web browser; Chrome extension (sideloaded, unpacked build)", "description": "Checks a delivery or billing email against the orders and tracking numbers you saved on your own device. The AI read runs on the device first and uses the cloud only after you agree.", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "license": "https://www.apache.org/licenses/LICENSE-2.0", "image": "https://did-i-order-this.vercel.app/og/home.jpg", "author": {"@type": "Person", "name": "Oh-Jay", "sameAs": ["https://x.com/Oh_Jay0", "https://github.com/ohjay-official"]}}</script>
   </head>
   <body class="landing-page">
     <header data-site-header></header>
@@ -118,6 +129,7 @@
               <canvas class="globe-canvas" data-globe-canvas aria-hidden="true"></canvas>
               <div class="globe-fallback" aria-hidden="true"><span class="tile-img" style="background-position:0.000% 0.000%"></span><span class="tile-img" style="background-position:33.333% 0.000%"></span><span class="tile-img" style="background-position:66.667% 0.000%"></span><span class="tile-img" style="background-position:100.000% 0.000%"></span><span class="tile-img" style="background-position:33.333% 33.333%"></span><span class="tile-img" style="background-position:66.667% 33.333%"></span><span class="tile-img" style="background-position:100.000% 33.333%"></span><span class="tile-img" style="background-position:0.000% 66.667%"></span><span class="tile-img" style="background-position:33.333% 66.667%"></span><span class="tile-img" style="background-position:33.333% 100.000%"></span><span class="tile-img" style="background-position:100.000% 66.667%"></span><span class="tile-img" style="background-position:66.667% 100.000%"></span></div>
               <p class="globe-hint" aria-hidden="true">Drag to spin</p>
+              <p class="globe-loading" role="status">Loading the sample tiles</p>
             </div>
             <div class="box-letter">
               <div class="letter">

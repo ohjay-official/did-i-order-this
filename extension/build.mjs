@@ -58,6 +58,7 @@ await build({
 });
 
 await cp(path.join(root, "manifest.json"), path.join(outDir, "manifest.json"));
+await cp(path.join(root, "icons"), path.join(outDir, "icons"), { recursive: true });
 
 // Vite may emit sidepanel.html in a nested path; flatten if needed.
 const htmlPath = path.join(outDir, "sidepanel.html");

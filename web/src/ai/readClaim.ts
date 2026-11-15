@@ -11,6 +11,7 @@ import {
 import { getFirebaseApp } from "../firebase/app.ts";
 import { parseClaimResponse } from "./parseClaim.ts";
 import { CLAIM_PROMPT, getClaimSchema } from "./schema.ts";
+import { cloudBudget } from "./cloudBudget.ts";
 
 export type ReadClaimMode = "only_on_device" | "prefer_on_device" | "only_in_cloud";
 
@@ -60,6 +61,8 @@ async function generateClaim(emailText: string, mode: ReadClaimMode): Promise<{
   claim: EmailClaim;
   inferenceSource: InferenceSourceValue;
 }> {
+  // Anything that may reach the cloud spends one unit of the session budget.
+  if (mode !== "only_on_device") cloudBudget.take();
   const ai = getAI(getFirebaseApp(), { backend: new GoogleAIBackend() });
   const model = getGenerativeModel(ai, hybridParams(mode));
 

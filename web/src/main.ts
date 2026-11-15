@@ -1,3 +1,4 @@
+import { mountInsights } from "./site/insights.ts";
 import { InboxApp } from "./ui/InboxApp.ts";
 import "./styles-v6.css";
 
@@ -7,3 +8,5 @@ if (!root) {
 }
 
 void new InboxApp(root).start();
+
+mountInsights();
