@@ -1,15 +1,15 @@
 // Only the three.js pieces the globe uses, so the lazy chunk can be tree-shaken.
 export {
-  BufferAttribute,
-  BufferGeometry,
   FrontSide,
+  Group,
   LinearSRGBColorSpace,
   Mesh,
-  NoColorSpace,
   PerspectiveCamera,
   Scene,
   ShaderMaterial,
+  SphereGeometry,
   TextureLoader,
   Vector3,
+  Vector4,
   WebGLRenderer,
 } from "three";

@@ -5,27 +5,38 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-// Auto-sliding row of sample cases. The list is duplicated once for a seamless loop;
-// the copy is hidden from assistive tech and from keyboard focus.
+// Work-row slider (ostra spec): every 2.4s the track slides left by one card over
+// 900ms, then the first card moves to the end and the transform resets.
 function mountSlider(root: HTMLElement): void {
   const track = root.querySelector<HTMLElement>("[data-slider-track]");
   if (!track) return;
-  if (prefersReducedMotion()) {
+  if (prefersReducedMotion() || typeof track.animate !== "function") {
     root.classList.add("is-static");
     return;
   }
-  const items = Array.from(track.children);
-  for (const item of items) {
-    const copy = item.cloneNode(true) as HTMLElement;
-    copy.setAttribute("aria-hidden", "true");
-    for (const link of copy.querySelectorAll("a, button")) link.setAttribute("tabindex", "-1");
-    track.appendChild(copy);
-  }
   root.classList.add("is-auto");
+  let running = false;
+  let visible = false;
   const io = new IntersectionObserver((entries) => {
-    root.classList.toggle("is-paused", !entries.some((entry) => entry.isIntersecting));
+    visible = entries.some((entry) => entry.isIntersecting);
   });
   io.observe(root);
+  window.setInterval(() => {
+    if (running || document.hidden || !visible || root.matches(":focus-within")) return;
+    const first = track.firstElementChild as HTMLElement | null;
+    if (!first) return;
+    running = true;
+    const distance = first.getBoundingClientRect().width;
+    const anim = track.animate(
+      [{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(${-distance}px,0,0)` }],
+      { duration: 900, easing: "cubic-bezier(.65,0,.35,1)" },
+    );
+    anim.onfinish = () => {
+      track.appendChild(first);
+      track.style.transform = "";
+      running = false;
+    };
+  }, 2400);
 }
 
 export function mountFlow(doc: Document): void {

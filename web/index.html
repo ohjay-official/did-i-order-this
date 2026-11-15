@@ -43,9 +43,9 @@
           <div class="try-row">
             <span class="try-label">Try</span>
             <div class="try-chips" role="group" aria-label="Sample checks">
-              <button type="button" class="try-chip" data-try="thread-1-carrier-lure" aria-pressed="false">Fake DHL release fee</button>
-              <button type="button" class="try-chip" data-try="thread-3-safe-carrier" aria-pressed="false">Real UPS update</button>
-              <button type="button" class="try-chip" data-try="thread-4-neutral-renewal" aria-pressed="false">Streamhut renewal</button>
+              <button type="button" class="try-chip" data-try="thread-1-carrier-lure" aria-pressed="false" aria-label="Fake DHL release fee">Fake DHL<span class="chip-more"> release</span> fee</button>
+              <button type="button" class="try-chip" data-try="thread-3-safe-carrier" aria-pressed="false" aria-label="Real UPS update">Real UPS<span class="chip-more"> update</span></button>
+              <button type="button" class="try-chip" data-try="thread-4-neutral-renewal" aria-pressed="false" aria-label="Streamhut renewal">Streamhut<span class="chip-more"> renewal</span></button>
             </div>
           </div>
           <div class="hero-result" data-result aria-live="polite"></div>
@@ -284,34 +284,31 @@
               </li>
             </ol>
           </div>
-          <div class="sun" aria-hidden="true"></div>
         </section>
 
         <section class="freight" data-freight aria-labelledby="freight-title">
-          <div class="freight-sticky">
-            <div class="freight-media" aria-hidden="true">
-              <img class="freight-poster" src="/media/freight-poster.jpg" alt="" loading="lazy" decoding="async" />
-              <video class="freight-video" data-freight-video muted playsinline preload="none" poster="/media/freight-poster.jpg"></video>
-            </div>
-            <div class="freight-knock" aria-hidden="true"><span>CHECK</span><span>IT</span></div>
-            <div class="freight-shade" aria-hidden="true"></div>
-            <div class="freight-band" aria-hidden="true"><div class="freight-sweep"></div></div>
-            <div class="freight-strip" data-freight-strip>
-              <div class="freight-head">
-                <p class="flow-kicker">Sample inbox</p>
-                <h2 id="freight-title">Try it on the sample inbox</h2>
-                <p>Five fictional emails are already loaded. No account, nothing to install.</p>
+          <div class="freight-scene" data-freight-scene>
+            <video class="freight-video" data-freight-video muted playsinline preload="none" poster="/media/handling-poster.jpg" aria-hidden="true"></video>
+            <img class="freight-still" data-freight-still src="/media/handling-end.jpg" alt="" aria-hidden="true" decoding="async" loading="lazy" />
+            <div class="freight-tint" aria-hidden="true"></div>
+            <p class="freight-letters" data-freight-letters aria-hidden="true">SAMPLE INBOX</p>
+            <div class="freight-band">
+              <div class="freight-strip" data-freight-strip>
+                <div class="freight-lead">
+                  <h2 id="freight-title"><span>Try it on the</span> <span>sample inbox.</span> <span class="accent">No account needed.</span></h2>
+                  <div class="freight-lead-copy">
+                    <p>Five fictional emails are already loaded: a fake DHL hold, a real UPS update, a store notice, a renewal, and one more lure.</p>
+                    <p>Every check starts on this device. The cloud runs only on the hosted site, and only after you agree. <a href="/how-it-works/">See a check taken apart</a></p>
+                  </div>
+                </div>
+                <ol class="freight-cards">
+                  <li class="fc"><svg class="fc-icon" viewBox="0 0 38 38" width="38" height="38" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="28" height="20" rx="3"/><path d="M6 11l13 9 13-9"/></svg><p class="fc-title"><span>Pick a</span><span>thread</span></p><p class="fc-body">Start with the DHL hold that wants $2.99.</p></li>
+                  <li class="fc"><svg class="fc-icon" viewBox="0 0 38 38" width="38" height="38" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="17" r="9"/><path d="M24 24l8 8"/><path d="M13 17l3 3 5-6"/></svg><p class="fc-title"><span>Check</span><span>it</span></p><p class="fc-body">The AI read starts on this device. The cloud only runs if you agree.</p></li>
+                  <li class="fc"><svg class="fc-icon" viewBox="0 0 38 38" width="38" height="38" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="24" height="18" rx="2" transform="rotate(-4 19 16)"/><path d="M12 15h14M12 20h9"/><path d="M10 31h18"/></svg><p class="fc-title"><span>Read the</span><span>stamp</span></p><p class="fc-body">A verdict, the reasons behind it, and where the check ran.</p></li>
+                  <li class="fc"><svg class="fc-icon" viewBox="0 0 38 38" width="38" height="38" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13l13-6 13 6v13l-13 6-13-6z"/><path d="M6 13l13 6 13-6M19 19v13"/></svg><p class="fc-title"><span>Save a</span><span>shipment</span></p><p class="fc-body">Confirm the Northwind notice, then check the UPS email again.</p></li>
+                </ol>
               </div>
-              <ol class="freight-cards" data-freight-track>
-                <li class="freight-card"><span class="fc-step">01</span><strong>Pick a thread</strong><span>Start with the DHL hold that wants $2.99.</span></li>
-                <li class="freight-card"><span class="fc-step">02</span><strong>Check it</strong><span>The AI read starts on this device. Cloud only if you agree.</span></li>
-                <li class="freight-card"><span class="fc-step">03</span><strong>Read the stamp</strong><span>A verdict, the reasons, and where the check ran.</span></li>
-                <li class="freight-card"><span class="fc-step">04</span><strong>Save a shipment</strong><span>Confirm the Northwind notice, then check the UPS email again.</span></li>
-              </ol>
-              <div class="cta-row">
-                <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
-                <a class="btn btn-ghost" href="/how-it-works/">See a check taken apart</a>
-              </div>
+              <a class="freight-pill" href="/app/">Open the sample inbox</a>
             </div>
           </div>
         </section>

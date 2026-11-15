@@ -1,108 +1,164 @@
-// Scroll-driven sticky freight scene: clip scrubs with scroll, giant letters knock out
-// the clip, a warm sweep crosses the band, then the strip of sample-inbox steps slides in.
+// Sticky handling-clip scene (KV scroll mapping): the clip is scrubbed, never played.
+// A = 2.4 viewports for the clip, B = (strip width + 0.45 vw) / vw x 1.1 for the strip.
+// Giant letters use mix-blend-mode: darken, so they show only where the clip is light
+// and read as passing behind the truck. The strip slides in on the dark band.
+
+const A = 2.4;
+const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-const range = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
-const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
 export function mountFreight(root: HTMLElement): void {
+  const scene = root.querySelector<HTMLElement>("[data-freight-scene]");
   const video = root.querySelector<HTMLVideoElement>("[data-freight-video]");
+  const still = root.querySelector<HTMLImageElement>("[data-freight-still]");
   const strip = root.querySelector<HTMLElement>("[data-freight-strip]");
-  const track = root.querySelector<HTMLElement>("[data-freight-track]");
-  if (!video || !strip || !track) return;
+  const letters = root.querySelector<HTMLElement>("[data-freight-letters]");
+  if (!scene || !video || !still || !strip || !letters) return;
+  const cards = Array.from(strip.querySelectorAll<HTMLElement>(".fc"));
+  const reduced = prefersReducedMotion();
 
-  if (prefersReducedMotion()) {
-    root.classList.add("is-static");
-    return;
-  }
-  root.classList.add("is-scroll");
-
+  let vw = 0;
+  let vh = 0;
+  let B = 1;
+  let stripW = 0;
+  let lettersW = 0;
   let duration = 0;
-  let ready = false;
-  let loaded = false;
+  let cur = 0;
+  let target = 0;
   let raf = 0;
-  let targetTime = 0;
+  let inView = false;
+  let loaded = false;
 
-  const fallBack = () => {
-    root.classList.add("is-poster");
+  // Frame the clip: cover on wide screens; on portrait/narrow screens 155vw wide,
+  // 40% of the frame at mid-screen, final band edge (44.8%) at 36% of the viewport.
+  const frame = () => {
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+    const narrow = vw < 768 || vw <= vh;
+    let w: number;
+    let h: number;
+    let left: number;
+    let top: number;
+    if (narrow) {
+      w = vw * 1.55;
+      h = (w * 9) / 16;
+      left = vw / 2 - 0.4 * w;
+      top = 0.36 * vh - 0.448 * h;
+    } else {
+      const s = Math.max(vw / 1920, vh / 1080);
+      w = 1920 * s;
+      h = 1080 * s;
+      left = (vw - w) / 2;
+      top = (vh - h) / 2;
+    }
+    for (const el of [video, still]) {
+      el.style.width = `${w}px`;
+      el.style.height = `${h}px`;
+      el.style.left = `${left}px`;
+      el.style.top = `${top}px`;
+    }
+    const edge = top + 0.448 * h;
+    scene.style.setProperty("--edge-px", `${edge.toFixed(1)}px`);
+    scene.style.setProperty("--line-px", `${(top + 0.9 * h).toFixed(1)}px`);
+    root.classList.toggle("is-narrow", narrow);
+
+    if (reduced) {
+      root.style.height = "";
+      return;
+    }
+    stripW = strip.scrollWidth;
+    lettersW = letters.scrollWidth;
+    B = ((stripW + 0.45 * vw) / vw) * 1.1;
+    root.style.height = `${((1 + A + B) * vh).toFixed(0)}px`;
   };
+
+  const useStill = () => root.classList.add("is-still");
 
   const load = () => {
     if (loaded) return;
     loaded = true;
-    const narrow = window.matchMedia("(max-width: 899px)").matches;
     const h264 = video.canPlayType('video/mp4; codecs="avc1.640028"') !== "";
-    video.src = !h264 ? "/media/freight-720.webm" : narrow ? "/media/freight-720.mp4" : "/media/freight-1080.mp4";
-    video.muted = true;
+    video.src = !h264 ? "/media/handling-720.webm" : vw <= 900 ? "/media/handling-720.mp4" : "/media/handling-1080.mp4";
     video.preload = "auto";
+    video.muted = true;
     const timeout = window.setTimeout(() => {
-      if (!ready) fallBack();
-    }, 8000);
+      if (!duration) useStill();
+    }, 10000);
     video.addEventListener(
-      "loadeddata",
+      "loadedmetadata",
       () => {
         window.clearTimeout(timeout);
-        duration = video.duration || 8;
-        ready = true;
-        root.classList.add("is-video");
-        // iOS paints seeks only after one play call.
-        const played = video.play();
-        if (played) played.then(() => video.pause()).catch(() => undefined);
+        duration = video.duration || 4.04;
+        root.classList.remove("is-still");
         schedule();
       },
       { once: true },
     );
-    video.addEventListener("error", fallBack, { once: true });
+    video.addEventListener("error", useStill, { once: true });
+    video.addEventListener("seeked", () => {
+      if (Math.abs(video.currentTime - cur) > 1 / 60) schedule();
+    });
     video.load();
   };
 
-  const near = new IntersectionObserver(
-    (entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        load();
-        near.disconnect();
-      }
-    },
-    { rootMargin: "800px 0px" },
-  );
-  near.observe(root);
-
-  const update = () => {
+  const tick = () => {
     raf = 0;
-    const rect = root.getBoundingClientRect();
-    const total = rect.height - window.innerHeight;
-    const p = total > 0 ? clamp(-rect.top / total) : 0;
-    root.style.setProperty("--p", p.toFixed(4));
-    root.style.setProperty("--knock", (1 - ease(range(p, 0.18, 0.42))).toFixed(4));
-    root.style.setProperty("--letters", ease(range(p, 0, 0.3)).toFixed(4));
-    root.style.setProperty("--sweep", range(p, 0.38, 0.6).toFixed(4));
-    root.style.setProperty("--strip", ease(range(p, 0.48, 0.66)).toFixed(4));
-
-    const overflow = Math.max(0, track.scrollWidth - strip.clientWidth);
-    const slide = ease(range(p, 0.66, 0.96));
-    track.style.transform = `translate3d(${(-overflow * slide).toFixed(1)}px,0,0)`;
-
-    if (ready && duration) {
-      targetTime = clamp(p / 0.9) * (duration - 0.05);
-      if (!video.seeking && Math.abs(video.currentTime - targetTime) > 1 / 30) {
-        video.currentTime = targetTime;
-      }
+    const y = -root.getBoundingClientRect().top;
+    const q = clamp(y / (A * vh));
+    const r = clamp((y - A * vh) / (B * vh));
+    root.style.setProperty("--ph", q >= 0.94 ? "1" : "0");
+    strip.style.transform = `translate3d(${(vw - r * (stripW + 0.45 * vw)).toFixed(1)}px,0,0)`;
+    letters.style.transform = `translate3d(${(vw - r * (lettersW + vw)).toFixed(1)}px,0,0)`;
+    for (const card of cards) {
+      const left = card.getBoundingClientRect().left;
+      const s = clamp((0.98 - left / vw) / 0.3, -0.4, 1.6) * 100;
+      card.style.setProperty("--s", `${s.toFixed(1)}%`);
     }
+    let moving = false;
+    if (duration) {
+      target = q * (duration - 1 / 48);
+      cur += (target - cur) * 0.2;
+      if (Math.abs(target - cur) > 0.0005) moving = true;
+      else cur = target;
+      if (!video.seeking && Math.abs(video.currentTime - cur) > 1 / 60) video.currentTime = cur;
+    }
+    if (moving && inView) schedule();
   };
 
-  const schedule = () => {
-    if (!raf) raf = requestAnimationFrame(update);
-  };
+  function schedule(): void {
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
 
-  video.addEventListener("seeked", () => {
-    if (Math.abs(video.currentTime - targetTime) > 1 / 30) schedule();
-  });
+  frame();
+  if (reduced) {
+    root.classList.add("is-static", "is-still");
+    window.addEventListener("resize", frame);
+    return;
+  }
+  root.classList.add("is-scroll");
+
+  new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) load();
+    },
+    { rootMargin: "900px 0px" },
+  ).observe(root);
+  new IntersectionObserver((entries) => {
+    inView = entries.some((entry) => entry.isIntersecting);
+    if (inView) schedule();
+  }).observe(root);
 
   window.addEventListener("scroll", schedule, { passive: true });
-  window.addEventListener("resize", schedule);
+  window.addEventListener("resize", () => {
+    frame();
+    schedule();
+  });
+  document.fonts?.ready.then(() => {
+    frame();
+    schedule();
+  });
   schedule();
 }
