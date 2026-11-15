@@ -35,7 +35,8 @@ export function mountFreight(root: HTMLElement): void {
     if (loaded) return;
     loaded = true;
     const narrow = window.matchMedia("(max-width: 899px)").matches;
-    video.src = narrow ? "/media/freight-720.mp4" : "/media/freight-1080.mp4";
+    const h264 = video.canPlayType('video/mp4; codecs="avc1.640028"') !== "";
+    video.src = !h264 ? "/media/freight-720.webm" : narrow ? "/media/freight-720.mp4" : "/media/freight-1080.mp4";
     video.muted = true;
     video.preload = "auto";
     const timeout = window.setTimeout(() => {
