@@ -155,6 +155,11 @@ async function start(root: HTMLElement, canvas: HTMLCanvasElement): Promise<void
     return;
   }
   const reduced = prefersReducedMotion();
+  // If a shader still fails on this GPU, show the static tile disc instead of an empty square.
+  renderer.debug.onShaderError = () => {
+    root.classList.remove("is-live", "is-loading");
+    root.classList.add("is-static");
+  };
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -247,6 +252,9 @@ async function start(root: HTMLElement, canvas: HTMLCanvasElement): Promise<void
       depthWrite: true,
       premultipliedAlpha: true,
       side: THREE.FrontSide,
+      // fwidth() needs OES_standard_derivatives on WebGL1 laptops (blocklisted or older GPUs).
+      // Without it the shader fails to compile and the globe renders blank.
+      extensions: { derivatives: true } as unknown as import("three").ShaderMaterial["extensions"],
     });
     const mesh = new THREE.Mesh(geometry, material);
     if (!reduced) mesh.scale.setScalar(0.9);

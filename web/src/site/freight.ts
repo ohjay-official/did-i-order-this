@@ -16,7 +16,7 @@ function prefersReducedMotion(): boolean {
 
 export function mountFreight(root: HTMLElement): void {
   const scene = root.querySelector<HTMLElement>("[data-freight-scene]");
-  const video = root.querySelector<HTMLVideoElement>("[data-freight-video]");
+  const video = root.querySelector<HTMLCanvasElement>("[data-freight-video]");
   const still = root.querySelector<HTMLImageElement>("[data-freight-still]");
   const strip = root.querySelector<HTMLElement>("[data-freight-strip]");
   const letters = root.querySelector<HTMLElement>("[data-freight-letters]");
@@ -29,7 +29,12 @@ export function mountFreight(root: HTMLElement): void {
   let B = 1;
   let stripW = 0;
   let lettersW = 0;
-  let duration = 0;
+  const FRAMES = 97;
+  const images: (HTMLImageElement | null)[] = new Array(FRAMES).fill(null);
+  let ready = false;
+  let drawn = -1;
+  let cardOffsets: number[] = [];
+  const ctx2d = video.getContext("2d");
   let cur = 0;
   let target = 0;
   let raf = 0;
@@ -74,6 +79,11 @@ export function mountFreight(root: HTMLElement): void {
       return;
     }
     stripW = strip.scrollWidth;
+    const prev = strip.style.transform;
+    strip.style.transform = "none";
+    const base = strip.getBoundingClientRect().left;
+    cardOffsets = cards.map((c) => c.getBoundingClientRect().left - base);
+    strip.style.transform = prev;
     lettersW = letters.scrollWidth;
     B = (stripW + (1 - REST) * vw) / vw;
     root.style.height = `${((1 + Math.max(A, OVERLAP * A + B)) * vh).toFixed(0)}px`;
@@ -81,31 +91,57 @@ export function mountFreight(root: HTMLElement): void {
 
   const useStill = () => root.classList.add("is-still");
 
+  // The clip is drawn from a WebP frame sequence onto a canvas. Seeking a <video> on
+  // every scroll frame stalls on many phones and laptops; drawing a decoded image does not.
   const load = () => {
-    if (loaded) return;
+    if (loaded || !ctx2d) {
+      if (!ctx2d) useStill();
+      return;
+    }
     loaded = true;
-    const h264 = video.canPlayType('video/mp4; codecs="avc1.640028"') !== "";
-    video.src = !h264 ? "/media/handling-720.webm" : vw <= 900 ? "/media/handling-720.mp4" : "/media/handling-1080.mp4";
-    video.preload = "auto";
-    video.muted = true;
-    const timeout = window.setTimeout(() => {
-      if (!duration) useStill();
-    }, 10000);
-    video.addEventListener(
-      "loadedmetadata",
-      () => {
-        window.clearTimeout(timeout);
-        duration = video.duration || 4.04;
-        root.classList.remove("is-still");
-        schedule();
-      },
-      { once: true },
-    );
-    video.addEventListener("error", useStill, { once: true });
-    video.addEventListener("seeked", () => {
-      if (Math.abs(video.currentTime - cur) > 1 / 60) schedule();
-    });
-    video.load();
+    const dir = vw <= 900 ? "/media/freight-960/" : "/media/freight-1280/";
+    let failed = 0;
+    const fetchFrame = (i: number) =>
+      new Promise<void>((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = `${dir}f${String(i + 1).padStart(3, "0")}.webp`;
+        img
+          .decode()
+          .then(() => {
+            images[i] = img;
+            if (!ready) {
+              ready = true;
+              video.width = img.naturalWidth;
+              video.height = img.naturalHeight;
+              root.classList.remove("is-still");
+            }
+            schedule();
+          })
+          .catch(() => {
+            failed += 1;
+            if (failed > 8 && !ready) useStill();
+          })
+          .finally(resolve);
+      });
+    // First and last frames first, then every 8th, then the rest, six at a time.
+    const order: number[] = [0, FRAMES - 1];
+    for (const step of [8, 4, 2, 1]) for (let i = 0; i < FRAMES; i += step) if (!order.includes(i)) order.push(i);
+    let next = 0;
+    const worker = async () => {
+      while (next < order.length) await fetchFrame(order[next++]);
+    };
+    for (let k = 0; k < 6; k++) void worker();
+  };
+
+  const nearest = (i: number): HTMLImageElement | null => {
+    for (let d = 0; d < FRAMES; d++) {
+      const a = images[i - d];
+      if (a) return a;
+      const b = images[i + d];
+      if (b) return b;
+    }
+    return null;
   };
 
   const tick = () => {
@@ -116,18 +152,24 @@ export function mountFreight(root: HTMLElement): void {
     root.style.setProperty("--ph", clamp((q - 0.82) / 0.14).toFixed(3));
     strip.style.transform = `translate3d(${(vw - r * (stripW + (1 - REST) * vw)).toFixed(1)}px,0,0)`;
     letters.style.transform = `translate3d(${(vw - r * (lettersW + vw)).toFixed(1)}px,0,0)`;
-    for (const card of cards) {
-      const left = card.getBoundingClientRect().left;
+    const stripX = vw - r * (stripW + (1 - REST) * vw);
+    cards.forEach((card, i) => {
+      const left = stripX + (cardOffsets[i] ?? 0);
       const s = clamp((0.98 - left / vw) / 0.14, -0.4, 1.6) * 100;
       card.style.setProperty("--s", `${s.toFixed(1)}%`);
-    }
+    });
     let moving = false;
-    if (duration) {
-      target = q * (duration - 1 / 48);
-      cur += (target - cur) * 0.2;
-      if (Math.abs(target - cur) > 0.0005) moving = true;
+    if (ready && ctx2d) {
+      target = q * (FRAMES - 1);
+      cur += (target - cur) * 0.35;
+      if (Math.abs(target - cur) > 0.02) moving = true;
       else cur = target;
-      if (!video.seeking && Math.abs(video.currentTime - cur) > 1 / 60) video.currentTime = cur;
+      const i = Math.round(cur);
+      const img = images[i] ?? nearest(i);
+      if (img && (i !== drawn || !images[i])) {
+        ctx2d.drawImage(img, 0, 0, video.width, video.height);
+        if (images[i]) drawn = i;
+      }
     }
     if (moving && inView) schedule();
   };

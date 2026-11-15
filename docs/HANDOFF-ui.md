@@ -33,7 +33,7 @@ Stack: TypeScript, Vite 7 multi-page app (no framework), plain CSS, three 0.160.
 
 **CSS cascade:** `web/src/styles-v6.css` imports `styles-v5.css`, which imports `styles.css`. All three are live. v6 overrides v5 overrides base.
 
-**Assets:** `web/public/` (favicons, `site.webmanifest`, `og.jpg`, `og/`, `brand/` lockups, `fonts/`, `media/` with the globe atlas, hands, and the freight clip `handling-720.mp4`, `handling-1080.mp4`, `handling-720.webm`, posters), `hero-desk.jpg/.webp`.
+**Assets:** `web/public/` (favicons, `site.webmanifest`, `og.jpg`, `og/`, `brand/` lockups, `fonts/`, `media/` with the globe atlas, hands, and the freight clip as WebP frame sequences in `freight-1280/` and `freight-960/` drawn to a canvas, plus `handling-end.jpg` as the still), `hero-desk.jpg/.webp`.
 
 **Extension UI:** `extension/sidepanel.html` (inline `<style>`), `extension/src/sidepanel.ts` (render and check flow), `extension/icons/`. Non-UI extension files: `background.ts`, `content.ts`, `extract.ts`, `messages.ts`, `ledger.ts`, `manifest.json`, `build.mjs`, `package.mjs`.
 
