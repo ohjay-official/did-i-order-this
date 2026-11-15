@@ -39,6 +39,7 @@ It prints `PASS` or `FAIL` per check and exits non-zero on any failure.
 ## Proof it's real
 
 - **On-device run on a public GitHub runner:** [nano-film run 43219012008](https://github.com/ohjay-official/nano-film/actions/runs/43219012008) (12 Nov) loaded the live `/app/` page in Chrome with Gemini Nano and got the label "Checked on this device". Re-run on 15 Nov after the security and error-handling changes: [nano-film run 43682923396](https://github.com/ohjay-official/nano-film/actions/runs/43682923396), Chrome 157, label "Checked on this device", headline "You're not expecting any parcel right now.", no cloud consent needed. The workflow is in `.github/workflows/on-device-demo.yml`; private 2 vCPU runners cannot run Nano, so the proof runs from the public `nano-film` repo.
+- **Extension on-device run on a public GitHub runner:** [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643) (15 Nov) downloaded the live judge zip, loaded it unpacked into Chrome 157 with Gemini Nano, opened the side panel on a local Gmail-thread fixture, and got the label "Checked on this device" (`inferenceSource` `on_device`), headline "You're not expecting any parcel right now.", no cloud consent. The runner adds `http://127.0.0.1:8123/*` to the installed manifest's content script matches because it cannot sign into Gmail; the JavaScript in the zip is unchanged. Workflow: `ohjay-official/nano-film`, `.github/workflows/extension-on-device.yml`.
 - **Tests:** 85 unit tests (core 51, web 29, extension 5), run by `npm test`. Core verdict engine coverage is gated at 95% statements and 85% branches in `packages/core/vitest.config.ts`.
 - **CI:** `.github/workflows/ci.yml` runs `npm run verify -- --offline` on every push to `main`.
 - **Lighthouse (mobile, production, 15 Nov, after the security headers went live):** Accessibility, Best Practices and SEO 100 on all 9 routes; Performance 84 on the home page and 100 on the other 8.
@@ -65,7 +66,7 @@ It prints `PASS` or `FAIL` per check and exits non-zero on any failure.
 | Paste your own email and check it | Works |
 | Import order history (Amazon ZIP or CSV, PayPal CSV, generic CSV), parsed in the browser | Works |
 | Save a shipment from a "your order has shipped" email | Works |
-| Chrome extension side panel on an open Gmail thread | Works when sideloaded; on-device only, never calls the cloud. On-device run inside the extension has not been filmed yet |
+| Chrome extension side panel on an open Gmail thread | Works when sideloaded; on-device only, never calls the cloud. Proven on a public runner (link above). The runner uses a local Gmail-thread fixture, not a signed-in mail.google.com session |
 | Chrome Web Store listing | Not done. Planned |
 | Screenshots, `.eml` files, SMS or phone texts | Not supported |
 | Outlook, Yahoo or other webmail in the extension | Not supported (Gmail only) |

@@ -87,7 +87,7 @@ Lighthouse mobile on production after the backend pass: Accessibility, Best Prac
 - **`/how-it-works/`:** content complete; the pinned "How it works" treatment is still open.
 - **`/features/`, `/pricing/`, `/faq/`, `/about/`, `/privacy/`:** complete, v6 shell, CTA above the fold.
 - **`/extension/`:** describes sideloading from the repo folder. It has no download button yet, although the zip now exists at `/downloads/did-i-order-this-extension-0.1.0.zip`.
-- **Extension side panel:** works (checked on 15 Nov by loading it next to the Gmail fixture). Styled inline in `sidepanel.html`; the on-device verdict inside the extension has not been filmed.
+- **Extension side panel:** works (checked on 15 Nov by loading it next to the Gmail fixture). Styled inline in `sidepanel.html`. On-device verdict filmed on a public runner: [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643), label "Checked on this device", `inferenceSource` `on_device`. The runner used a local Gmail-thread fixture (manifest match added at test time); the zip JavaScript was unchanged.
 
 ## 8. Open UI items
 
@@ -95,13 +95,13 @@ Lighthouse mobile on production after the backend pass: Accessibility, Best Prac
 2. A picture or GIF for the top of the README. A still is at `docs/media/sample-inbox-verdict.png`; a short GIF of the sample-inbox flow would be better.
 3. `/app/` as a bigger dashboard.
 4. The pinned "How it works" section.
-5. Film the extension verdict ("Checked on this device" in the side panel on a Gmail thread).
+5. Optional for the demo film: a polished clip of the side panel on a real signed-in Gmail thread. The on-device proof itself is done (nano-film run 43685102643, local Gmail-thread fixture, "Checked on this device").
 6. An extension download button on `/extension/` that links to `/downloads/did-i-order-this-extension-0.1.0.zip` and updates the sideload steps (download, unzip, Load unpacked). The README already documents this path.
 7. Keep the no-sideways-scroll audit green at 375 and 390 on all 10 routes.
 
 ## 9. Selectors the on-device film run needs (do not break)
 
-The public proof workflow (`ohjay-official/nano-film`, `e2e/on-device.mjs`, also in this repo under `e2e/`) drives the live `/app/` page and the extension. Keep these exactly:
+The public proof workflows in `ohjay-official/nano-film` (`on-device-demo.yml` for the live `/app/` page, `extension-on-device.yml` for the judge zip) share `e2e/on-device.mjs` (also in this repo under `e2e/`). Keep these exactly:
 
 - `[data-action=check]`, `[data-thread="thread-1-carrier-lure"]`, `[data-action=consent-yes]`
 - `.source-label`, `.outcome`, `.headline` and `.result h2`
@@ -146,7 +146,7 @@ A live cloud check needs a headed Chrome (reCAPTCHA Enterprise rejects headless 
 - `/home/box/hackathons/buildhybridai-2026/`: `spec.md`, `rules.md`, `brief.md`, `brief-v6.txt`, `demo-script.md`, `HANDOFF-to-Grok.md`.
 - UI rounds: `ui-v1/` to `ui-v6-2/` (v6.2 has `checklist.md`, `lighthouse-scores.md`, `lighthouse/*.html`).
 - Logo: `logo/` (`concept-sheet.png`, `concepts/`, `final/`).
-- On-device proof: `evidence/on-device-demo-43219012008/` and `evidence/on-device-demo-43682923396/` (15 Nov re-run: "Checked on this device") and <https://github.com/ohjay-official/nano-film/actions>.
+- On-device proof: `evidence/on-device-demo-43219012008/` and `evidence/on-device-demo-43682923396/` (15 Nov site re-run: "Checked on this device"). Extension proof: `evidence/extension-on-device-43685102643/` and <https://github.com/ohjay-official/nano-film/actions/runs/43685102643>. All runs: <https://github.com/ohjay-official/nano-film/actions>.
 - README: `README.md` in the repo (rewritten 15 Nov; the film link is the only placeholder).
 
 ## 14. Non-UI items waiting on Oh-Jay (not for Claude to do)
@@ -155,4 +155,4 @@ A live cloud check needs a headed Chrome (reCAPTCHA Enterprise rejects headless 
 - Make the repo public (about 28 Nov) and show Apache-2.0 in the About box. The README repo link only works after that.
 - Confirm the rights to the supplied media (hero desk photo, globe texture, hands, freight clip) before the repo goes public.
 - Decide whether the downloadable extension zip may carry the Firebase web config. It holds the same public web API key that the live site's JavaScript already serves (key locked to the site's referrer, no reCAPTCHA key). The rules forbid production API keys in the repo, form and testing instructions; the zip is a build output, not in the repo.
-- The on-device check inside the extension has not run on real Gemini Nano yet (the public runner only covers the hosted site). It needs a capable laptop or a public workflow that builds the extension once the repo is public.
+- Extension on-device proof is done: [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643). Caveat: the runner could not sign into Gmail, so it added a local fixture host to the installed manifest's content script matches. The zip JavaScript was unchanged.
