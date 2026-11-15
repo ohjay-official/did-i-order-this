@@ -511,7 +511,7 @@ body {
   height: 100vh;
   height: 100lvh;
   overflow: hidden;
-  background: linear-gradient(180deg, #fff 0, #fff var(--line-px, 80%), #111 var(--line-px, 80%), #111 100%);
+  background: linear-gradient(180deg, #fff 0, #fff var(--line-px, 80%), #151416 var(--line-px, 80%), #151416 100%);
   isolation: isolate;
 }
 
@@ -752,7 +752,7 @@ body {
   height: auto;
   min-height: 100vh;
   padding-top: var(--edge-px, 45vh);
-  background: linear-gradient(180deg, #fff 0, #fff var(--edge-px, 45vh), #111 var(--edge-px, 45vh));
+  background: linear-gradient(180deg, #fff 0, #fff var(--edge-px, 45vh), #151416 var(--edge-px, 45vh));
 }
 
 .freight.is-static .freight-letters {

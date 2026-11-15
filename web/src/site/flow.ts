@@ -25,7 +25,8 @@ function mountSlider(root: HTMLElement): void {
     const first = track.firstElementChild as HTMLElement | null;
     if (!first) return;
     running = true;
-    const distance = first.getBoundingClientRect().width;
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    const distance = first.getBoundingClientRect().width + gap;
     const anim = track.animate(
       [{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(${-distance}px,0,0)` }],
       { duration: 900, easing: "cubic-bezier(.65,0,.35,1)" },

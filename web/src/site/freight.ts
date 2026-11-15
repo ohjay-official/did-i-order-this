@@ -4,6 +4,10 @@
 // and read as passing behind the truck. The strip slides in on the dark band.
 
 const A = 2.4;
+// The strip starts while the clip is still finishing, so there is no frozen stretch.
+const OVERLAP = 0.9;
+// The strip stops with its last card resting on screen, then the section releases.
+const REST = 0.94;
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 function prefersReducedMotion(): boolean {
@@ -71,8 +75,8 @@ export function mountFreight(root: HTMLElement): void {
     }
     stripW = strip.scrollWidth;
     lettersW = letters.scrollWidth;
-    B = ((stripW + 0.45 * vw) / vw) * 1.1;
-    root.style.height = `${((1 + A + B) * vh).toFixed(0)}px`;
+    B = (stripW + (1 - REST) * vw) / vw;
+    root.style.height = `${((1 + Math.max(A, OVERLAP * A + B)) * vh).toFixed(0)}px`;
   };
 
   const useStill = () => root.classList.add("is-still");
@@ -108,9 +112,9 @@ export function mountFreight(root: HTMLElement): void {
     raf = 0;
     const y = -root.getBoundingClientRect().top;
     const q = clamp(y / (A * vh));
-    const r = clamp((y - A * vh) / (B * vh));
-    root.style.setProperty("--ph", q >= 0.94 ? "1" : "0");
-    strip.style.transform = `translate3d(${(vw - r * (stripW + 0.45 * vw)).toFixed(1)}px,0,0)`;
+    const r = clamp((y - OVERLAP * A * vh) / (B * vh));
+    root.style.setProperty("--ph", clamp((q - 0.82) / 0.14).toFixed(3));
+    strip.style.transform = `translate3d(${(vw - r * (stripW + (1 - REST) * vw)).toFixed(1)}px,0,0)`;
     letters.style.transform = `translate3d(${(vw - r * (lettersW + vw)).toFixed(1)}px,0,0)`;
     for (const card of cards) {
       const left = card.getBoundingClientRect().left;

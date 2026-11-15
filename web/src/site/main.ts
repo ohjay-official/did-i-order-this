@@ -7,6 +7,7 @@ import { mountDots } from "./dots.ts";
 import { mountHiw } from "./hiw.ts";
 import { mountBelt } from "./belt.ts";
 import { mountPrivacyScroll } from "./privacy-scroll.ts";
+import { mountEd } from "./ed.ts";
 import "../styles-v6.css";
 import "../styles-v7.css";
 
@@ -18,5 +19,6 @@ mountDots(document);
 mountHiw(document);
 mountBelt(document);
 mountPrivacyScroll(document);
+mountEd(document);
 
 mountInsights();
