@@ -36,9 +36,15 @@ type CheckState =
   | { status: "error"; message: string; canLimited: boolean };
 
 export class InboxApp {
+  private static initialThread(threads: SampleThread[]): string {
+    const wanted = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("thread");
+    const hit = threads.find((thread) => thread.id === wanted);
+    return hit?.id ?? threads[0]?.id ?? "";
+  }
+
   private root: HTMLElement;
   private threads = sampleThreads;
-  private selectedId = this.threads[0]?.id ?? "";
+  private selectedId = InboxApp.initialThread(this.threads);
   private pasteText = "";
   private mode: "thread" | "paste" = "thread";
   private ledger: LedgerSnapshot = { orders: [], shipments: [], senders: [] };

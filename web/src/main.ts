@@ -1,5 +1,5 @@
 import { InboxApp } from "./ui/InboxApp.ts";
-import "./styles-v5.css";
+import "./styles-v6.css";
 
 const root = document.getElementById("app");
 if (!root) {

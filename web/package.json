@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@did-i-order-this/core": "*",
-    "firebase": "13.2.0"
+    "firebase": "13.2.0",
+    "three": "0.160.0"
   },
   "devDependencies": {
+    "@types/three": "0.160.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
     "vitest": "^3.2.4"

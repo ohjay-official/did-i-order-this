@@ -54,10 +54,13 @@
       </section>
 
       
-      <div class="below-hero">
-        <section class="bleed" aria-label="How the check decides">
+      <div class="below-hero landing-flow">
+        <div class="handoff handoff-ember" aria-hidden="true"></div>
+
+        <section class="flow-sec flow-decide" aria-label="How the check decides">
           <div class="bleed-inner">
             <div class="bleed-head">
+              <p class="flow-kicker">How the check decides</p>
               <h2>The email can look official. What you ordered is what counts.</h2>
               <p>In the default sample you are not expecting any parcel. An official-looking domain does not change that.</p>
             </div>
@@ -105,68 +108,92 @@
           </div>
         </section>
 
-        <section class="bleed is-raised" aria-label="Sample emails">
-          <div class="bleed-inner">
-            <div class="bleed-head">
-              <h2>The same check, across the sample inbox</h2>
-              <p>These are the fictional demo threads that ship in the product today, not testimonials and not a live mailbox.</p>
+        <section class="flow-sec flow-box" aria-labelledby="box-title">
+          <div class="bleed-inner box-grid">
+            <div class="box-head">
+              <p class="flow-kicker">The sample box</p>
+              <h2 id="box-title">Every tile is a screen from the sample inbox.</h2>
             </div>
-            <div class="gallery">
-              <article class="gallery-card">
-                <div class="gallery-visual"><article class="mock-email">
-  <p class="meta"><strong>From</strong> DHL Express Desk &lt;alerts@dhl-parcel-desk.example&gt;<br /><strong>Subject</strong> Your parcel is held. Pay the release fee.</p>
-  <p class="subject">Your parcel is held. Pay the release fee.</p>
-  <p class="body">Your parcel could not be delivered and is being held at a DHL facility. Tracking number: GM123456789012345. A customs release fee of $2.99 is due.</p>
-</article><div class="mock-verdict is-warning">
-  <p class="kicker">Warning</p>
-  <p class="headline">You're not expecting any parcel right now.</p>
-  <span class="stamp">Checked on this device</span>
-</div></div>
-                <div class="gallery-copy">
-                  <h3>Fake DHL release fee</h3>
-                  <p>A carrier-hold lure. The cited tracking number is not an expected parcel, so the verdict is Warning.</p>
-                </div>
-              </article>
-              <article class="gallery-card">
-                <div class="gallery-visual"><article class="mock-email">
-  <p class="meta"><strong>From</strong> UPS &lt;pkginfo@ups.com&gt;</p>
-  <p class="subject">UPS delivery update for 1Z999AA10123456784</p>
-  <p class="body">A delivery update is available for tracking number 1Z999AA10123456784. This is the genuine-looking carrier sample in the demo inbox.</p>
-</article></div>
-                <div class="gallery-copy">
-                  <h3>UPS delivery update</h3>
-                  <p>The wording looks like a real carrier update. It is still judged by the tracking number stored on this device, not by how official it looks.</p>
-                </div>
-              </article>
-              <article class="gallery-card">
-                <div class="gallery-visual"><article class="mock-email">
-  <p class="meta"><strong>From</strong> Northwind Outfitters</p>
-  <p class="subject">Your order has shipped</p>
-  <p class="body">Order NW-10482 has shipped with tracking number 1Z999AA10123456784.</p>
-</article></div>
-                <div class="gallery-copy">
-                  <h3>Store shipment notice</h3>
-                  <p>Northwind Outfitters cites an order and a tracking number. After you confirm, that shipment can be saved on this device.</p>
-                </div>
-              </article>
-              <article class="gallery-card">
-                <div class="gallery-visual"><article class="mock-email">
-  <p class="meta"><strong>From</strong> Streamhut Billing</p>
-  <p class="subject">Your Streamhut invoice is due</p>
-  <p class="body">Invoice INV-88931 is due for your Streamhut renewal.</p>
-</article></div>
-                <div class="gallery-copy">
-                  <h3>Subscription renewal</h3>
-                  <p>Streamhut Billing cites invoice INV-88931. Renewals are checked against a stored order or invoice number, not a scam score.</p>
-                </div>
-              </article>
+            <div class="globe" data-globe>
+              <canvas class="globe-canvas" data-globe-canvas aria-hidden="true"></canvas>
+              <div class="globe-fallback" aria-hidden="true"><span class="tile-img" style="background-position:0.000% 0.000%"></span><span class="tile-img" style="background-position:33.333% 0.000%"></span><span class="tile-img" style="background-position:66.667% 0.000%"></span><span class="tile-img" style="background-position:100.000% 0.000%"></span><span class="tile-img" style="background-position:33.333% 33.333%"></span><span class="tile-img" style="background-position:66.667% 33.333%"></span><span class="tile-img" style="background-position:100.000% 33.333%"></span><span class="tile-img" style="background-position:0.000% 66.667%"></span><span class="tile-img" style="background-position:33.333% 66.667%"></span><span class="tile-img" style="background-position:33.333% 100.000%"></span><span class="tile-img" style="background-position:100.000% 66.667%"></span><span class="tile-img" style="background-position:66.667% 100.000%"></span></div>
+              <p class="globe-hint" aria-hidden="true">Drag to spin</p>
             </div>
+            <div class="box-letter">
+              <div class="letter">
+                <p class="letter-greet">To whoever has a parcel email open right now,</p>
+                <p>Spin the globe. Each tile is a real crop of the product: the fake DHL hold, the UPS update, a Streamhut renewal, the numbers they cite, and the verdict the code gave each one.</p>
+                <p>You will not find a scam score on it. The check asks one question: does the number in this email match something you ordered and saved on this device?</p>
+                <p>In the sample, no parcel is expected yet, so even the real UPS email gets a Warning. Save the Northwind shipment and that same UPS email comes back Safe.</p>
+                <p class="letter-sign"><span>Oh-Jay</span>Building Did I Order This? for #BuildHybridAI 2026</p>
+              </div>
+            </div>
+          </div>
+          <div class="cases" data-slider aria-label="Sample cases">
+            <ul class="cases-track" data-slider-track>
+              <li class="case-card">
+                <a href="/app/?thread=thread-1-carrier-lure">
+                  <span class="tile-img" style="background-position:0.000% 0.000%"></span>
+                  <span class="case-body">
+                    <span class="case-pill is-warning">Warning</span>
+                    <span class="case-title">Fake DHL release fee</span>
+                    <span class="case-text">A carrier-hold lure from dhl-parcel-desk.example asks for $2.99. Its tracking number matches nothing you expect.</span>
+                    <span class="case-link">Open it in the sample inbox</span>
+                  </span>
+                </a>
+              </li>
+              <li class="case-card">
+                <a href="/app/?thread=thread-3-safe-carrier">
+                  <span class="tile-img" style="background-position:100.000% 0.000%"></span>
+                  <span class="case-body">
+                    <span class="case-pill is-warning">Warning, then Safe</span>
+                    <span class="case-title">Real UPS update</span>
+                    <span class="case-text">Sent from ups.com, which is official. It still gets Warning until you save the Northwind shipment it matches.</span>
+                    <span class="case-link">Open it in the sample inbox</span>
+                  </span>
+                </a>
+              </li>
+              <li class="case-card">
+                <a href="/app/?thread=thread-2-shipment-notice">
+                  <span class="tile-img" style="background-position:33.333% 33.333%"></span>
+                  <span class="case-body">
+                    <span class="case-pill is-neutral">Neutral</span>
+                    <span class="case-title">Northwind shipment notice</span>
+                    <span class="case-text">A store notice citing order NW-10482. Confirm it and the shipment is saved on this device.</span>
+                    <span class="case-link">Open it in the sample inbox</span>
+                  </span>
+                </a>
+              </li>
+              <li class="case-card">
+                <a href="/app/?thread=thread-4-neutral-renewal">
+                  <span class="tile-img" style="background-position:100.000% 33.333%"></span>
+                  <span class="case-body">
+                    <span class="case-pill is-neutral">Neutral</span>
+                    <span class="case-title">Streamhut renewal</span>
+                    <span class="case-text">Invoice INV-88931 from a sender you have no history with. Not an alarm, just a heads up.</span>
+                    <span class="case-link">Open it in the sample inbox</span>
+                  </span>
+                </a>
+              </li>
+              <li class="case-card">
+                <a href="/app/?thread=thread-5-wrong-tracking">
+                  <span class="tile-img" style="background-position:33.333% 66.667%"></span>
+                  <span class="case-body">
+                    <span class="case-pill is-warning">Warning</span>
+                    <span class="case-title">DHL duty, wrong number</span>
+                    <span class="case-text">Another duty demand, another tracking number nobody ordered: GM999888777666555.</span>
+                    <span class="case-link">Open it in the sample inbox</span>
+                  </span>
+                </a>
+              </li>
+            </ul>
           </div>
         </section>
 
-        <section class="bleed" aria-label="Compared with other options">
+        <section class="flow-sec flow-compare" aria-label="Compared with other options">
           <div class="bleed-inner">
             <div class="bleed-head">
+              <p class="flow-kicker">What it is not</p>
               <h2>Compared with a spam folder, or with guessing</h2>
               <p>This product does not replace your mail app. It answers a narrower question: does this claim match what you ordered?</p>
             </div>
@@ -182,34 +209,34 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Checks a cited tracking or order number against your records</td>
-                    <td class="is-yes">Yes, against orders stored on this device</td>
-                    <td class="is-no">No</td>
-                    <td class="is-no">Only if you look them up by hand</td>
+                    <td class="q">Checks a cited tracking or order number against your records</td>
+                    <td data-label="Did I Order This?" class="is-yes">Yes, against orders stored on this device</td>
+                    <td data-label="A spam filter" class="is-no">No</td>
+                    <td data-label="Reading it yourself" class="is-no">Only if you look them up by hand</td>
                   </tr>
                   <tr>
-                    <td>Starts the AI read on this device</td>
-                    <td class="is-yes">Yes</td>
-                    <td class="is-no">Mail is usually processed on a server</td>
-                    <td class="is-no">No AI step</td>
+                    <td class="q">Starts the AI read on this device</td>
+                    <td data-label="Did I Order This?" class="is-yes">Yes</td>
+                    <td data-label="A spam filter" class="is-no">Mail is usually processed on a server</td>
+                    <td data-label="Reading it yourself" class="is-no">No AI step</td>
                   </tr>
                   <tr>
-                    <td>Sends the email to a server only after you agree</td>
-                    <td class="is-yes">Yes, and only on the hosted site</td>
-                    <td class="is-no">Not in your control</td>
-                    <td class="is-yes">Nothing is sent</td>
+                    <td class="q">Sends the email to a server only after you agree</td>
+                    <td data-label="Did I Order This?" class="is-yes">Yes, and only on the hosted site</td>
+                    <td data-label="A spam filter" class="is-no">Not in your control</td>
+                    <td data-label="Reading it yourself" class="is-yes">Nothing is sent</td>
                   </tr>
                   <tr>
-                    <td>Labels where the check ran</td>
-                    <td class="is-yes">On this device, in the cloud, limited, or not completed</td>
-                    <td class="is-no">No</td>
-                    <td class="is-no">No</td>
+                    <td class="q">Labels where the check ran</td>
+                    <td data-label="Did I Order This?" class="is-yes">On this device, in the cloud, limited, or not completed</td>
+                    <td data-label="A spam filter" class="is-no">No</td>
+                    <td data-label="Reading it yourself" class="is-no">No</td>
                   </tr>
                   <tr>
-                    <td>Scans your whole inbox</td>
-                    <td class="is-no">No. One pasted email, or the Gmail thread that is open</td>
-                    <td class="is-no">It already sees the mailbox</td>
-                    <td class="is-yes">You choose what to open</td>
+                    <td class="q">Scans your whole inbox</td>
+                    <td data-label="Did I Order This?" class="is-no">No. One pasted email, or the Gmail thread that is open</td>
+                    <td data-label="A spam filter" class="is-no">It already sees the mailbox</td>
+                    <td data-label="Reading it yourself" class="is-yes">You choose what to open</td>
                   </tr>
                 </tbody>
               </table>
@@ -217,15 +244,74 @@
           </div>
         </section>
 
-        <section class="bleed is-warm" aria-label="Open the sample inbox">
+        <section class="flow-sec flow-same" aria-label="The same check across the sample inbox">
           <div class="bleed-inner">
             <div class="bleed-head">
-              <h2>Try it on the sample inbox</h2>
-              <p>The hosted inbox includes the DHL hold thread and the other demo messages. No account is required.</p>
+              <p class="flow-kicker">One rule, every email</p>
+              <h2>The same check, across the sample inbox</h2>
+              <p>Fictional demo threads that ship in the product today, not testimonials and not a live mailbox. Each one is judged by the number it cites.</p>
             </div>
-            <div class="cta-row">
-              <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
-              <a class="btn btn-ghost" href="/how-it-works/">See a check taken apart</a>
+            <ol class="ledger">
+              <li class="ledger-row">
+                <span class="ledger-from"><strong>DHL Express Desk</strong><span>Your parcel is held. Pay the release fee.</span></span>
+                <span class="ledger-cell" data-label="Cites">GM123456789012345</span>
+                <span class="ledger-cell" data-label="On this device">No expected parcel</span>
+                <span class="case-pill is-warning">Warning</span>
+              </li>
+              <li class="ledger-row">
+                <span class="ledger-from"><strong>UPS</strong><span>UPS delivery update</span></span>
+                <span class="ledger-cell" data-label="Cites">1Z999AA10123456784</span>
+                <span class="ledger-cell" data-label="On this device">No expected parcel yet</span>
+                <span class="case-pill is-warning">Warning</span>
+              </li>
+              <li class="ledger-row">
+                <span class="ledger-from"><strong>Northwind Outfitters</strong><span>Your order has shipped</span></span>
+                <span class="ledger-cell" data-label="Cites">NW-10482</span>
+                <span class="ledger-cell" data-label="On this device">New shipment, confirm to save</span>
+                <span class="case-pill is-neutral">Neutral</span>
+              </li>
+              <li class="ledger-row">
+                <span class="ledger-from"><strong>UPS, after saving</strong><span>UPS delivery update</span></span>
+                <span class="ledger-cell" data-label="Cites">1Z999AA10123456784</span>
+                <span class="ledger-cell" data-label="On this device">Matches the saved shipment</span>
+                <span class="case-pill is-safe">Safe</span>
+              </li>
+              <li class="ledger-row">
+                <span class="ledger-from"><strong>Streamhut Billing</strong><span>Your Streamhut invoice is due</span></span>
+                <span class="ledger-cell" data-label="Cites">INV-88931</span>
+                <span class="ledger-cell" data-label="On this device">No history with sender</span>
+                <span class="case-pill is-neutral">Neutral</span>
+              </li>
+            </ol>
+          </div>
+          <div class="sun" aria-hidden="true"></div>
+        </section>
+
+        <section class="freight" data-freight aria-labelledby="freight-title">
+          <div class="freight-sticky">
+            <div class="freight-media" aria-hidden="true">
+              <img class="freight-poster" src="/media/freight-poster.jpg" alt="" loading="lazy" decoding="async" />
+              <video class="freight-video" data-freight-video muted playsinline preload="none" poster="/media/freight-poster.jpg"></video>
+            </div>
+            <div class="freight-knock" aria-hidden="true"><span>CHECK</span><span>IT</span></div>
+            <div class="freight-shade" aria-hidden="true"></div>
+            <div class="freight-band" aria-hidden="true"><div class="freight-sweep"></div></div>
+            <div class="freight-strip" data-freight-strip>
+              <div class="freight-head">
+                <p class="flow-kicker">Sample inbox</p>
+                <h2 id="freight-title">Try it on the sample inbox</h2>
+                <p>Five fictional emails are already loaded. No account, nothing to install.</p>
+              </div>
+              <ol class="freight-cards" data-freight-track>
+                <li class="freight-card"><span class="fc-step">01</span><strong>Pick a thread</strong><span>Start with the DHL hold that wants $2.99.</span></li>
+                <li class="freight-card"><span class="fc-step">02</span><strong>Check it</strong><span>The AI read starts on this device. Cloud only if you agree.</span></li>
+                <li class="freight-card"><span class="fc-step">03</span><strong>Read the stamp</strong><span>A verdict, the reasons, and where the check ran.</span></li>
+                <li class="freight-card"><span class="fc-step">04</span><strong>Save a shipment</strong><span>Confirm the Northwind notice, then check the UPS email again.</span></li>
+              </ol>
+              <div class="cta-row">
+                <a class="btn btn-primary" href="/app/">Open the sample inbox</a>
+                <a class="btn btn-ghost" href="/how-it-works/">See a check taken apart</a>
+              </div>
             </div>
           </div>
         </section>
