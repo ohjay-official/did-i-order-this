@@ -7,7 +7,8 @@
   "scripts": {
     "build": "node ./build.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "package": "node ./package.mjs"
   },
   "dependencies": {
     "@did-i-order-this/core": "*",
@@ -16,9 +17,10 @@
   "devDependencies": {
     "@types/chrome": "^0.1.24",
     "@types/jsdom": "^30.0.0",
+    "fflate": "^0.8.3",
     "jsdom": "^31.0.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.12"
   }
 }

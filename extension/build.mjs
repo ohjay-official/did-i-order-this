@@ -9,6 +9,10 @@ const alias = {
   "@did-i-order-this/core": path.resolve(root, "../packages/core/src/index.ts"),
 };
 
+// The extension never makes cloud AI calls and cannot run reCAPTCHA App Check
+// (reCAPTCHA keys are website-only), so the site key is never baked into it.
+process.env.VITE_FIREBASE_RECAPTCHA_SITE_KEY = "";
+
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 

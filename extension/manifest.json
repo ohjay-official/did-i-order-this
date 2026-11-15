@@ -2,14 +2,10 @@
   "manifest_version": 3,
   "name": "Did I Order This?",
   "version": "0.1.0",
-  "description": "Check a delivery email against the purchases and tracking numbers on this device.",
+  "description": "Checks the open Gmail thread against the orders and tracking numbers saved on this device.",
   "permissions": [
     "storage",
-    "sidePanel",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "https://mail.google.com/*"
+    "sidePanel"
   ],
   "background": {
     "service_worker": "background.js"
@@ -40,5 +36,6 @@
     "32": "icons/icon-32.png",
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
-  }
+  },
+  "minimum_chrome_version": "138"
 }

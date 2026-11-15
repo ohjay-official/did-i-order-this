@@ -12,10 +12,19 @@ import {
   type Verdict,
 } from "@did-i-order-this/core";
 import { readClaim } from "../../web/src/ai/readClaim.ts";
+import { describeAiError } from "../../web/src/ai/aiError.ts";
 import { isFirebaseConfigured } from "../../web/src/firebase/app.ts";
 import { getOfficialPack } from "../../web/src/packs/official.ts";
 import { clearLedger, loadLedger, saveOrder, saveSender, saveShipment } from "./ledger.ts";
-import { HOSTED_APP_URL, MESSAGE, type EmailTextMessage, type ExtractedEmail } from "./messages.ts";
+import {
+  HOSTED_APP_URL,
+  MESSAGE,
+  isTrustedSender,
+  manifestPrefixes,
+  sanitizeEmail,
+  type EmailTextMessage,
+  type ExtractedEmail,
+} from "./messages.ts";
 
 type ViewState =
   | { status: "idle" }
@@ -155,7 +164,7 @@ async function runCheck(): Promise<void> {
       saved: false,
     };
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "On-device AI is not available.";
+    const detail = `The AI read could not run. ${describeAiError(error)}`;
     view = {
       status: "error",
       message: `${detail} This extension does not send mail to the cloud. Open ${HOSTED_APP_URL} to check in the cloud after you agree, or run a limited check here.`,
@@ -225,10 +234,13 @@ async function start(): Promise<void> {
   try {
     if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
       const current = (await chrome.runtime.sendMessage({ type: MESSAGE.GET_EMAIL })) as EmailTextMessage | undefined;
-      if (current?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage(current);
+      if (current?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage({ ...current, email: sanitizeEmail(current.email) });
       else render();
-      chrome.runtime.onMessage.addListener((message: EmailTextMessage) => {
-        if (message?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage(message);
+      const prefixes = manifestPrefixes();
+      chrome.runtime.onMessage.addListener((message: EmailTextMessage, sender) => {
+        if (message?.type !== MESSAGE.EMAIL_TEXT) return;
+        if (!isTrustedSender(sender, chrome.runtime.id, prefixes)) return;
+        applyEmailMessage({ ...message, email: sanitizeEmail(message.email) });
       });
       return;
     }

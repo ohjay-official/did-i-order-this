@@ -11,3 +11,4 @@ coverage
 *.tsbuildinfo
 extension/dist
 e2e/out
+extension/release
