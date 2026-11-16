@@ -298,7 +298,10 @@ export class InboxApp {
       <div class="result result-${verdict.outcome}">
         <p class="outcome">${escapeHtml(verdict.outcome)}</p>
         <h2 class="headline">${escapeHtml(verdict.headline)}</h2>
-        <p class="source-label">${escapeHtml(verdict.inferenceSourceLabel)}</p>
+        ${
+          // Same as the homepage fallback: a prepared claim gets the note, not a source stamp.
+          usedSampleClaim ? "" : `<p class="source-label">${escapeHtml(verdict.inferenceSourceLabel)}</p>`
+        }
         ${
           usedSampleClaim
             ? `<p class="note">${escapeHtml(SAMPLE_NOTE)}</p>`
