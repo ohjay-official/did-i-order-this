@@ -2588,3 +2588,20 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
   filter: blur(4px);
   transform: translateZ(0);
 }
+
+/* Consent mock now carries the real dialog text: let its tile grow instead of clipping */
+.tile-visual:has(.mock-consent) {
+  height: auto;
+  max-height: none;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  overflow: visible;
+}
+
+.mock-consent p {
+  margin-bottom: 10px;
+}
+
+.mock-consent .btn-row {
+  margin-top: 14px;
+}
