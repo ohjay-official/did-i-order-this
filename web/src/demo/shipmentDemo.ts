@@ -50,3 +50,20 @@ export async function loadMatchingShipmentDemo(save: {
   if (sender) await save.sender(sender);
   return shipment;
 }
+
+export const CHIP_DEMO_NOTE =
+  "This chip stored the matching UPS shipment on this device first, as demo data. Reset demo data in the sample inbox removes it.";
+
+/**
+ * Homepage "Real UPS" chip: store the matching expected shipment before the
+ * check, so the chip shows the safe match instead of a warning on an empty
+ * ledger. Returns the note to show with the result, or "" for other chips.
+ */
+export async function prepareTryChip(
+  threadId: string,
+  save: Parameters<typeof loadMatchingShipmentDemo>[0],
+): Promise<string> {
+  if (threadId !== SHIPMENT_NEXT_THREAD_ID) return "";
+  await loadMatchingShipmentDemo(save);
+  return CHIP_DEMO_NOTE;
+}

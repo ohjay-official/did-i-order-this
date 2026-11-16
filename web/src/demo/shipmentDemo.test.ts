@@ -3,7 +3,9 @@ import { NOTHING_EXPECTED_HEADLINE, decideVerdict, type LedgerSender, type Ledge
 import { getOfficialPack } from "../packs/official.ts";
 import { demoSeed, sampleThreads } from "./seed.ts";
 import {
+  CHIP_DEMO_NOTE,
   DEMO_SHIPMENT_ID,
+  prepareTryChip,
   SHIPMENT_NEXT_THREAD_ID,
   hasMatchingShipmentDemo,
   loadMatchingShipmentDemo,
@@ -78,5 +80,23 @@ describe("Load the matching shipment demo", () => {
   it("a stored parcel that is not expected does not count as the demo", () => {
     const { shipment } = matchingShipmentDemo();
     expect(hasMatchingShipmentDemo({ shipments: [{ ...shipment, expected: false }] })).toBe(false);
+  });
+});
+
+describe("homepage Real UPS chip", () => {
+  it("stores the matching shipment first, so the chip comes back safe", async () => {
+    const store = fakeStore(demoSeed());
+    const note = await prepareTryChip("thread-3-safe-carrier", store.save);
+    expect(note).toBe(CHIP_DEMO_NOTE);
+    const verdict = decideVerdict(claimOf("thread-3-safe-carrier"), store.snapshot(), pack);
+    expect(verdict.outcome).toBe("safe");
+    expect(verdict.headline).toBe("This tracking number matches a shipment you are expecting.");
+  });
+
+  it("leaves the ledger alone for the other chips", async () => {
+    const store = fakeStore(demoSeed());
+    expect(await prepareTryChip("thread-1-carrier-lure", store.save)).toBe("");
+    expect(await prepareTryChip("thread-4-neutral-renewal", store.save)).toBe("");
+    expect(store.snapshot().shipments).toHaveLength(0);
   });
 });
