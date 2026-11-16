@@ -52,7 +52,7 @@ export async function loadMatchingShipmentDemo(save: {
 }
 
 export const CHIP_DEMO_NOTE =
-  "This chip stored the matching UPS shipment on this device first, as demo data. Reset demo data in the sample inbox removes it.";
+  "Demo data: before this check, the chip saved UPS parcel 1Z999AA10123456784 from the Northwind sample as an expected parcel on this device. Reset demo data in the sample inbox removes it.";
 
 /**
  * Homepage "Real UPS" chip: store the matching expected shipment before the

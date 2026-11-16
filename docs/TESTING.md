@@ -74,7 +74,7 @@ Paste an email that is not one of the samples and click **Check pasted email**. 
 On https://did-i-order-this.vercel.app, in a browser without on-device AI and with the default "on this device" mode:
 
 - **Fake DHL**: **You're not expecting any parcel right now.** with **On-device AI did not run in this browser. This check used the structured claim prepared for this sample.**
-- **Real UPS**: the chip first stores the matching UPS shipment. Expect **This tracking number matches a shipment you are expecting.** and **This chip stored the matching UPS shipment on this device first, as demo data. Reset demo data in the sample inbox removes it.**
+- **Real UPS**: the chip first stores the matching UPS shipment. Expect **This tracking number matches a shipment you are expecting.** and **Demo data: before this check, the chip saved UPS parcel 1Z999AA10123456784 from the Northwind sample as an expected parcel on this device. Reset demo data in the sample inbox removes it.**
 - After **Real UPS**, the **Fake DHL** chip says **This tracking number is not one of your shipments.**, because a parcel is now expected. **Reset demo data** in the sample inbox brings back the first headline.
 
 ## 5. Chrome extension (desktop Chrome 138 or later)
