@@ -2309,6 +2309,8 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
     display: flex;
     gap: 8px;
     width: 100%;
+    /* keeps the row's overflow out of the page's scroll width */
+    contain: paint;
     max-height: none;
     padding: 10px;
     overflow-x: auto;
