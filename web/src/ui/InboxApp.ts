@@ -24,6 +24,7 @@ import {
 import { SAMPLE_NOTE, runCheckFlow } from "./checkFlow.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
+import { importNoteText } from "../ledger/importNote.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { extractFromDomain } from "../site/emailText.ts";
 import { wireModalKeys } from "./dialogKeys.ts";
@@ -402,8 +403,10 @@ export class InboxApp {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const parsed = parseOrderHistoryFile({ name: file.name, bytes });
+      let newOrders = 0;
+      let newShipments = 0;
       for (const order of parsed.orders) {
-        await saveOrder(order);
+        if (await saveOrder(order)) newOrders += 1;
         const sender: LedgerSender = {
           domain: order.senderDomain,
           displayName: order.merchant,
@@ -413,11 +416,11 @@ export class InboxApp {
         };
         await saveSender(sender);
       }
-      for (const shipment of parsed.shipments) await saveShipment(shipment);
+      for (const shipment of parsed.shipments) {
+        if (await saveShipment(shipment)) newShipments += 1;
+      }
       this.ledger = await loadLedger();
-      const shipmentText =
-        parsed.shipments.length === 1 ? "1 shipment" : `${parsed.shipments.length} shipments`;
-      this.importNote = `Imported ${parsed.orders.length} orders and ${shipmentText} on this device. The file was not uploaded.`;
+      this.importNote = importNoteText(newOrders, newShipments, parsed.orders.length + parsed.shipments.length);
     } catch (error) {
       const message =
         error instanceof OrderHistoryParseError
