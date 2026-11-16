@@ -1,61 +1,79 @@
 # Did I Order This?
 
+**For judges:** open the [sample inbox](https://did-i-order-this.vercel.app/app/), click the first thread (**DHL Express Desk**, **Your parcel is held. Pay the release fee.**), click **Check this email**, and read the verdict. No login.
+
+<p align="center">
+  <img src="docs/images/sample-inbox-ready.png" width="260" alt="The sample inbox on the live site, captured at 390-pixel width: a fake DHL release-fee email with tracking number GM123456789012345 and the Check this email button.">
+</p>
+
 **Check a delivery or billing email against the orders and tracking numbers on your own device, before you click.**
 
-![The sample inbox on the live site: a fake DHL fee email gets "You're not expecting any parcel right now."](docs/media/sample-inbox-verdict.png)
+A parcel or billing email can ask you to pay a fee or open a link, and a fake DHL or UPS message can look like a real one. This app uses Firebase AI Logic to read what the email claims, then plain code checks that claim against the orders and tracking numbers stored on your device.
 
-**For judges:** open the [sample inbox](https://did-i-order-this.vercel.app/app/), click the first thread (DHL Express Desk), click **Check this email**, and read the verdict. No login, no extension, about 30 seconds.
+## Quick links
 
-| Live demo | Demo film | Repo | Extension zip |
-| --- | --- | --- | --- |
-| [did-i-order-this.vercel.app](https://did-i-order-this.vercel.app) | `[PLACEHOLDER: demo film link, added after filming]` | [ohjay-official/did-i-order-this](https://github.com/ohjay-official/did-i-order-this) | [did-i-order-this-extension-0.1.0.zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip) |
+- [Try the sample inbox](#try-it) on the live site. No account.
+- Watch the film: `TBD-post-build: film URL`
+- [Live site](https://did-i-order-this.vercel.app) and the [judge extension zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip)
+- [One-command check](#more-ways-to-test): `npm run verify` (Node 20 or later)
+- [Tracks and judging criteria](#tracks)
+- [How it was built](#built-during-buildhybridai-2026)
 
-## What's new here
+## Try It
 
-The AI does not judge the email. Firebase AI Logic reads what the email *claims* (who it says it is from, what it wants you to do, which number it cites), and plain code checks that claim against the orders and tracking numbers stored on your device. A fake parcel-fee email fails because you are not expecting a parcel, not because the wording looks scary.
+This is the live app at [did-i-order-this.vercel.app/app](https://did-i-order-this.vercel.app/app/). Nothing to install and no account. The page starts with demo data: **1 order and 0 expected parcels are stored on this device.**
 
-## Try it in 30 seconds
+1. Open that link in desktop Chrome.
+2. Click the thread **DHL Express Desk**, **Your parcel is held. Pay the release fee.**, then **Check this email**.
+3. If on-device AI is not available, a dialog asks **Check this email in the cloud?** It also says the cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it. Click **Check in the cloud**, or **Do not send** and then **Run a limited check (no AI)**.
+4. With AI you see **Warning** and **You're not expecting any parcel right now.**, plus **Checked on this device** or **Checked in the cloud**. The limited check says **Limited check only. This is not a full verdict.**
 
-Open <https://did-i-order-this.vercel.app/app/> in desktop Chrome. Nothing to install and no account. The page starts with demo data: one past order and no expected parcels ("1 order and 0 expected parcels are stored on this device.").
+You just saw a fake parcel-fee email fail because you are not expecting a parcel, not because the wording looks scary.
 
-1. Click the thread **DHL Express Desk, "Your parcel is held. Pay the release fee."**, then **Check this email**.
-2. If on-device AI is not available in your browser, a dialog asks **"Check this email in the cloud?"** Click **Check in the cloud** (or **Do not send**, then **Run a limited check (no AI)**).
-3. With AI you see **Warning** and **"You're not expecting any parcel right now."** with a label: **Checked on this device** or **Checked in the cloud**. The limited check instead says "Limited check only. This is not a full verdict." and lists what it found.
-4. Click **Northwind Outfitters, "Your order has shipped"**, check it, then click **Save this shipment**.
-5. Click **UPS, "UPS delivery update for 1Z999AA10123456784"** and check it: **"This tracking number matches a shipment you are expecting."**
-6. Click the second **DHL Express Desk** thread ("Duty payment required for your shipment"): **"This tracking number is not one of your shipments."**
-7. **Reset demo data** puts everything back.
+To check the code itself: `npm ci`, then `npm run verify`. It prints `PASS` or `FAIL` per check and exits non-zero on any failure. `npm run verify -- --offline` skips the live-site checks.
 
-**Check everything with one command** (Node 22.22 or later):
+**With the rest of the sample inbox**
 
-```bash
-npm ci
-npm run verify            # tests, coverage gate, typecheck, lint, build, zip, secrets scan, audit, live-site links
-npm run verify -- --offline   # same, without the live-site checks
-```
+If on-device AI is not available, the cloud consent dialog appears again for each check.
 
-It prints `PASS` or `FAIL` per check and exits non-zero on any failure.
+5. Click **Northwind Outfitters**, **Your order has shipped**, check it, then **Save this shipment**.
+6. Click **UPS**, **UPS delivery update for 1Z999AA10123456784**, and check it: **This tracking number matches a shipment you are expecting.**
+7. Click the second **DHL Express Desk** thread (**Duty payment required for your shipment**): **This tracking number is not one of your shipments.**
+8. **Reset demo data** puts everything back.
 
-## Proof it's real
+## Proof It's Real
 
-- **On-device run on a public GitHub runner:** [nano-film run 43219012008](https://github.com/ohjay-official/nano-film/actions/runs/43219012008) (12 Nov) loaded the live `/app/` page in Chrome with Gemini Nano and got the label "Checked on this device". Re-run on 15 Nov after the security and error-handling changes: [nano-film run 43682923396](https://github.com/ohjay-official/nano-film/actions/runs/43682923396), Chrome 157, label "Checked on this device", headline "You're not expecting any parcel right now.", no cloud consent needed. The workflow is in `.github/workflows/on-device-demo.yml`; private 2 vCPU runners cannot run Nano, so the proof runs from the public `nano-film` repo.
-- **Extension on-device run on a public GitHub runner:** [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643) (15 Nov) downloaded the live judge zip, loaded it unpacked into Chrome 157 with Gemini Nano, opened the side panel on a local Gmail-thread fixture, and got the label "Checked on this device" (`inferenceSource` `on_device`), headline "You're not expecting any parcel right now.", no cloud consent. The runner adds `http://127.0.0.1:8123/*` to the installed manifest's content script matches because it cannot sign into Gmail; the JavaScript in the zip is unchanged. Workflow: `ohjay-official/nano-film`, `.github/workflows/extension-on-device.yml`.
-- **Tests:** 85 unit tests (core 51, web 29, extension 5), run by `npm test`. Core verdict engine coverage is gated at 95% statements and 85% branches in `packages/core/vitest.config.ts`.
-- **CI:** `.github/workflows/ci.yml` runs `npm run verify -- --offline` on every push to `main`.
-- **Lighthouse (mobile, production, 15 Nov, after the security headers went live):** Accessibility, Best Practices and SEO 100 on all 9 routes; Performance 84 on the home page and 100 on the other 8.
-- **No real users yet.** Three testers are scheduled for 26 to 28 Nov.
+- **On-device run on a public GitHub runner:** [nano-film run 43682923396](https://github.com/ohjay-official/nano-film/actions/runs/43682923396) (15 Nov 2026) loaded the live `/app/` page in Chrome 157.0.8103.50 with Gemini Nano and got the label **Checked on this device**, headline **You're not expecting any parcel right now.**, no cloud consent. An earlier run on 12 Nov is [nano-film run 43219012008](https://github.com/ohjay-official/nano-film/actions/runs/43219012008). The workflow is in this repo at `.github/workflows/on-device-demo.yml`; private 2 vCPU runners cannot run Nano, so the proof runs from the public `ohjay-official/nano-film` repo.
+- **Extension on-device run on a public GitHub runner:** [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643) (15 Nov 2026) downloaded the live judge zip, loaded it unpacked into Chrome 157.0.8103.50 with Gemini Nano, opened the side panel on a local Gmail-thread fixture, and got **Checked on this device** (`inferenceSource` `on_device`), the same headline, and no cloud consent. The runner adds `http://127.0.0.1:8123/*` to the installed manifest's content script matches because it cannot sign into Gmail. The JavaScript in the zip is unchanged. Workflow: `ohjay-official/nano-film`, `.github/workflows/extension-on-device.yml`.
+- **Tests:** 85 unit tests (core 51, web 29, extension 5), re-run 16 Nov 2026 (Africa/Lagos). `npm test` runs them. Core verdict engine coverage the same day: 96.75% statements (417/431) and 89.23% branches (315/353), gated at 95% statements and 85% branches in `packages/core/vitest.config.ts`.
+- **CI:** `.github/workflows/ci.yml` runs `npm run verify -- --offline` on every push to `main` and on pull requests.
+- **Lighthouse** (mobile, production, 15 Nov 2026, after the security headers went live): Accessibility, Best Practices and SEO 100 on all 9 routes; Performance 84 on the home page and 100 on the other 8. Reports live in the build notes, not in this repo.
+- **No real users yet.** Three testers are scheduled for 26 to 28 Nov 2026.
 
-## Tracks and judging criteria
+## What's New Here
+
+**The AI does not judge the email.** Firebase AI Logic reads what the email claims (who it says it is from, what it wants you to do, which number it cites). Plain code then checks that claim against the orders and tracking numbers stored on your device.
+
+This is for people who get a delivery or billing email that asks them to pay or click, and who want to check that claim without sending their inbox to a server. No usage numbers yet.
+
+- **A fake parcel-fee email fails because you are not expecting a parcel.** The headline is exactly **You're not expecting any parcel right now.** when the email claims to be a carrier and no expected shipment is stored.
+- **On-device first, cloud only after consent.** The hosted site tries `InferenceMode.ONLY_ON_DEVICE`, then asks before any `ONLY_IN_CLOUD` call. The extension never calls the cloud.
+- **The source is labelled, not guessed.** Every result shows **Checked on this device**, **Checked in the cloud**, **Limited check (no AI)**, or **Check not completed**. The first two come from `result.response.inferenceSource`.
+
+## Tracks
+
+Platform and prize category names are taken from the [#BuildHybridAI 2026](https://firebasehybridaihackathon.devpost.com/) rules. The official rules do not use Q-style requirement ids.
 
 | Track or criterion | What qualifies | Where to check |
 | --- | --- | --- |
-| Platform: Web / Chrome | Hosted web app plus a Chrome MV3 side-panel extension | [Live site](https://did-i-order-this.vercel.app), `extension/` |
-| Firebase AI Logic, imported and called at runtime | `getAI`, `getGenerativeModel`, `generateContent` with `GoogleAIBackend` and hybrid `InferenceMode` | `web/src/ai/readClaim.ts` |
-| Hybrid inference | On-device first (`only_on_device`), cloud only after consent (`only_in_cloud`); the label comes from `result.response.inferenceSource` | `web/src/ai/readClaim.ts`, `web/src/consent.ts`, `web/src/ui/InboxApp.ts` |
-| Structured output | A JSON schema (`Schema.object`) is sent as `responseConstraint` on device and `responseSchema` in the cloud | `web/src/ai/schema.ts`, `web/src/ai/parseClaim.ts` |
-| App Check | reCAPTCHA Enterprise provider with token auto-refresh; the AI Logic API rejects calls without a valid token | `web/src/firebase/app.ts` |
+| Platform: Web (Chrome) | Hosted web app plus a Chrome MV3 side-panel extension | [Live site](https://did-i-order-this.vercel.app), `extension/` |
+| Prize category: Best Web/Chrome | Same as the platform above | Live site, judge zip, this README |
+| Technological Implementation | Firebase AI Logic hybrid inference, structured output, App Check | [How Firebase AI Logic Is Used](#how-firebase-ai-logic-is-used), `web/src/ai/readClaim.ts` |
+| Design | A complete sample-inbox product, not only a probe | [Try It](#try-it), live `/app/` |
+| Potential Impact | Check a delivery or billing claim against *your* on-device orders before you click | [What's New Here](#whats-new-here), [What It Does](#what-it-does) |
+| Quality of the Idea | The model reads the claim; code issues the verdict | [What's New Here](#whats-new-here), `packages/core/src/verdict.ts` |
 
-## What works today
+## What Works Today
 
 | Feature | Status |
 | --- | --- |
@@ -73,116 +91,173 @@ It prints `PASS` or `FAIL` per check and exits non-zero on any failure.
 | Account login emails | Out of scope by design |
 | Real user numbers | None yet |
 
-<details>
-<summary><b>More ways to test</b></summary>
+## More Ways to Test
 
-**Run it locally**
+None of these needs a Google or Firebase account. The live sample inbox does not need one either.
+
+<details>
+<summary><strong>1. One command (Node 20 or later)</strong></summary>
 
 ```bash
 npm ci
-cp .env.example web/.env.local   # fill in your own Firebase web config; leave it empty to use the prepared sample claims
+npm run verify
+npm run verify -- --offline
+```
+
+`npm run verify` runs the unit tests, the core coverage gate, typecheck, lint, a guard that product code must not call Chrome's Prompt API directly, the web and extension builds, the extension zip, a secrets scan of tracked files and git history, a bundle scan for App Check debug tokens, a dependency audit, and live-site checks (routes, the zip, and security headers). Each line prints `PASS` or `FAIL`. On 16 Nov 2026 (Africa/Lagos), with dependencies already installed, it finished in 29 seconds and printed PASS on all 18 checks.
+
+If you already have dependencies installed, `npm test` alone re-ran in about 4 seconds on 16 Nov 2026 (Africa/Lagos).
+
+</details>
+
+<details>
+<summary><strong>2. Run it locally (Node 20 or later)</strong></summary>
+
+```bash
+npm ci
+cp .env.example web/.env.local
 npm run dev --workspace=web
 ```
 
-Without Firebase config the sample inbox still works: each sample thread falls back to the claim prepared for that thread, and the page says "On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread." Pasted emails fall back to the limited check.
+Environment variables, as names only (fill in `web/.env.local`, never commit values):
 
-**Sideload the Chrome extension**
+```
+VITE_FIREBASE_API_KEY=<your Firebase web API key>
+VITE_FIREBASE_AUTH_DOMAIN=<your-project.firebaseapp.com>
+VITE_FIREBASE_PROJECT_ID=<your-project-id>
+VITE_FIREBASE_STORAGE_BUCKET=<your-project.appspot.com>
+VITE_FIREBASE_MESSAGING_SENDER_ID=<your-sender-id>
+VITE_FIREBASE_APP_ID=<your-app-id>
+VITE_FIREBASE_RECAPTCHA_SITE_KEY=<your reCAPTCHA Enterprise site key>
+VITE_FIREBASE_RECAPTCHA_PROVIDER=enterprise
+```
+
+Do not put an App Check debug token in this file, in the repo, or in a shipped bundle.
+
+Without the Firebase web config, the sample inbox still works: each sample thread falls back to the claim prepared for that thread, and the page says **On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.** Pasted emails fall back to the limited check. Without `VITE_FIREBASE_RECAPTCHA_SITE_KEY`, cloud AI is not offered.
+
+</details>
+
+<details>
+<summary><strong>3. Sideload the Chrome extension (desktop Chrome 138 or later)</strong></summary>
 
 1. Download [did-i-order-this-extension-0.1.0.zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip) and unzip it. Or build it yourself: `npm run package:extension` writes the zip to `extension/release/`.
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the unzipped folder.
-3. Open a Gmail thread at `mail.google.com`, then click the extension icon to open the side panel, then **Check this email**.
+3. Open a Gmail thread at `mail.google.com`, click the extension icon to open the side panel, then **Check this email**.
 
-Needs desktop Chrome 138 or later. Permissions: `storage` and `sidePanel` only, plus a content script on `https://mail.google.com/*`. The side panel runs `only_on_device`; if on-device AI is not available it offers **Run a limited check (no AI)** and points to the hosted site.
+Permissions: `storage` and `sidePanel` only, plus a content script on `https://mail.google.com/*`. The side panel runs `only_on_device`. If on-device AI is not available it offers **Run a limited check (no AI)** and points to the hosted site.
 
-**Each command on its own**
+</details>
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/home.png" width="160" alt="The live home page at 390-pixel width, with the headline Got a parcel email? See if it's yours, and a Check field.">
+  <img src="docs/images/sample-inbox.png" width="160" alt="The sample inbox list on the live site at 390-pixel width, showing five demo threads and the line 1 order and 0 expected parcels are stored on this device.">
+  <img src="docs/images/cloud-consent.png" width="160" alt="The cloud consent dialog on the live sample inbox at 390-pixel width, titled Check this email in the cloud, with Check in the cloud and Do not send buttons.">
+</p>
+
+<p align="center"><em>Captures of the live site on 16 Nov 2026 (Africa/Lagos), at 390-pixel width. Retake after any UI change.</em></p>
+
+A live AI verdict could not be captured from the machine that wrote this README: this Chrome has no Gemini Nano, and App Check rejects the automated browser (reCAPTCHA Enterprise). The on-device verdict itself is in the proof runs linked above.
+
+## What It Does
+
+1. **Read the claim.** `readClaim()` in `web/src/ai/readClaim.ts` sends the email text to Firebase AI Logic and asks for four fields only: `claimed_party` (name, role, domain), `asked_action`, `cited_numbers`, and `email_kind`.
+2. **Pick where it runs.** The first try is `only_on_device`. If that fails on the hosted site, the app asks for consent before any cloud call. If you click **Do not send**, the email is not sent, and you can run a limited check with no AI.
+3. **Decide in code.** `decideVerdict()` in `packages/core/src/verdict.ts` is deterministic. Carrier emails are judged by the cited tracking number against expected parcels on the device. Store and billing emails are judged by order numbers and sender history.
+4. **Label the source.** The label comes from the SDK. If the SDK does not report a source, the read is treated as failed instead of guessed.
+
+It cannot promise that an email is safe or is a scam. It can only say whether the claim matches the orders and tracking numbers stored on that device.
+
+## How Firebase AI Logic Is Used
+
+All of this is in code, imported from `firebase/ai` and `firebase/app-check`, and called at runtime. It is not only named here.
+
+- **Calls:** `getAI` with `new GoogleAIBackend()`, `getGenerativeModel`, `initializeDeviceModel`, and `generateContent` in `web/src/ai/readClaim.ts`. The hosted site and the extension both call this same `readClaim()`.
+- **Hybrid modes:** the app tries `InferenceMode.ONLY_ON_DEVICE` first. After consent, the hosted site calls `InferenceMode.ONLY_IN_CLOUD`. The visible label comes from `result.response.inferenceSource` (`InferenceSource.ON_DEVICE` or `InferenceSource.IN_CLOUD`).
+- **In code, but not chosen by the app:** `InferenceMode.PREFER_ON_DEVICE` is mapped in `readClaim.ts` and covered by tests (it spends the client cloud budget, because it may reach the cloud). The hosted site and the extension never select it.
+- **Models:** cloud model `gemini-3.5-flash-lite`. On device, Chrome's Gemini Nano is requested as text-only (`expectedInputs` and `expectedOutputs` of type `text`, English).
+- **Structured output:** `Schema.object` from `firebase/ai` (`web/src/ai/schema.ts`) is sent as `responseConstraint` on device and as `responseSchema` with `responseMimeType: "application/json"` in the cloud. One retry if the reply does not parse.
+- **App Check:** `initializeAppCheck` with `ReCaptchaEnterpriseProvider` and `isTokenAutoRefreshEnabled: true` in `web/src/firebase/app.ts`. The AI Logic API rejects calls without a valid token (HTTP 401).
+- **Not used:** this app does not import Firestore, Remote Config, or Authentication.
+
+## Privacy
+
+- Email stays on the device by default. Cloud is used only on the hosted site, only after the consent dialog, and only for the one email being checked. The dialog says: "The cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it."
+- Orders and tracking numbers are stored in IndexedDB (site) or `chrome.storage.local` (extension). There is no project server or database.
+- Vercel Web Analytics and Speed Insights run on the production host only, cookie-free, with query strings stripped. See the [privacy policy](https://did-i-order-this.vercel.app/privacy/#policy).
+
+## Security
+
+- **App Check** (reCAPTCHA Enterprise) is enforced on the Firebase AI Logic API.
+- **Spend and abuse limits:** the browser API key is restricted to `https://did-i-order-this.vercel.app/*`; the Firebase AI Logic quota is 10 requests per minute per user; billing is not linked, so nothing can bill; a client throttle allows 4 cloud reads per minute and 30 per browser session (`web/src/ai/cloudBudget.ts`). The client throttle is a courtesy limit. It cannot stop a determined caller.
+- **Headers:** a Content Security Policy that allows scripts only from this site and reCAPTCHA, plus HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, a strict referrer policy, and a locked-down permissions policy (`vercel.json`). These headers were present on the live site when checked on 16 Nov 2026.
+- **Extension:** the background worker accepts email text only from this extension's own content script on Gmail, caps it at 20,000 characters, and answers requests from inside the extension only. No Gmail API, no mailbox scan.
+- **No secrets in the repo.** `.env.example` has empty values only. `npm run verify` scans tracked files and the full git history for API keys, tokens, private keys, and App Check debug tokens, and checks the built bundles for a debug token.
+- **Dependencies:** `npm audit` reports 4 high advisories, all from `@grpc/grpc-js` inside the Firestore part of the `firebase` package. This app never imports Firestore, and the verify script checks that no grpc code is in the web bundle. There has been no third-party security audit.
+
+**What it doesn't promise:** a passed check is not a guarantee the email is safe. A cloud check sends that one email to Google's free Gemini tier, which may keep it and may review it. On-device AI needs desktop Chrome with Gemini Nano available (Chrome's own hardware requirements apply). The extension reads Gmail on the web only, and is sideloaded; there is no Chrome Web Store listing yet. SMS, phone texts, screenshots, and `.eml` files are not covered. Account login emails are out of scope.
+
+## Sustainability
+
+There is no product server to run. Orders stay on the device. The site is hosted on Vercel. Cloud AI uses Google's free Gemini tier, and the Firebase project's billing is not linked. If work on the code stops, the live site stays up as long as the Vercel and Firebase projects remain.
+
+## Run Your Own
+
+Follow [Run it locally](#more-ways-to-test) above. The variable names and the fallbacks without each key are listed there.
+
+## Repository
+
+| Path | What it holds |
+| --- | --- |
+| `packages/core` | Verdict engine, ingest, order-history import, limited check |
+| `web` | Vite multi-page site and the sample inbox |
+| `extension` | Chrome MV3 side panel, content script, background worker |
+| `e2e` | On-device filming run used by `nano-film` |
+| `scripts` | `npm run verify` and the no-Prompt-API guard |
+| `docs/images` | README screenshots of the live site |
+| `docs/HANDOFF-ui.md` | Internal UI handoff for remaining design work, not a user guide |
+| `.github/workflows` | CI and the on-device demo workflow |
+
+## Built During #BuildHybridAI 2026
+
+**This is a new project. Every commit in this repository was written during the #BuildHybridAI 2026 submission period.**
+
+- **The first commit:** `d6b4d68`, 12 Nov 2026, 12:16:52 Africa/Lagos (UTC+1), which is 11:16:52 UTC. Message: "Scaffold the app and the core scam check." Check with:
 
 ```bash
-npm test                      # unit tests in all three workspaces
-npm run coverage              # core coverage with thresholds
-npm run typecheck
-npm run lint
-npm run check:no-languagemodel   # product code must not call Chrome's Prompt API directly
-npm run build
+git log --reverse --format='%h %ad %s' --date=iso | head -3
 ```
 
-</details>
+- **Official requirements this answers** (names from the [official rules](https://firebasehybridaihackathon.devpost.com/rules) and [What to Submit](https://firebasehybridaihackathon.devpost.com/); there are no Q-style rule ids):
+  - **What to Create / Web (Chrome):** a web app and a Chrome extension using Gemini Nano through Firebase AI Logic.
+  - **Firebase AI Logic imported and called at runtime:** see [How Firebase AI Logic Is Used](#how-firebase-ai-logic-is-used).
+  - **App Check:** required by the rules; reCAPTCHA Enterprise is enforced. Debug tokens are accepted in submissions; this project does not ship one.
+  - **New project:** all commits are inside the submission period. Earlier work reused, and disclosed below: the on-device warm-up approach, supplied media, and parts of a CSS checklist.
+  - **Value proposition, features, and instructions:** this README, plus a hosted project URL (encouraged by the rules).
+  - **Open source license:** Apache-2.0, the rules' preferred license, in the `LICENSE` file. The rules also want that license visible in the GitHub About box once the repo is public.
+  - **Demonstration video:** required on the Devpost form, at most 3 minutes, on YouTube. `TBD-post-build: film URL`
+  - **No production secrets in the repo, form, or testing instructions:** `.env.example` uses placeholders only; `npm run verify` scans for secrets.
+
+- **AI code:** Grok Bot wrote the code, the tests, and the docs, directed by Oh-Jay. Claude did planning on 11 and 12 Nov 2026 and is doing the UI and UX from 15 Nov 2026. Oh-Jay chose the idea, wrote the product and design briefs, made the product decisions, and reviewed every build on his phone.
+- **Earlier work reused:** the on-device warm-up approach in `e2e/` follows Oh-Jay's own `nano-probe` test from 12 Nov 2026. Photos, the globe texture, the hands, and the freight clip are media files Oh-Jay supplied. The CSS follows parts of the unslop design checklist by Damir Sokolovsky (CC BY 4.0), credited in `web/src/styles-v6.css`.
+- **The live site will stay up through judging and after.**
+
+### Libraries and services, at lockfile versions
+
+Runtime: firebase 13.2.0 (`firebase/ai`, `firebase/app-check`); three 0.160.0 (home-page globe); @vercel/analytics 2.0.1; @vercel/speed-insights 2.1.0; fflate 0.8.3 (order-history ZIPs, and packaging the extension zip).
+
+Development only: vite 7.3.8; typescript 5.9.3; vitest 4.1.12; @vitest/coverage-v8 4.1.12; jsdom 31.0.0 (extension DOM tests); eslint 9.39.5; typescript-eslint 8.72.2; playwright-core 1.65.0 (pinned in `e2e/package-lock.json`, used by the on-device filming run).
+
+Services: Firebase AI Logic with the Gemini Developer API (model `gemini-3.5-flash-lite` in the cloud, Gemini Nano on device); Firebase App Check with reCAPTCHA Enterprise; Vercel (hosting, production deploys from `main`, Web Analytics, Speed Insights); GitHub Actions (CI and the on-device runs).
 
 <details>
-<summary><b>How it works</b></summary>
+<summary><strong>Build log (from git history)</strong></summary>
 
-1. **Read the claim.** `readClaim()` (`web/src/ai/readClaim.ts`) calls Firebase AI Logic with model `gemini-3.5-flash-lite` for the cloud and Chrome's on-device model for local runs. The prompt asks for four fields only: `claimed_party` (name, role, domain), `asked_action`, `cited_numbers`, `email_kind`. The reply must match the schema; one retry happens if it does not.
-2. **Pick where it runs.** The first try is `only_on_device`. If that fails on the hosted site, `chooseInferenceMode()` asks for consent before any cloud call. If you decline, nothing is sent.
-3. **Decide in code.** `decideVerdict()` (`packages/core/src/verdict.ts`) is deterministic. Carrier emails are judged by the cited tracking number against expected parcels on the device. Store and billing emails are judged by order numbers and sender history. The headline for a carrier email when nothing is expected is exactly "You're not expecting any parcel right now."
-4. **Label the source.** Every result shows "Checked on this device", "Checked in the cloud", "Limited check (no AI)" or "Check not completed". The first two come from `result.response.inferenceSource`; if the SDK does not report a source, the read is treated as failed instead of guessing.
-
-Layout: `packages/core` (verdict, ingest, import, limited check), `web` (Vite multi-page site and the sample inbox), `extension` (MV3 side panel, content script, background worker), `e2e` (the on-device filming run), `scripts` (verify and guards).
-
-</details>
-
-<details>
-<summary><b>Security and privacy</b></summary>
-
-- **Email stays on the device by default.** Cloud is used only on the hosted site, only after the consent dialog, and only for the one email being checked. The dialog says: "The cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it."
-- **Orders and tracking numbers** are stored in IndexedDB (site) or `chrome.storage.local` (extension). There is no project server or database.
-- **App Check** (reCAPTCHA Enterprise) is enforced on the Firebase AI Logic API. Calls without a valid token get HTTP 401.
-- **Spend and abuse limits:** the browser API key is restricted to `https://did-i-order-this.vercel.app/*`; the Firebase AI Logic quota is 10 requests per minute per user; billing is not linked, so nothing can bill; a client throttle allows 4 cloud reads per minute and 30 per browser session (`web/src/ai/cloudBudget.ts`).
-- **Headers:** a Content Security Policy that allows scripts only from this site and reCAPTCHA, plus HSTS, `X-Frame-Options: DENY`, `nosniff`, a strict referrer policy and a locked-down permissions policy (`vercel.json`).
-- **Extension:** the background worker accepts email text only from this extension's own content script on Gmail, caps it at 20,000 characters, and answers requests from inside the extension only. No Gmail API, no mailbox scan.
-- **No secrets in the repo.** `.env.example` has empty values only. `npm run verify` scans tracked files and the full git history for API keys, tokens, private keys and App Check debug tokens, and checks the built bundles for a debug token.
-- **Dependencies:** `npm audit` reports 4 high advisories, all from `@grpc/grpc-js` inside the Firestore part of the `firebase` package. This app never imports Firestore and the verify script checks that no grpc code is in the web bundle.
-- **Analytics:** Vercel Web Analytics and Speed Insights, cookie-free, production host only, query strings stripped. See the [privacy policy](https://did-i-order-this.vercel.app/privacy/#policy).
-
-</details>
-
-<details>
-<summary><b>Limits</b></summary>
-
-- On-device AI needs desktop Chrome with Gemini Nano available (Chrome's own hardware requirements apply, roughly a 16 GB laptop). Other browsers get the cloud check after consent, or the limited check.
-- The extension reads Gmail web only. It is sideloaded; there is no Chrome Web Store listing.
-- SMS, phone texts, screenshots and `.eml` files are not covered.
-- Account login emails are out of scope.
-- The cloud check uses Google's free Gemini tier, with its quota.
-
-</details>
-
-## Built during #BuildHybridAI 2026
-
-- **First commit:** `d6b4d68`, 12 Nov 2026, 12:16 (Africa/Lagos, UTC+1). Everything in this repo was built during the submission period.
-- **Written with AI.** The code was written with AI. Grok Bot (the agent that built this project) wrote the app, the extension, the tests, the site through v6.2 and the 15 Nov backend pass. Claude did the planning research on 11 and 12 Nov and is taking over the remaining UI work. Oh-Jay chose the idea, wrote the product and design briefs, and reviewed every build on his phone.
-- **Earlier work reused:** the on-device warm-up approach in `e2e/` follows Oh-Jay's own `nano-probe` test from 12 Nov. Photos, the globe texture, the hands and the freight clip are media files Oh-Jay supplied in his design brief. The CSS follows parts of the unslop design checklist by Damir Sokolovsky (CC BY 4.0), credited in `web/src/styles-v6.css`.
-
-<details>
-<summary><b>Libraries and services, with versions</b></summary>
-
-| Library | Version | Used for |
-| --- | --- | --- |
-| firebase (`firebase/ai`, `firebase/app-check`) | 13.2.0 | Firebase AI Logic hybrid inference and App Check |
-| three | 0.160.0 | Globe on the home page |
-| @vercel/analytics | 2.0.1 | Web Analytics |
-| @vercel/speed-insights | 2.1.0 | Speed Insights |
-| fflate | 0.8.3 | Reading order-history ZIPs; packaging the extension zip |
-| vite | 7.3.8 | Build and dev server |
-| typescript | 5.9.3 | Types |
-| vitest, @vitest/coverage-v8 | 4.1.12 | Tests and coverage |
-| jsdom | 31.0.0 | Extension DOM tests |
-| eslint, typescript-eslint | 9.39.5, 8.72.2 | Lint |
-| playwright-core | 1.65.0 | On-device filming run (`e2e/`) |
-
-| Service | Used for |
-| --- | --- |
-| Firebase AI Logic with the Gemini Developer API (model `gemini-3.5-flash-lite` in the cloud, Gemini Nano on device) | Reading the claim |
-| Firebase App Check with reCAPTCHA Enterprise | Proving calls come from the real site |
-| Vercel | Hosting, production deploys from `main`, Web Analytics, Speed Insights |
-| GitHub Actions | CI and the on-device run |
-
-</details>
-
-<details>
-<summary><b>Build log (from git history)</b></summary>
-
-- **12 Nov (12 commits):** core verdict engine and tests; order-history import, limited check, Chrome extension and App Check providers; the on-device workflow and Nano warm-up; first multi-page site, rebuilt three times toward a live checker.
-- **13 and 14 Nov:** no commits.
-- **15 Nov:** v6 landing (globe, freight scroll, night footer) and VP9 video fallback; v6.1 real media and footer; v6.2 logo, favicons, per-page meta and OG images, JSON-LD, privacy policy, Vercel Analytics and Speed Insights, client cloud budget, contrast fixes, faster hero; backend pass: extension messaging checks and fewer permissions, judge zip, plain-language AI errors, the free-tier review notice on the consent dialog, CSP and security headers, lint, more tests with a coverage gate, `npm run verify`.
+- **12 Nov 2026 (12 commits):** core verdict engine and tests; order-history import, limited check, Chrome extension, and App Check providers; the on-device workflow and Nano warm-up; first multi-page site, rebuilt toward a live checker.
+- **13 and 14 Nov 2026:** no commits.
+- **15 Nov 2026 (12 commits):** v6 landing (globe, freight scroll, night footer) and VP9 video fallback; v6.1 real media and footer; v6.2 logo, favicons, per-page meta and OG images, JSON-LD, privacy policy, Vercel Analytics and Speed Insights, client cloud budget, contrast fixes, faster hero; backend pass: extension messaging checks and fewer permissions, judge zip, plain-language AI errors, the free-tier review notice on the consent dialog, CSP and security headers, lint, more tests with a coverage gate, `npm run verify`; README and the extension on-device proof citation.
 
 </details>
 
