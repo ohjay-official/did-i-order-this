@@ -92,7 +92,7 @@ Lighthouse mobile on production after the backend pass: Accessibility, Best Prac
 ## 8. Open UI items
 
 1. Home Performance (84 now, 74 earlier). The main costs are the hero stage, the globe and the freight video.
-2. A picture or GIF for the top of the README. A still is at `docs/media/sample-inbox-verdict.png`; a short GIF of the sample-inbox flow would be better.
+2. README screenshots now live in `docs/images/` (home, sample inbox, consent), captured from the live site at 390-pixel width on 16 Nov 2026. Retake all of them after any UI change. A live AI verdict could not be captured from the box (no Gemini Nano; App Check rejects automated Chrome). A short GIF of the sample-inbox verdict would still help.
 3. `/app/` as a bigger dashboard.
 4. The pinned "How it works" section.
 5. Optional for the demo film: a polished clip of the side panel on a real signed-in Gmail thread. The on-device proof itself is done (nano-film run 43685102643, local Gmail-thread fixture, "Checked on this device").
@@ -147,11 +147,11 @@ A live cloud check needs a headed Chrome (reCAPTCHA Enterprise rejects headless 
 - UI rounds: `ui-v1/` to `ui-v6-2/` (v6.2 has `checklist.md`, `lighthouse-scores.md`, `lighthouse/*.html`).
 - Logo: `logo/` (`concept-sheet.png`, `concepts/`, `final/`).
 - On-device proof: `evidence/on-device-demo-43219012008/` and `evidence/on-device-demo-43682923396/` (15 Nov site re-run: "Checked on this device"). Extension proof: `evidence/extension-on-device-43685102643/` and <https://github.com/ohjay-official/nano-film/actions/runs/43685102643>. All runs: <https://github.com/ohjay-official/nano-film/actions>.
-- README: `README.md` in the repo (rewritten 15 Nov; the film link is the only placeholder).
+- README: `README.md` in the repo (rewritten 16 Nov to Oh-Jay's readme-playbook skill and merged to `main`). The film line is `TBD-post-build: film URL`.
 
 ## 14. Non-UI items waiting on Oh-Jay (not for Claude to do)
 
-- Add the demo film link to the README placeholder after filming.
+- Add the demo film link in place of `TBD-post-build: film URL` in the README after filming.
 - Make the repo public (about 28 Nov) and show Apache-2.0 in the About box. The README repo link only works after that.
 - Confirm the rights to the supplied media (hero desk photo, globe texture, hands, freight clip) before the repo goes public.
 - Decide whether the downloadable extension zip may carry the Firebase web config. It holds the same public web API key that the live site's JavaScript already serves (key locked to the site's referrer, no reCAPTCHA key). The rules forbid production API keys in the repo, form and testing instructions; the zip is a build output, not in the repo.
