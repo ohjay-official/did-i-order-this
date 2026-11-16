@@ -2300,9 +2300,15 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
 
 /* ---------- /app/ on phones: threads as one swipeable row ---------- */
 @media (max-width: 700px) {
+  .app-page .workspace > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .app-page .thread-list {
     display: flex;
     gap: 8px;
+    width: 100%;
     max-height: none;
     padding: 10px;
     overflow-x: auto;
