@@ -147,7 +147,7 @@ A live cloud check needs a headed Chrome (reCAPTCHA Enterprise rejects headless 
 - UI rounds: `ui-v1/` to `ui-v6-2/` (v6.2 has `checklist.md`, `lighthouse-scores.md`, `lighthouse/*.html`).
 - Logo: `logo/` (`concept-sheet.png`, `concepts/`, `final/`).
 - On-device proof: `evidence/on-device-demo-43219012008/` and `evidence/on-device-demo-43682923396/` (15 Nov site re-run: "Checked on this device"). Extension proof: `evidence/extension-on-device-43685102643/` and <https://github.com/ohjay-official/nano-film/actions/runs/43685102643>. All runs: <https://github.com/ohjay-official/nano-film/actions>.
-- README: `README.md` in the repo (rewritten 16 Nov on branch `readme-playbook` to Oh-Jay's readme-playbook skill). The film line is `TBD-post-build: film URL`.
+- README: `README.md` in the repo (rewritten 16 Nov to Oh-Jay's readme-playbook skill and merged to `main`). The film line is `TBD-post-build: film URL`.
 
 ## 14. Non-UI items waiting on Oh-Jay (not for Claude to do)
 

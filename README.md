@@ -1,9 +1,9 @@
 # Did I Order This?
 
-**For judges:** open the [sample inbox](https://did-i-order-this.vercel.app/app/), click the first thread (**DHL Express Desk**, **Your parcel is held. Pay the release fee.**), click **Check this email**, and read the verdict. No login.
+**For judges:** open the [sample inbox](https://did-i-order-this.vercel.app/app/), click the first thread (**DHL Express Desk**, **Your parcel is held. Pay the release fee.**), click **Check this email**, and read the verdict: **You're not expecting any parcel right now.** Then click **Load the matching shipment demo** and check the UPS email: **This tracking number matches a shipment you are expecting.** No login.
 
 <p align="center">
-  <img src="docs/images/sample-inbox-ready.png" width="260" alt="The sample inbox on the live site, captured at 390-pixel width: a fake DHL release-fee email with tracking number GM123456789012345 and the Check this email button.">
+  <img src="docs/images/sample-verdict-prepared.png" width="260" alt="The live sample inbox at 390-pixel width after Do not send: Warning, You're not expecting any parcel right now, with the note that on-device AI did not run and the structured claim prepared for this sample thread was used, plus the reasons and the claim that was checked.">
 </p>
 
 **Check a delivery or billing email against the orders and tracking numbers on your own device, before you click.**
@@ -12,42 +12,40 @@ A parcel or billing email can ask you to pay a fee or open a link, and a fake DH
 
 ## Quick links
 
-- [Try the sample inbox](#try-it) on the live site. No account.
-- Watch the film: `TBD-post-build: film URL`
-- [Live site](https://did-i-order-this.vercel.app) and the [judge extension zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip)
-- [One-command check](#more-ways-to-test): `npm run verify` (Node 20 or later)
+- [Try the sample inbox](#try-it) on the live site. No account, nothing to install.
+- Watch the film: `TBD-post-build: film URL (YouTube, at most 3 minutes, not filmed yet)`
+- [Live site](https://did-i-order-this.vercel.app), the [judge extension zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip) and its [test page](https://did-i-order-this.vercel.app/extension-demo/)
+- [One-command check](#more-ways-to-test): `npm run verify` (Node 22.22 or later)
+- [Step-by-step testing guide](docs/TESTING.md) with every on-screen string
 - [Tracks and judging criteria](#tracks)
 - [How it was built](#built-during-buildhybridai-2026)
 
 ## Try It
 
-This is the live app at [did-i-order-this.vercel.app/app](https://did-i-order-this.vercel.app/app/). Nothing to install and no account. The page starts with demo data: **1 order and 0 expected parcels are stored on this device.**
+This is the live app at [did-i-order-this.vercel.app/app](https://did-i-order-this.vercel.app/app/). No account and nothing to install. It starts with demo data: **1 order and 0 expected parcels are stored on this device.** If the count is different, click **Reset demo data**.
 
-1. Open that link in desktop Chrome.
-2. Click the thread **DHL Express Desk**, **Your parcel is held. Pay the release fee.**, then **Check this email**.
-3. If on-device AI is not available, a dialog asks **Check this email in the cloud?** It also says the cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it. Click **Check in the cloud**, or **Do not send** and then **Run a limited check (no AI)**.
-4. With AI you see **Warning** and **You're not expecting any parcel right now.**, plus **Checked on this device** or **Checked in the cloud**. The limited check says **Limited check only. This is not a full verdict.**
+1. Click the first thread, **DHL Express Desk**, **Your parcel is held. Pay the release fee.**, then **Check this email**.
+2. In Chrome with on-device AI (Gemini Nano) there is no dialog. Everywhere else (for example phones, Firefox, Safari, or desktop Chrome without Nano) a dialog asks **Check this email in the cloud?** and says the cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it. Click **Check in the cloud** or **Do not send**.
+3. You see **Warning** and **You're not expecting any parcel right now.** The line under it says how the email was read:
+   - **Checked on this device** or **Checked in the cloud** when the AI read it.
+   - **On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.** when you clicked **Do not send**, or the cloud check could not run (a second line then says why, for example App Check or a timeout). This is a prepared claim, not an AI read, so it has no source label.
+4. Click **Load the matching shipment demo**. The header now says **1 order and 1 expected parcel are stored on this device.** and the UPS thread opens.
+5. Click **Check this email**: **Safe** and **This tracking number matches a shipment you are expecting.** After a cloud yes, sample threads in the same tab do not ask again.
 
-You just saw a fake parcel-fee email fail because you are not expecting a parcel, not because the wording looks scary.
+You just saw the same kind of carrier email fail or pass only because of what is stored on this device, not because of scary wording.
 
-To check the code itself: `npm ci`, then `npm run verify`. It prints `PASS` or `FAIL` per check and exits non-zero on any failure. `npm run verify -- --offline` skips the live-site checks.
+**With another minute:** the last thread, **Duty payment required for your shipment**, gives **This tracking number is not one of your shipments.** **Streamhut Billing** gives **Neutral** and **You have no history with this sender.** **Reset demo data** puts everything back. Every path, including paste, import, the homepage chips, and the extension test page, is in [docs/TESTING.md](docs/TESTING.md).
 
-**With the rest of the sample inbox**
-
-If on-device AI is not available, the cloud consent dialog appears again for each check.
-
-5. Click **Northwind Outfitters**, **Your order has shipped**, check it, then **Save this shipment**.
-6. Click **UPS**, **UPS delivery update for 1Z999AA10123456784**, and check it: **This tracking number matches a shipment you are expecting.**
-7. Click the second **DHL Express Desk** thread (**Duty payment required for your shipment**): **This tracking number is not one of your shipments.**
-8. **Reset demo data** puts everything back.
+To check the code itself: `npm ci`, then `npm run verify`. It prints `PASS` or `FAIL` per check and exits non-zero on any failure.
 
 ## Proof It's Real
 
-- **On-device run on a public GitHub runner:** [nano-film run 43682923396](https://github.com/ohjay-official/nano-film/actions/runs/43682923396) (15 Nov 2026) loaded the live `/app/` page in Chrome 157.0.8103.50 with Gemini Nano and got the label **Checked on this device**, headline **You're not expecting any parcel right now.**, no cloud consent. An earlier run on 12 Nov is [nano-film run 43219012008](https://github.com/ohjay-official/nano-film/actions/runs/43219012008). The workflow is in this repo at `.github/workflows/on-device-demo.yml`; private 2 vCPU runners cannot run Nano, so the proof runs from the public `ohjay-official/nano-film` repo.
-- **Extension on-device run on a public GitHub runner:** [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643) (15 Nov 2026) downloaded the live judge zip, loaded it unpacked into Chrome 157.0.8103.50 with Gemini Nano, opened the side panel on a local Gmail-thread fixture, and got **Checked on this device** (`inferenceSource` `on_device`), the same headline, and no cloud consent. The runner adds `http://127.0.0.1:8123/*` to the installed manifest's content script matches because it cannot sign into Gmail. The JavaScript in the zip is unchanged. Workflow: `ohjay-official/nano-film`, `.github/workflows/extension-on-device.yml`.
-- **Tests:** 85 unit tests (core 51, web 29, extension 5), re-run 16 Nov 2026 (Africa/Lagos). `npm test` runs them. Core verdict engine coverage the same day: 96.75% statements (417/431) and 89.23% branches (315/353), gated at 95% statements and 85% branches in `packages/core/vitest.config.ts`.
+- **On-device run on a public GitHub runner (15 Nov 2026, before the 16 Nov judge-demo changes; not re-run on the current build yet):** [nano-film run 43682923396](https://github.com/ohjay-official/nano-film/actions/runs/43682923396) (15 Nov 2026) loaded the live `/app/` page in Chrome 157.0.8103.50 with Gemini Nano and got the label **Checked on this device**, headline **You're not expecting any parcel right now.**, no cloud consent. An earlier run on 12 Nov is [nano-film run 43219012008](https://github.com/ohjay-official/nano-film/actions/runs/43219012008). The workflow is in this repo at `.github/workflows/on-device-demo.yml`; private 2 vCPU runners cannot run Nano, so the proof runs from the public `ohjay-official/nano-film` repo.
+- **Extension on-device run on a public GitHub runner (same caveat):** [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643) (15 Nov 2026) downloaded the live judge zip, loaded it unpacked into Chrome 157.0.8103.50 with Gemini Nano, opened the side panel on a local Gmail-thread fixture, and got **Checked on this device** (`inferenceSource` `on_device`), the same headline, and no cloud consent. The runner adds `http://127.0.0.1:8123/*` to the installed manifest's content script matches because it cannot sign into Gmail. The JavaScript in the zip is unchanged. Workflow: `ohjay-official/nano-film`, `.github/workflows/extension-on-device.yml`.
+- **Cloud check on the current build:** not recorded yet. The build machine's automated Chrome is rejected by App Check (reCAPTCHA Enterprise), and the page then shows the prepared-claim note with **The cloud check could not run. This page could not prove it is the real site (App Check). Reload the page and try again.** A real-phone cloud test is pending.
+- **Tests:** 133 unit tests (core 51, web 69, extension 13), re-run 16 Nov 2026 (Africa/Lagos). `npm test` runs them. Core verdict engine coverage the same day: 96.75% statements (417/431) and 89.23% branches (315/353), gated at 95% statements and 85% branches in `packages/core/vitest.config.ts`.
 - **CI:** `.github/workflows/ci.yml` runs `npm run verify -- --offline` on every push to `main` and on pull requests.
-- **Lighthouse** (mobile, production, 15 Nov 2026, after the security headers went live): Accessibility, Best Practices and SEO 100 on all 9 routes; Performance 84 on the home page and 100 on the other 8. Reports live in the build notes, not in this repo.
+- **Lighthouse** (mobile, production, 15 Nov 2026, before the v7 UI and the judge-demo changes, so stale until re-run): Accessibility, Best Practices and SEO 100 on all 9 routes; Performance 84 on the home page and 100 on the other 8. Reports live in the build notes, not in this repo.
 - **No real users yet.** Three testers are scheduled for 26 to 28 Nov 2026.
 
 ## What's New Here
@@ -78,13 +76,16 @@ Platform and prize category names are taken from the [#BuildHybridAI 2026](https
 | Feature | Status |
 | --- | --- |
 | Sample inbox with 5 threads and the full verdict flow | Works on the live site |
+| Prepared-claim fallback on sample threads when on-device AI and the cloud are not used or fail | Works on the live site (walked on 16 Nov 2026 in desktop Chrome at 1280 and 390 pixels) |
+| **Load the matching shipment demo** after the first check | Works on the live site |
 | On-device check through Firebase AI Logic (Gemini Nano in Chrome) | Works where Chrome's on-device model is available; proven on a public runner (links above) |
-| Cloud check after consent | Works on the live site |
+| Cloud check after consent | Built and called on the live site. A cloud verdict on the current build is not recorded yet (see Proof) |
+| Remember a cloud yes for sample threads until the tab closes | Works; **Ask me each time** clears it. Pasted emails are always asked about |
 | Limited check with no AI | Works |
 | Paste your own email and check it | Works |
 | Import order history (Amazon ZIP or CSV, PayPal CSV, generic CSV), parsed in the browser | Works |
 | Save a shipment from a "your order has shipped" email | Works |
-| Chrome extension side panel on an open Gmail thread | Works when sideloaded; on-device only, never calls the cloud. Proven on a public runner (link above). The runner uses a local Gmail-thread fixture, not a signed-in mail.google.com session |
+| Chrome extension side panel on an open Gmail thread | Works when sideloaded; on-device only, never calls the cloud. Proven on a public runner (link above). The runner uses a local Gmail-thread fixture, not a signed-in mail.google.com session. A hosted test page is at [/extension-demo/](https://did-i-order-this.vercel.app/extension-demo/) |
 | Chrome Web Store listing | Not done. Planned |
 | Screenshots, `.eml` files, SMS or phone texts | Not supported |
 | Outlook, Yahoo or other webmail in the extension | Not supported (Gmail only) |
@@ -96,7 +97,7 @@ Platform and prize category names are taken from the [#BuildHybridAI 2026](https
 None of these needs a Google or Firebase account. The live sample inbox does not need one either.
 
 <details>
-<summary><strong>1. One command (Node 20 or later)</strong></summary>
+<summary><strong>1. One command (Node 22.22 or later)</strong></summary>
 
 ```bash
 npm ci
@@ -104,14 +105,13 @@ npm run verify
 npm run verify -- --offline
 ```
 
-`npm run verify` runs the unit tests, the core coverage gate, typecheck, lint, a guard that product code must not call Chrome's Prompt API directly, the web and extension builds, the extension zip, a secrets scan of tracked files and git history, a bundle scan for App Check debug tokens, a dependency audit, and live-site checks (routes, the zip, and security headers). Each line prints `PASS` or `FAIL`. On 16 Nov 2026 (Africa/Lagos), with dependencies already installed, it finished in 29 seconds and printed PASS on all 18 checks.
+`npm run verify` checks the Node version, then runs the unit tests, the core coverage gate, typecheck, lint, a guard that product code must not call Chrome's Prompt API directly, the web and extension builds, the extension zip, a secrets scan of tracked files and git history, a bundle scan for App Check debug tokens, a dependency audit, and live-site checks (routes, the zip, and security headers). Each line prints `PASS` or `FAIL`. On 16 Nov 2026 (Africa/Lagos), on Node 22.22.0, a fresh `npm ci` plus `npm run verify` took 37 seconds and printed PASS on all 19 checks.
 
-If you already have dependencies installed, `npm test` alone re-ran in about 4 seconds on 16 Nov 2026 (Africa/Lagos).
 
 </details>
 
 <details>
-<summary><strong>2. Run it locally (Node 20 or later)</strong></summary>
+<summary><strong>2. Run it locally (Node 22.22 or later)</strong></summary>
 
 ```bash
 npm ci
@@ -142,8 +142,10 @@ Without the Firebase web config, the sample inbox still works: each sample threa
 <summary><strong>3. Sideload the Chrome extension (desktop Chrome 138 or later)</strong></summary>
 
 1. Download [did-i-order-this-extension-0.1.0.zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip) and unzip it. Or build it yourself: `npm run package:extension` writes the zip to `extension/release/`.
-2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the unzipped folder.
-3. Open a Gmail thread at `mail.google.com`, click the extension icon to open the side panel, then **Check this email**.
+2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the inner `did-i-order-this-extension` folder.
+3. Open the [extension test page](https://did-i-order-this.vercel.app/extension-demo/) (labelled **Extension test fixture.**, not Gmail) or a Gmail thread at `mail.google.com`, open the side panel from the toolbar, then click **Check this email**.
+
+Without Nano the panel shows **Error** and says this extension does not send mail to the cloud, then offers **Run a limited check (no AI)**. A signed-in Gmail thread was not tested on the build machine; the runner proof above used a local Gmail-thread fixture.
 
 Permissions: `storage` and `sidePanel` only, plus a content script on `https://mail.google.com/*`. The side panel runs `only_on_device`. If on-device AI is not available it offers **Run a limited check (no AI)** and points to the hosted site.
 
@@ -155,16 +157,17 @@ Permissions: `storage` and `sidePanel` only, plus a content script on `https://m
   <img src="docs/images/home.png" width="160" alt="The live home page at 390-pixel width, with the headline Got a parcel email? See if it's yours, and a Check field.">
   <img src="docs/images/sample-inbox.png" width="160" alt="The sample inbox list on the live site at 390-pixel width, showing five demo threads and the line 1 order and 0 expected parcels are stored on this device.">
   <img src="docs/images/cloud-consent.png" width="160" alt="The cloud consent dialog on the live sample inbox at 390-pixel width, titled Check this email in the cloud, with Check in the cloud and Do not send buttons.">
+  <img src="docs/images/ups-match-prepared.png" width="160" alt="The UPS sample email after Load the matching shipment demo, at 390-pixel width: Safe, This tracking number matches a shipment you are expecting, using the structured claim prepared for this sample thread.">
 </p>
 
-<p align="center"><em>Captures of the live site on 16 Nov 2026 (Africa/Lagos), at 390-pixel width. Retake after any UI change.</em></p>
+<p align="center"><em>Captures of the live site on 16 Nov 2026 (Africa/Lagos), at 390-pixel width, with sample data. The two verdicts use the prepared sample claim (Do not send), not an AI read.</em></p>
 
-A live AI verdict could not be captured from the machine that wrote this README: this Chrome has no Gemini Nano, and App Check rejects the automated browser (reCAPTCHA Enterprise). The on-device verdict itself is in the proof runs linked above.
+A live AI verdict could not be captured from the machine that wrote this README: its Chrome has no Gemini Nano, and App Check rejects the automated browser. The on-device verdict is in the runner proof linked above.
 
 ## What It Does
 
 1. **Read the claim.** `readClaim()` in `web/src/ai/readClaim.ts` sends the email text to Firebase AI Logic and asks for four fields only: `claimed_party` (name, role, domain), `asked_action`, `cited_numbers`, and `email_kind`.
-2. **Pick where it runs.** The first try is `only_on_device`. If that fails on the hosted site, the app asks for consent before any cloud call. If you click **Do not send**, the email is not sent, and you can run a limited check with no AI.
+2. **Pick where it runs.** The first try is `only_on_device`. If that fails on the hosted site, the app asks for consent before any cloud call. If you click **Do not send**, the email is not sent. A sample thread then uses the claim prepared for it and says so; a pasted email offers a limited check with no AI.
 3. **Decide in code.** `decideVerdict()` in `packages/core/src/verdict.ts` is deterministic. Carrier emails are judged by the cited tracking number against expected parcels on the device. Store and billing emails are judged by order numbers and sender history.
 4. **Label the source.** The label comes from the SDK. If the SDK does not report a source, the read is treated as failed instead of guessed.
 
@@ -191,7 +194,7 @@ All of this is in code, imported from `firebase/ai` and `firebase/app-check`, an
 ## Security
 
 - **App Check** (reCAPTCHA Enterprise) is enforced on the Firebase AI Logic API.
-- **Spend and abuse limits:** the browser API key is restricted to `https://did-i-order-this.vercel.app/*`; the Firebase AI Logic quota is 10 requests per minute per user; billing is not linked, so nothing can bill; a client throttle allows 4 cloud reads per minute and 30 per browser session (`web/src/ai/cloudBudget.ts`). The client throttle is a courtesy limit. It cannot stop a determined caller.
+- **Spend and abuse limits:** the browser API key is restricted to `https://did-i-order-this.vercel.app/*`; the Firebase AI Logic quota is 10 requests per minute per user; billing is not linked, so nothing can bill; a client throttle allows 10 cloud reads a minute and 30 per tab session (`web/src/ai/cloudBudget.ts`), and a cloud read that does not answer in 20 seconds is stopped. The client throttle is a courtesy limit. It cannot stop a determined caller.
 - **Headers:** a Content Security Policy that allows scripts only from this site and reCAPTCHA, plus HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, a strict referrer policy, and a locked-down permissions policy (`vercel.json`). These headers were present on the live site when checked on 16 Nov 2026.
 - **Extension:** the background worker accepts email text only from this extension's own content script on Gmail, caps it at 20,000 characters, and answers requests from inside the extension only. No Gmail API, no mailbox scan.
 - **No secrets in the repo.** `.env.example` has empty values only. `npm run verify` scans tracked files and the full git history for API keys, tokens, private keys, and App Check debug tokens, and checks the built bundles for a debug token.
@@ -212,10 +215,11 @@ Follow [Run it locally](#more-ways-to-test) above. The variable names and the fa
 | Path | What it holds |
 | --- | --- |
 | `packages/core` | Verdict engine, ingest, order-history import, limited check |
-| `web` | Vite multi-page site and the sample inbox |
+| `web` | Vite multi-page site, the sample inbox, and the `/extension-demo/` test page |
 | `extension` | Chrome MV3 side panel, content script, background worker |
 | `e2e` | On-device filming run used by `nano-film` |
 | `scripts` | `npm run verify` and the no-Prompt-API guard |
+| `docs/TESTING.md` | Do-this, see-this steps for judges and testers |
 | `docs/images` | README screenshots of the live site |
 | `docs/HANDOFF-ui.md` | Internal UI handoff for remaining design work, not a user guide |
 | `.github/workflows` | CI and the on-device demo workflow |
@@ -240,7 +244,7 @@ git log --reverse --format='%h %ad %s' --date=iso | head -3
   - **Demonstration video:** required on the Devpost form, at most 3 minutes, on YouTube. `TBD-post-build: film URL`
   - **No production secrets in the repo, form, or testing instructions:** `.env.example` uses placeholders only; `npm run verify` scans for secrets.
 
-- **AI code:** Grok Bot wrote the code, the tests, and the docs, directed by Oh-Jay. Claude did planning on 11 and 12 Nov 2026 and is doing the UI and UX from 15 Nov 2026. Oh-Jay chose the idea, wrote the product and design briefs, made the product decisions, and reviewed every build on his phone.
+- **AI code:** Grok Bot wrote the product code, the tests, the docs, and the verify pipeline, directed by Oh-Jay. Claude did the planning on 11 and 12 Nov 2026, and Claude Opus 5.5 landed the v7 UI commits on `main` on 15 Nov 2026 (`16fc66e`, `b1f076d`, `8bb5936`, each with a Co-Authored-By line); further UI and UX work is Claude's. Oh-Jay chose the idea, wrote the product and design briefs, made the product decisions, and reviewed every build on his phone.
 - **Earlier work reused:** the on-device warm-up approach in `e2e/` follows Oh-Jay's own `nano-probe` test from 12 Nov 2026. Photos, the globe texture, the hands, and the freight clip are media files Oh-Jay supplied. The CSS follows parts of the unslop design checklist by Damir Sokolovsky (CC BY 4.0), credited in `web/src/styles-v6.css`.
 - **The live site will stay up through judging and after.**
 
@@ -257,7 +261,8 @@ Services: Firebase AI Logic with the Gemini Developer API (model `gemini-3.5-fla
 
 - **12 Nov 2026 (12 commits):** core verdict engine and tests; order-history import, limited check, Chrome extension, and App Check providers; the on-device workflow and Nano warm-up; first multi-page site, rebuilt toward a live checker.
 - **13 and 14 Nov 2026:** no commits.
-- **15 Nov 2026 (12 commits):** v6 landing (globe, freight scroll, night footer) and VP9 video fallback; v6.1 real media and footer; v6.2 logo, favicons, per-page meta and OG images, JSON-LD, privacy policy, Vercel Analytics and Speed Insights, client cloud budget, contrast fixes, faster hero; backend pass: extension messaging checks and fewer permissions, judge zip, plain-language AI errors, the free-tier review notice on the consent dialog, CSP and security headers, lint, more tests with a coverage gate, `npm run verify`; README and the extension on-device proof citation.
+- **15 Nov 2026 (12 commits):** v6 landing (globe, freight scroll, night footer) and VP9 video fallback; v6.1 real media and footer; v6.2 logo, favicons, per-page meta and OG images, JSON-LD, privacy policy, Vercel Analytics and Speed Insights, client cloud budget, contrast fixes, faster hero; backend pass: extension messaging checks and fewer permissions, judge zip, plain-language AI errors, the free-tier review notice on the consent dialog, CSP and security headers, lint, more tests with a coverage gate, `npm run verify`; README and the extension on-device proof citation; Claude's v7 UI commits.
+- **16 Nov 2026:** judge-demo fixes (fail fast without an on-device model, client cloud cap raised to 10 a minute, tab-session memory for a cloud yes, the matching shipment demo loader, the prepared-claim fallback on sample threads, a 20-second cloud timeout, the `/extension-demo/` test page, `docs/TESTING.md`); Node 22.22 as the minimum; this README.
 
 </details>
 

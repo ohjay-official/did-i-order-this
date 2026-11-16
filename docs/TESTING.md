@@ -1,8 +1,8 @@
 # Testing Did I Order This?
 
-Do-this, see-this steps for judges and testers. Every quoted string below was read off the screen in a local build of branch `judge-demo-fixes` on 16 Nov 2026 (Africa/Lagos), unless the step says otherwise. No keys, tokens or accounts are needed.
+Do-this, see-this steps for judges and testers. Every quoted string below was read off the screen on 16 Nov 2026 (Africa/Lagos), first in a local build and then again on the live site after the merge (`72f7212`), unless the step says otherwise. No keys, tokens or accounts are needed.
 
-Live site: https://did-i-order-this.vercel.app (sample inbox at `/app/`). These steps describe the branch; they match the live site only after the branch is merged and deployed.
+Live site: https://did-i-order-this.vercel.app (sample inbox at `/app/`).
 
 ## 1. Sample inbox, any browser
 
@@ -14,7 +14,7 @@ Open https://did-i-order-this.vercel.app/app/. The header says **1 order and 0 e
 ### Path A: Chrome with on-device AI (Gemini Nano)
 
 - No dialog appears. You see **Warning**, **You're not expecting any parcel right now.**, and **Checked on this device**.
-- Not re-run for this branch: the box used for these steps has no Gemini Nano. The same screen was recorded on a GitHub runner with Nano before these changes (nano-film run 43682923396, 15 Nov 2026).
+- Not re-run on the current build: the machine used for these steps has no Gemini Nano. The same screen was recorded on a GitHub runner with Nano before these changes (nano-film run 43682923396, 15 Nov 2026).
 
 ### Path B: no on-device AI, you allow the cloud
 
@@ -77,13 +77,13 @@ On https://did-i-order-this.vercel.app, in a browser without on-device AI and wi
 
 ## 5. Chrome extension (desktop Chrome 138 or later)
 
-1. Download https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip and unzip it. If you downloaded it before this branch was deployed, download it again: the fixture page below needs the new copy.
+1. Download https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip and unzip it. If you downloaded it before 16 Nov 2026, download it again: the test page below needs the new copy.
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the inner `did-i-order-this-extension` folder.
 3. Open https://did-i-order-this.vercel.app/extension-demo/. It is labelled **Extension test fixture.** and says it is not Gmail. Open the extension's side panel from the toolbar. It shows the open sample email and **Check this email**. The buttons on the page switch between the five sample emails.
 4. With Gemini Nano you should see **Checked on this device** and the verdict (recorded on a runner with Nano on 15 Nov 2026, nano-film run 43685102643, against a local copy of this kind of page).
 5. Without Nano you see **Error** and **The AI read could not run. On-device AI is not available in this browser. This extension does not send mail to the cloud. Open https://did-i-order-this.vercel.app to check in the cloud after you agree, or run a limited check here.** Then **Run a limited check (no AI)** gives the limited check.
 
-The side panel and fixture were run on this box with the extension loaded unpacked and the fixture served at its live address. The extension also works on a real open Gmail thread at `mail.google.com`; that was not re-run here.
+The side panel and fixture were run on this box with the extension loaded unpacked and the fixture served at its live address. The extension is built to read an open Gmail thread at `mail.google.com`; a signed-in Gmail thread was not tested on this machine.
 
 ## 6. For maintainers
 
