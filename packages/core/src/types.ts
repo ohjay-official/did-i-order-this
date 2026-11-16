@@ -39,7 +39,13 @@ export interface OfficialPack {
     name: string;
     role: "carrier" | "merchant" | "bank" | "other";
   }[];
-  lureTemplates: { id: string; pattern: string; note: string }[];
+  lureTemplates: {
+    id: string;
+    pattern: string;
+    note: string;
+    /** When set, the note is shown only for claims with one of these roles or email kinds. */
+    appliesTo?: { roles?: ClaimedRole[]; kinds?: EmailKind[] };
+  }[];
 }
 
 export type ClaimedRole = "carrier" | "merchant" | "bank" | "subscription" | "unknown";
@@ -90,3 +96,5 @@ export interface LedgerSnapshot {
 }
 
 export const NOTHING_EXPECTED_HEADLINE = "You're not expecting any parcel right now.";
+export const LOOKALIKE_MATCH_HEADLINE =
+  "This tracking number matches your shipment, but this email is not from the carrier's official domain.";

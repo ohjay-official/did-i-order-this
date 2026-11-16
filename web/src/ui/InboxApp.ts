@@ -26,6 +26,7 @@ import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { extractFromDomain } from "../site/emailText.ts";
+import { wireModalKeys } from "./dialogKeys.ts";
 
 type CheckState =
   | { status: "idle" }
@@ -192,6 +193,8 @@ export class InboxApp {
     this.root.querySelector("[data-action=consent-no]")?.addEventListener("click", () => {
       this.consentResolver?.(false);
     });
+    const consentOverlay = this.root.querySelector<HTMLElement>(".consent-overlay");
+    if (consentOverlay) wireModalKeys(consentOverlay, () => this.consentResolver?.(false), "[data-action=consent-no]");
     const pasteForm = this.root.querySelector<HTMLFormElement>("[data-paste-form]");
     const pasteInput = this.root.querySelector<HTMLTextAreaElement>("[data-paste]");
     pasteInput?.addEventListener("input", () => {

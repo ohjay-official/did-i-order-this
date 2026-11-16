@@ -153,3 +153,15 @@ describe("readClaim through Firebase AI Logic", () => {
     await expect(readClaim("email body", "only_on_device")).rejects.toThrow("inferenceSource");
   });
 });
+
+describe("readClaim input cap", () => {
+  it("sends at most 20,000 characters of email text, like the extension", async () => {
+    state.responses.push({ text: GOOD, inferenceSource: "in_cloud" });
+    const huge = "A".repeat(19_990) + "TAIL-MARKER" + "B".repeat(30_000);
+    await readClaim(huge, "only_in_cloud");
+    const prompt = state.prompts[0] ?? "";
+    expect(prompt).not.toContain("TAIL-MARKER");
+    expect(prompt).not.toContain("B");
+    expect(prompt.split("---\n")[1]?.replace(/\n---$/, "").length).toBe(20_000);
+  });
+});

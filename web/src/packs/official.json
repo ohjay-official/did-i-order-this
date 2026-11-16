@@ -11,7 +11,8 @@
     {
       "id": "fee-to-release",
       "pattern": "\"asked_action\":\"pay\"",
-      "note": "The wording asks for a payment, which is common in parcel-hold lures."
+      "note": "The wording asks for a payment, which is common in parcel-hold lures.",
+      "appliesTo": { "roles": ["carrier"], "kinds": ["carrier_update", "delivery_problem"] }
     }
   ]
 }
