@@ -2579,3 +2579,12 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
     margin: 12px !important;
   }
 }
+
+/* Hero field: low-res canvas scaled up by CSS, softened on the GPU (see stage.ts) */
+.hero-stage {
+  inset: -12px;
+  width: calc(100% + 24px);
+  height: calc(100% + 24px);
+  filter: blur(4px);
+  transform: translateZ(0);
+}

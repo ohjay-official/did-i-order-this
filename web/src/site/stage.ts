@@ -76,22 +76,21 @@ export function mountStage(canvas: HTMLCanvasElement): () => void {
   let onScreen = true;
   let last = 0;
 
+  // The canvas holds the field at 30% resolution; CSS scales it up and blurs it on
+  // the GPU. Painting full-resolution pixels with ctx.filter blur every frame cost
+  // seconds of main-thread time on phones.
+  const SCALE = 0.3;
   const resize = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const width = Math.max(1, canvas.clientWidth);
-    const height = Math.max(1, canvas.clientHeight);
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const width = Math.max(1, Math.floor(canvas.clientWidth * SCALE));
+    const height = Math.max(1, Math.floor(canvas.clientHeight * SCALE));
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
   };
 
   const paint = (time: number) => {
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
     const t = prefersReducedMotion() ? 0 : time / 1000;
-    const scale = 0.3;
-    const ow = Math.max(1, Math.floor(width * scale));
-    const oh = Math.max(1, Math.floor(height * scale));
+    const ow = canvas.width;
+    const oh = canvas.height;
     if (off.width !== ow || off.height !== oh) {
       off.width = ow;
       off.height = oh;
@@ -125,14 +124,7 @@ export function mountStage(canvas: HTMLCanvasElement): () => void {
       data[i + 2] = lut[j + 2];
       data[i + 3] = lut[j + 3];
     }
-    octx.putImageData(img, 0, 0);
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.filter = "blur(5px)";
-    ctx.drawImage(off, 0, 0, width, height);
-    ctx.filter = "none";
+    ctx.putImageData(img, 0, 0);
   };
 
   const loop = (now: number) => {
