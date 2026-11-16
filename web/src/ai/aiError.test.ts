@@ -19,8 +19,8 @@ describe("describeAiError", () => {
     expect(describeAiError(new Error("The structured claim is invalid or incomplete."))).toMatch(/usable claim/);
   });
   it("passes the session budget message through", () => {
-    expect(describeAiError(new CloudBudgetError("Cloud reads are limited to 4 a minute.", 1000))).toBe(
-      "Cloud reads are limited to 4 a minute.",
+    expect(describeAiError(new CloudBudgetError("Cloud reads are limited to 10 a minute.", 1000))).toBe(
+      "Cloud reads are limited to 10 a minute.",
     );
   });
   it("never echoes unknown raw text", () => {
