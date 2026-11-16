@@ -42,7 +42,7 @@ export function hasMatchingShipmentDemo(ledger: Pick<LedgerSnapshot, "shipments"
 
 /** Stores the demo shipment (and its sender) through the given savers. Saving twice keeps one copy. */
 export async function loadMatchingShipmentDemo(save: {
-  shipment: (shipment: LedgerShipment) => Promise<void>;
+  shipment: (shipment: LedgerShipment) => Promise<unknown>;
   sender: (sender: LedgerSender) => Promise<void>;
 }): Promise<LedgerShipment> {
   const { shipment, sender } = matchingShipmentDemo();

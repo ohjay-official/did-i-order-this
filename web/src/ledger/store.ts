@@ -1,5 +1,6 @@
 import type { LedgerOrder, LedgerSender, LedgerShipment, LedgerSnapshot } from "@did-i-order-this/core";
 import { demoSeed } from "../demo/seed.ts";
+import { findSameOrder, findSameShipment } from "./dedupe.ts";
 
 const DB_NAME = "did-i-order-this";
 const DB_VERSION = 1;
@@ -78,24 +79,40 @@ export async function resetToDemoSeed(): Promise<LedgerSnapshot> {
   }
 }
 
-export async function saveOrder(order: LedgerOrder): Promise<void> {
+/** Stores an order. The same order (same order id from the same sender) is updated, not added twice. Returns true if it was new. */
+export async function saveOrder(order: LedgerOrder): Promise<boolean> {
   const db = await openDb();
   try {
-    await runTransaction(db, ["orders"], "readwrite", (tx) => {
-      tx.objectStore("orders").put(order);
-      return () => undefined;
+    return await runTransaction(db, ["orders"], "readwrite", (tx) => {
+      const store = tx.objectStore("orders");
+      let added = true;
+      const all = store.getAll();
+      all.onsuccess = () => {
+        const same = findSameOrder((all.result ?? []) as LedgerOrder[], order);
+        if (same) added = false;
+        store.put(same ? { ...order, id: same.id } : order);
+      };
+      return () => added;
     });
   } finally {
     db.close();
   }
 }
 
-export async function saveShipment(shipment: LedgerShipment): Promise<void> {
+/** Stores a shipment. A shipment with the same tracking number is updated, not added twice. Returns true if it was new. */
+export async function saveShipment(shipment: LedgerShipment): Promise<boolean> {
   const db = await openDb();
   try {
-    await runTransaction(db, ["shipments"], "readwrite", (tx) => {
-      tx.objectStore("shipments").put(shipment);
-      return () => undefined;
+    return await runTransaction(db, ["shipments"], "readwrite", (tx) => {
+      const store = tx.objectStore("shipments");
+      let added = true;
+      const all = store.getAll();
+      all.onsuccess = () => {
+        const same = findSameShipment((all.result ?? []) as LedgerShipment[], shipment);
+        if (same) added = false;
+        store.put(same ? { ...shipment, id: same.id } : shipment);
+      };
+      return () => added;
     });
   } finally {
     db.close();
