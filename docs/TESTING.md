@@ -87,6 +87,8 @@ The side panel and fixture were run on this box with the extension loaded unpack
 
 ## 6. For maintainers
 
+Needs Node 22.22 or later (`.nvmrc` says 22; `nvm use` picks it up). Verify fails its first check on an older Node.
+
 ```bash
 npm ci
 npm run verify -- --offline   # tests, coverage, typecheck, lint, build, zip, secret scans

@@ -187,6 +187,11 @@ async function liveChecks() {
 }
 
 console.log("Did I Order This? verify\n");
+// Node 22.22 or later is the supported minimum (package.json engines).
+{
+  const [maj, min] = process.versions.node.split(".").map(Number);
+  record("Node 22.22 or later", maj > 22 || (maj === 22 && min >= 22), `node ${process.versions.node}`);
+}
 run("unit tests (core, web, extension)", "npm", ["test", "--silent"]);
 run("core coverage thresholds", "npm", ["run", "coverage", "--silent"]);
 run("typecheck", "npm", ["run", "typecheck", "--silent"]);
