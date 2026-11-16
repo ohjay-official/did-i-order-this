@@ -2297,3 +2297,146 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
     font-size: 13px;
   }
 }
+
+/* ---------- /app/ on phones: threads as one swipeable row ---------- */
+@media (max-width: 700px) {
+  .app-page .thread-list {
+    display: flex;
+    gap: 8px;
+    max-height: none;
+    padding: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: flex-start;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 10px;
+    overscroll-behavior-x: contain;
+    border-bottom: 1px solid var(--hairline);
+    scrollbar-width: none;
+  }
+
+  .app-page .thread-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-page .thread-item {
+    flex: 0 0 min(72vw, 260px);
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--card);
+    scroll-snap-align: start;
+  }
+
+  .app-page .thread-item.is-current {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  .app-page .thread-item .thread-subject {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .app-page .paste-card {
+    display: flex;
+    flex: 0 0 min(84vw, 320px);
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px;
+    scroll-snap-align: start;
+  }
+
+  .app-page .paste-card h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .app-page .paste-card textarea {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    height: 44px;
+    margin: 0;
+    resize: none;
+  }
+
+  .app-page .paste-card .btn {
+    flex: 0 0 auto;
+    width: auto;
+    height: 44px;
+    margin: 0;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .app-page .app-tools {
+    align-items: flex-start;
+    width: 100%;
+    text-align: left;
+  }
+
+  .app-page .app-header .lede {
+    display: none;
+  }
+
+  .app-page .app-header h1 {
+    font-size: 24px;
+  }
+
+  .app-page .app-header .eyebrow {
+    display: none;
+  }
+
+  .app-page #app {
+    padding-top: 80px;
+  }
+
+  .app-page .email {
+    padding: 14px 16px;
+  }
+
+  .app-page .app-header {
+    gap: 10px;
+  }
+
+  .app-page .app-ledger {
+    margin: 0;
+    padding: 0;
+  }
+
+  .app-page .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-page .email-body {
+    max-height: 8em;
+    overflow-y: auto;
+    padding-right: 4px;
+    -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent);
+    mask-image: linear-gradient(180deg, #000 82%, transparent);
+  }
+
+  .app-page .email-body:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .app-page .header-actions .btn {
+    min-height: 0;
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+}

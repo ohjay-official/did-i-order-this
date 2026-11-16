@@ -220,7 +220,7 @@ export class InboxApp {
         <header class="email-header">
           <p><strong>Pasted email</strong></p>
         </header>
-        <pre class="email-body">${escapeHtml(text)}</pre>
+        <pre class="email-body" tabindex="0">${escapeHtml(text)}</pre>
       </article>
       ${this.renderResult()}
     `;
@@ -234,7 +234,7 @@ export class InboxApp {
           <p><strong>Subject</strong> ${escapeHtml(thread.subject)}</p>
           <p><strong>Date</strong> ${escapeHtml(thread.date)}</p>
         </header>
-        <pre class="email-body">${escapeHtml(thread.body)}</pre>
+        <pre class="email-body" tabindex="0">${escapeHtml(thread.body)}</pre>
         <div class="actions">
           <button type="button" class="btn btn-primary" data-action="check">Check this email</button>
         </div>
