@@ -26,7 +26,7 @@ Open <https://did-i-order-this.vercel.app/app/> in desktop Chrome. Nothing to in
 6. Click the second **DHL Express Desk** thread ("Duty payment required for your shipment"): **"This tracking number is not one of your shipments."**
 7. **Reset demo data** puts everything back.
 
-**Check everything with one command** (Node 20 or later):
+**Check everything with one command** (Node 22.22 or later):
 
 ```bash
 npm ci
