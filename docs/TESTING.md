@@ -1,6 +1,6 @@
 # Testing Did I Order This?
 
-Do-this, see-this steps for judges and testers. Every quoted string below was read off the screen on 16 Nov 2026 (Africa/Lagos), first in a local build and then again on the live site after the merge (`72f7212`), unless the step says otherwise. Steps 1 (Path C) and 2 were walked again on the live site at `9c6e0cc` the same evening, at 390 pixels, with the same strings. No keys, tokens or accounts are needed.
+Do-this, see-this steps for judges and testers. Every quoted string below was read off the screen on 16 Nov 2026 (Africa/Lagos), first in a local build and then again on the live site after the merge (`72f7212`), unless the step says otherwise. Steps 1 (Path C) and 2 were walked again on the live site at `9c6e0cc` the same evening, at 390 pixels, with the same strings, and again after the UI update at `f87d165` (16 Nov, 23:00 to 23:30 Africa/Lagos). Section 4 was re-checked at `c94c806`. No keys, tokens or accounts are needed.
 
 Live site: https://did-i-order-this.vercel.app (sample inbox at `/app/`).
 
@@ -8,13 +8,13 @@ Live site: https://did-i-order-this.vercel.app (sample inbox at `/app/`).
 
 Open https://did-i-order-this.vercel.app/app/. The header says **1 order and 0 expected parcels are stored on this device.** If it shows a different count (for example after you tried the homepage chips), click **Reset demo data** first.
 
-1. Click the first thread, **DHL Express Desk**, **Your parcel is held. Pay the release fee.**, then click **Check this email**.
+1. Click the first thread, **DHL Express Desk**, **Your parcel is held. Pay the release fee.**, then click **Check this email**. On a phone the threads are one row you can swipe sideways, and **Check this email** is on the first screen; the verdict appears just below it, so scroll down a little.
 2. What happens next depends on your browser. Pick the path that matches.
 
 ### Path A: Chrome with on-device AI (Gemini Nano)
 
 - No dialog appears. You see **Warning**, **You're not expecting any parcel right now.**, and **Checked on this device**.
-- Recorded on the current build on a GitHub runner with Nano: nano-film run 43950308139 (16 Nov 2026, production `9c6e0cc`). The machine used for the other steps has no Gemini Nano.
+- Recorded on the current build on a GitHub runner with Nano: nano-film run 43968899989 (16 Nov 2026, production `f87d165`). The machine used for the other steps has no Gemini Nano.
 - To turn on-device AI on in desktop Chrome: the hackathon FAQ says to open `chrome://flags`, search for **Gemma 4 for Built-in AI**, enable it, and relaunch. The runner instead enables `chrome://flags/#optimization-guide-on-device-model` and `chrome://flags/#prompt-api-for-gemini-nano`. `chrome://on-device-internals` shows whether the model is ready. Chrome's hardware requirements apply.
 
 ### Path B: no on-device AI, you allow the cloud
@@ -55,7 +55,7 @@ After any result in step 1, a card says **Next, see a match. This stores the UPS
 
 3. Click **Load the matching shipment demo**. The UPS thread opens, the header says **1 order and 1 expected parcel are stored on this device.**, and a note says **Matching shipment demo loaded. UPS 1Z999AA10123456784 is now an expected parcel on this device (demo data). Check this UPS email next.**
 4. Click **Check this email**. Expect **Safe** and **This tracking number matches a shipment you are expecting.**
-5. Open the last thread, **Duty payment required for your shipment**, and check it. Expect **Warning** and **This tracking number is not one of your shipments.**
+5. Open the last thread, **Duty payment required for your shipment** (on a phone, swipe the thread row to reach it), and check it. Expect **Warning** and **This tracking number is not one of your shipments.**
 6. Optional: **Streamhut Billing**, **Your Streamhut invoice is due** gives **Neutral** and **You have no history with this sender.**
 7. Click **Reset demo data**. You see **Demo data reset. There are no expected parcels.** and the header is back to **1 order and 0 expected parcels are stored on this device.**
 
@@ -74,7 +74,7 @@ Paste an email that is not one of the samples and click **Check pasted email**. 
 On https://did-i-order-this.vercel.app, in a browser without on-device AI and with the default "on this device" mode:
 
 - **Fake DHL**: **You're not expecting any parcel right now.** with **On-device AI did not run in this browser. This check used the structured claim prepared for this sample.**
-- **Real UPS**: the chip first stores the matching UPS shipment. Expect **This tracking number matches a shipment you are expecting.** and **Demo data: before this check, the chip saved UPS parcel 1Z999AA10123456784 from the Northwind sample as an expected parcel on this device. Reset demo data in the sample inbox removes it.**
+- **Real UPS**: the chip first stores the matching UPS shipment. This works even as the very first tap on a brand-new device (fixed in `c94c806`). Expect **This tracking number matches a shipment you are expecting.** and **Demo data: before this check, the chip saved UPS parcel 1Z999AA10123456784 from the Northwind sample as an expected parcel on this device. Reset demo data in the sample inbox removes it.**
 - After **Real UPS**, the **Fake DHL** chip says **This tracking number is not one of your shipments.**, because a parcel is now expected. **Reset demo data** in the sample inbox brings back the first headline.
 
 ## 5. Chrome extension (desktop Chrome 138 or later)
@@ -82,7 +82,7 @@ On https://did-i-order-this.vercel.app, in a browser without on-device AI and wi
 1. Download https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip and unzip it. If you downloaded it before 16 Nov 2026, download it again: the test page below needs the new copy.
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the inner `did-i-order-this-extension` folder.
 3. Open https://did-i-order-this.vercel.app/extension-demo/. It is labelled **Extension test fixture.** and says it is not Gmail. Open the extension's side panel from the toolbar. It shows the open sample email and **Check this email**. The buttons on the page switch between the five sample emails.
-4. With Gemini Nano you should see **Checked on this device** and the verdict (recorded on a runner with Nano on 16 Nov 2026 against the live zip, nano-film run 43952581780, using a local copy of this kind of page).
+4. With Gemini Nano you should see **Checked on this device** and the verdict (recorded on a runner with Nano on 16 Nov 2026 against the live zip, nano-film run 43967844787, using a local copy of this kind of page).
 5. Without Nano you see **Error** and **The AI read could not run. On-device AI is not available in this browser. This extension does not send mail to the cloud. Open https://did-i-order-this.vercel.app to check in the cloud after you agree, or run a limited check here.** Then **Run a limited check (no AI)** gives the limited check.
 
 The side panel and fixture were run on this box with the extension loaded unpacked and the fixture served at its live address. The extension is built to read an open Gmail thread at `mail.google.com`; a signed-in Gmail thread was not tested on this machine.
