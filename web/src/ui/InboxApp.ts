@@ -13,9 +13,15 @@ import {
   type Verdict,
 } from "@did-i-order-this/core";
 import { readClaim } from "../ai/readClaim.ts";
-import { chooseInferenceMode } from "../consent.ts";
-import { describeAiError } from "../ai/aiError.ts";
+import { cloudConsentMemory } from "../ai/consentMemory.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
+import {
+  SHIPMENT_NEXT_THREAD_ID,
+  hasMatchingShipmentDemo,
+  loadMatchingShipmentDemo,
+  matchingShipmentDemo,
+} from "../demo/shipmentDemo.ts";
+import { SAMPLE_NOTE, runCheckFlow } from "./checkFlow.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { getOfficialPack } from "../packs/official.ts";
@@ -23,13 +29,15 @@ import { extractFromDomain } from "../site/emailText.ts";
 
 type CheckState =
   | { status: "idle" }
-  | { status: "checking" }
+  | { status: "checking"; where: "device" | "cloud" }
   | { status: "consent" }
   | {
       status: "done";
       verdict: Verdict;
       claim: EmailClaim;
       usedSampleClaim: boolean;
+      fallbackDetail: string;
+      cloudConsentRemembered: boolean;
       canSaveShipment: boolean;
       saved: boolean;
     }
@@ -170,6 +178,14 @@ export class InboxApp {
     this.root.querySelector("[data-action=limited]")?.addEventListener("click", () => {
       this.runLimited();
     });
+    this.root.querySelector("[data-action=load-shipment-demo]")?.addEventListener("click", () => {
+      void this.loadShipmentDemo();
+    });
+    this.root.querySelector("[data-action=forget-cloud-consent]")?.addEventListener("click", () => {
+      cloudConsentMemory.forget();
+      if (this.check.status === "done") this.check = { ...this.check, cloudConsentRemembered: false };
+      this.render();
+    });
     this.root.querySelector("[data-action=consent-yes]")?.addEventListener("click", () => {
       this.consentResolver?.(true);
     });
@@ -231,7 +247,8 @@ export class InboxApp {
       return "";
     }
     if (this.check.status === "checking") {
-      return `<div class="result is-checking" aria-busy="true"><p class="status is-loading">Checking this email on this device</p></div>`;
+      const where = this.check.where === "cloud" ? "in the cloud" : "on this device";
+      return `<div class="result is-checking" aria-busy="true"><p class="status is-loading">Checking this email ${where}</p></div>`;
     }
     if (this.check.status === "consent") {
       return "";
@@ -259,10 +276,12 @@ export class InboxApp {
             ${result.findings.map((finding) => `<li>${escapeHtml(finding)}</li>`).join("")}
           </ul>
         </div>
+        ${this.renderShipmentDemo()}
       `;
     }
 
-    const { verdict, claim, usedSampleClaim, canSaveShipment, saved } = this.check;
+    const { verdict, claim, usedSampleClaim, fallbackDetail, cloudConsentRemembered, canSaveShipment, saved } =
+      this.check;
     const claimLines = [
       `Claims to be: ${claim.claimed_party.name} (${claim.claimed_party.role})`,
       claim.claimed_party.domain ? `Claimed domain: ${claim.claimed_party.domain}` : "",
@@ -282,9 +301,10 @@ export class InboxApp {
         <p class="source-label">${escapeHtml(verdict.inferenceSourceLabel)}</p>
         ${
           usedSampleClaim
-            ? `<p class="note">On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.</p>`
+            ? `<p class="note">${escapeHtml(SAMPLE_NOTE)}</p>`
             : ""
         }
+        ${fallbackDetail ? `<p class="note fallback-detail" data-fallback-detail>${escapeHtml(fallbackDetail)}</p>` : ""}
         <ul class="reasons">
           ${verdict.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}
         </ul>
@@ -301,8 +321,38 @@ export class InboxApp {
             : ""
         }
         ${saved ? `<p class="note">Saved on this device.</p>` : ""}
+        ${
+          cloudConsentRemembered
+            ? `<div class="consent-remembered" data-consent-remembered>
+                <p class="note">Your yes to cloud checks is remembered for sample emails until you close this tab.</p>
+                <button type="button" class="btn btn-secondary" data-action="forget-cloud-consent">Ask me each time</button>
+              </div>`
+            : ""
+        }
       </div>
+      ${this.renderShipmentDemo()}
     `;
+  }
+
+  /** One-tap next step after the first verdict, while no parcel is expected. Claude styles the card. */
+  private renderShipmentDemo(): string {
+    if (this.mode !== "thread") return "";
+    if (this.expectedCount() > 0 || hasMatchingShipmentDemo(this.ledger)) return "";
+    return `<div class="demo-next" data-demo-next>
+        <p>Next, see a match. This stores the UPS parcel from the Northwind sample email as an expected parcel on this device. It is demo data, and Reset demo data removes it.</p>
+        <button type="button" class="btn btn-secondary" data-action="load-shipment-demo">Load the matching shipment demo</button>
+      </div>`;
+  }
+
+  private async loadShipmentDemo(): Promise<void> {
+    await loadMatchingShipmentDemo({ shipment: saveShipment, sender: saveSender });
+    this.ledger = await loadLedger();
+    this.mode = "thread";
+    this.selectedId = SHIPMENT_NEXT_THREAD_ID;
+    this.check = { status: "idle" };
+    const { shipment } = matchingShipmentDemo();
+    this.note = `Matching shipment demo loaded. ${shipment.carrier ?? "UPS"} ${shipment.trackingNumber} is now an expected parcel on this device (demo data). Check this UPS email next.`;
+    this.render();
   }
 
   private renderConsent(): string {
@@ -385,7 +435,7 @@ export class InboxApp {
     this.render();
   }
 
-  private finishWithSampleClaim(thread: SampleThread): void {
+  private finishWithSampleClaim(thread: SampleThread, fallbackDetail = ""): void {
     const claim = thread.expectedClaim;
     const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), undefined);
     const shipment = ingestShipmentFromClaim(claim, {
@@ -397,6 +447,8 @@ export class InboxApp {
       verdict,
       claim,
       usedSampleClaim: true,
+      fallbackDetail,
+      cloudConsentRemembered: false,
       canSaveShipment: shipment !== null,
       saved: false,
     };
@@ -407,6 +459,7 @@ export class InboxApp {
     meta: { fromDomain: string; subject: string },
     claim: EmailClaim,
     inferenceSource?: InferenceSourceValue,
+    cloudConsentRemembered = false,
   ): void {
     const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), inferenceSource);
     const shipment = ingestShipmentFromClaim(claim, {
@@ -418,6 +471,8 @@ export class InboxApp {
       verdict,
       claim,
       usedSampleClaim: false,
+      fallbackDetail: "",
+      cloudConsentRemembered,
       canSaveShipment: shipment !== null,
       saved: false,
     };
@@ -427,62 +482,41 @@ export class InboxApp {
   private async runCheck(): Promise<void> {
     const current = this.currentEmail();
     if (!current) return;
-    this.check = { status: "checking" };
+    this.check = { status: "checking", where: "device" };
     this.note = "";
     this.render();
 
-    const emailText = current.text;
+    const outcome = await runCheckFlow(
+      { text: current.text, sample: current.sample },
+      {
+        readClaim,
+        firebaseConfigured: isFirebaseConfigured,
+        cloudAvailable: isCloudAiAvailable,
+        askForCloudConsent: () => this.askForCloudConsent(),
+        consentMemory: cloudConsentMemory,
+        onCloudStart: () => {
+          this.check = { status: "checking", where: "cloud" };
+          this.render();
+        },
+        warn: (message, error) => console.warn(message, error),
+      },
+    );
 
-    if (!isFirebaseConfigured()) {
-      if (current.sample) {
-        this.finishWithSampleClaim(current.sample);
-        return;
-      }
-      this.runLimited();
+    if (outcome.kind === "ai") {
+      const remembered = outcome.inferenceSource === "in_cloud" && cloudConsentMemory.has();
+      this.finishWithClaim(current, outcome.claim, outcome.inferenceSource, remembered);
       return;
     }
-
-    try {
-      const first = await readClaim(emailText, "only_on_device");
-      this.finishWithClaim(current, first.claim, first.inferenceSource);
-      return;
-    } catch {
-      // Continue to cloud consent or the no-key fallback.
-    }
-
-    if (!isCloudAiAvailable()) {
-      if (current.sample) {
-        this.finishWithSampleClaim(current.sample);
-        return;
-      }
-      this.runLimited();
+    if (outcome.kind === "sample" && current.sample) {
+      this.finishWithSampleClaim(current.sample, outcome.detail);
       return;
     }
-
-    const mode = await chooseInferenceMode(false, () => this.askForCloudConsent());
-    if (mode === "cancelled") {
-      this.check = {
-        status: "error",
-        message: "The AI read could not run. The email was not sent to the cloud.",
-        canLimited: true,
-      };
+    if (outcome.kind === "error") {
+      this.check = { status: "error", message: outcome.message, canLimited: outcome.canLimited };
       this.render();
       return;
     }
-
-    try {
-      const second = await readClaim(emailText, mode);
-      this.finishWithClaim(current, second.claim, second.inferenceSource);
-    } catch (cloudError) {
-      console.warn("Cloud read failed", cloudError);
-      const cloudMessage = describeAiError(cloudError);
-      this.check = {
-        status: "error",
-        message: `The AI read could not run. ${cloudMessage}`,
-        canLimited: true,
-      };
-      this.render();
-    }
+    this.runLimited();
   }
 
   private async saveShipment(): Promise<void> {

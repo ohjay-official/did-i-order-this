@@ -5,7 +5,6 @@ import {
   InferenceSource,
   getAI,
   getGenerativeModel,
-  type GenerativeModel,
   type HybridParams,
 } from "firebase/ai";
 import { getFirebaseApp } from "../firebase/app.ts";
