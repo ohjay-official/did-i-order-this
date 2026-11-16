@@ -4,3 +4,4 @@ export * from "./verdict.ts";
 export * from "./ingest.ts";
 export * from "./importCsv.ts";
 export * from "./limitedCheck.ts";
+export * from "./reconcile.ts";

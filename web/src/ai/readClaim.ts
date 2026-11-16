@@ -1,4 +1,4 @@
-import type { EmailClaim, InferenceSourceValue } from "@did-i-order-this/core";
+import { reconcileClaim, senderDomainFromHeader, type EmailClaim, type InferenceSourceValue } from "@did-i-order-this/core";
 import {
   GoogleAIBackend,
   InferenceMode,
@@ -76,15 +76,20 @@ async function generateClaim(emailText: string, mode: ReadClaimMode): Promise<{
 
   const prompt = `${CLAIM_PROMPT}\n\n---\n${emailText}\n---`;
   const result = await model.generateContent(prompt);
-  const claim = parseClaimResponse(result.response.text());
+  // Fill model gaps (display name as domain, missed tracking number) from the text in code.
+  const claim = reconcileClaim(parseClaimResponse(result.response.text()), emailText, senderDomainFromHeader(emailText));
   const inferenceSource = mapInferenceSource(result.response.inferenceSource);
   return { claim, inferenceSource };
 }
 
+/** Same cap as the extension's background worker: longer emails are cut, not sent whole. */
+export const MAX_EMAIL_CHARS = 20_000;
+
 export async function readClaim(
-  emailText: string,
+  rawEmailText: string,
   mode: ReadClaimMode,
 ): Promise<{ claim: EmailClaim; inferenceSource: InferenceSourceValue }> {
+  const emailText = rawEmailText.slice(0, MAX_EMAIL_CHARS);
   try {
     return await generateClaim(emailText, mode);
   } catch (error) {

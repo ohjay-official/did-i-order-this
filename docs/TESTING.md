@@ -28,6 +28,7 @@ Open https://did-i-order-this.vercel.app/app/. The header says **1 order and 0 e
 - You see **Warning**, **You're not expecting any parcel right now.**, then **On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.** and **The email was not sent to the cloud.**
 - There is no source label on this result, because it is a prepared sample claim, not an AI read.
 - The decline is not remembered. The next **Check this email** asks again.
+- With a keyboard, focus starts on **Do not send**, and Escape is the same as **Do not send**.
 
 ### Path D: you allow the cloud, but the cloud check fails
 

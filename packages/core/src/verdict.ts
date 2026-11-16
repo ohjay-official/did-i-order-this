@@ -1,5 +1,6 @@
 import { looksLikeTracking, normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
 import {
+  LOOKALIKE_MATCH_HEADLINE,
   NOTHING_EXPECTED_HEADLINE,
   type EmailClaim,
   type InferenceSourceLabel,
@@ -37,7 +38,24 @@ export function isCarrierClaim(claim: EmailClaim, pack: OfficialPack): boolean {
 
 function findOfficial(pack: OfficialPack, domain: string) {
   const normalized = normalizeDomain(domain);
-  return pack.officialDomains.find((entry) => normalizeDomain(entry.domain) === normalized);
+  // A subdomain of an official domain (alerts.ups.com) counts; a lookalike
+  // that only contains it (ups.com.parcel-desk.example) does not.
+  return pack.officialDomains.find((entry) => {
+    const official = normalizeDomain(entry.domain);
+    return normalized === official || normalized.endsWith(`.${official}`);
+  });
+}
+
+function lureApplies(claim: EmailClaim, appliesTo: OfficialPack["lureTemplates"][number]["appliesTo"]): boolean {
+  if (!appliesTo) return true;
+  return Boolean(
+    appliesTo.roles?.includes(claim.claimed_party.role) || appliesTo.kinds?.includes(claim.email_kind),
+  );
+}
+
+/** Asks that a real carrier notice rarely needs: money, a login, or a download. */
+function asksForRiskyAction(claim: EmailClaim): boolean {
+  return claim.asked_action === "pay" || claim.asked_action === "log_in" || claim.asked_action === "download";
 }
 
 function isStoreClaim(claim: EmailClaim): boolean {
@@ -145,6 +163,7 @@ function packReasons(claim: EmailClaim, pack: OfficialPack): string[] {
   }
   const blob = JSON.stringify(claim);
   for (const lure of pack.lureTemplates) {
+    if (!lureApplies(claim, lure.appliesTo)) continue;
     let matched = false;
     try {
       matched = new RegExp(lure.pattern, "i").test(blob);
@@ -184,6 +203,19 @@ export function decideVerdict(
     if (match) {
       reasons.push("This tracking number matches a shipment stored on this device.");
       reasons.push(...packReasons(claim, pack));
+      const domain = claim.claimed_party.domain;
+      const official = domain ? findOfficial(pack, domain) : undefined;
+      if (domain && official?.role !== "carrier" && asksForRiskyAction(claim)) {
+        // A leaked tracking number is not proof of the sender. Do not stamp a
+        // fee or login demand from an unofficial domain as safe.
+        reasons.push("A matching tracking number can leak. Use the carrier's own app or site instead of this email.");
+        return {
+          outcome: "warning",
+          headline: LOOKALIKE_MATCH_HEADLINE,
+          reasons,
+          inferenceSourceLabel,
+        };
+      }
       return {
         outcome: "safe",
         headline: "This tracking number matches a shipment you are expecting.",
