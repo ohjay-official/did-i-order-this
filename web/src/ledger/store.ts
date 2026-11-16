@@ -79,8 +79,29 @@ export async function resetToDemoSeed(): Promise<LedgerSnapshot> {
   }
 }
 
+/**
+ * Seeds the demo ledger if this device has never been seeded. Every write calls
+ * this first: otherwise a write on a brand-new device (for example the homepage
+ * Real UPS chip saving its demo shipment) would be wiped by the first
+ * loadLedger(), which seeds by clearing every store.
+ */
+export async function ensureSeeded(): Promise<void> {
+  const db = await openDb();
+  let seeded = false;
+  try {
+    seeded = await runTransaction(db, ["meta"], "readonly", (tx) => {
+      const req = tx.objectStore("meta").get("seeded");
+      return () => Boolean(req.result);
+    });
+  } finally {
+    db.close();
+  }
+  if (!seeded) await resetToDemoSeed();
+}
+
 /** Stores an order. The same order (same order id from the same sender) is updated, not added twice. Returns true if it was new. */
 export async function saveOrder(order: LedgerOrder): Promise<boolean> {
+  await ensureSeeded();
   const db = await openDb();
   try {
     return await runTransaction(db, ["orders"], "readwrite", (tx) => {
@@ -101,6 +122,7 @@ export async function saveOrder(order: LedgerOrder): Promise<boolean> {
 
 /** Stores a shipment. A shipment with the same tracking number is updated, not added twice. Returns true if it was new. */
 export async function saveShipment(shipment: LedgerShipment): Promise<boolean> {
+  await ensureSeeded();
   const db = await openDb();
   try {
     return await runTransaction(db, ["shipments"], "readwrite", (tx) => {
@@ -120,6 +142,7 @@ export async function saveShipment(shipment: LedgerShipment): Promise<boolean> {
 }
 
 export async function saveSender(sender: LedgerSender): Promise<void> {
+  await ensureSeeded();
   const db = await openDb();
   try {
     await runTransaction(db, ["senders"], "readwrite", (tx) => {
