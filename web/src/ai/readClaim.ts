@@ -12,6 +12,7 @@ import { getFirebaseApp } from "../firebase/app.ts";
 import { parseClaimResponse } from "./parseClaim.ts";
 import { CLAIM_PROMPT, getClaimSchema } from "./schema.ts";
 import { cloudBudget } from "./cloudBudget.ts";
+import { NoOnDeviceModelError, hasOnDeviceApi, warmUpOnDevice } from "./onDevice.ts";
 
 export type ReadClaimMode = "only_on_device" | "prefer_on_device" | "only_in_cloud";
 
@@ -61,13 +62,17 @@ async function generateClaim(emailText: string, mode: ReadClaimMode): Promise<{
   claim: EmailClaim;
   inferenceSource: InferenceSourceValue;
 }> {
+  // Without the browser's on-device API, Firebase has no on-device adapter and
+  // would send an "only on device" request to the cloud. Stop here instead, so
+  // nothing leaves the device without consent and the caller can move on fast.
+  if (mode === "only_on_device" && !hasOnDeviceApi()) throw new NoOnDeviceModelError();
   // Anything that may reach the cloud spends one unit of the session budget.
   if (mode !== "only_on_device") cloudBudget.take();
   const ai = getAI(getFirebaseApp(), { backend: new GoogleAIBackend() });
   const model = getGenerativeModel(ai, hybridParams(mode));
 
   if (mode !== "only_in_cloud") {
-    await initializeOnDevice(model);
+    await warmUpOnDevice(model);
   }
 
   const prompt = `${CLAIM_PROMPT}\n\n---\n${emailText}\n---`;
@@ -75,25 +80,6 @@ async function generateClaim(emailText: string, mode: ReadClaimMode): Promise<{
   const claim = parseClaimResponse(result.response.text());
   const inferenceSource = mapInferenceSource(result.response.inferenceSource);
   return { claim, inferenceSource };
-}
-
-async function initializeOnDevice(model: GenerativeModel): Promise<void> {
-  // Chrome can report the Prompt API as unavailable for a few seconds after
-  // launch, before the on-device backend is ready. Retry that transient case
-  // instead of immediately falling back to cloud consent.
-  let lastError: unknown;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    try {
-      await model.initializeDeviceModel();
-      return;
-    } catch (error) {
-      lastError = error;
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes("not available in this environment")) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    }
-  }
-  throw lastError;
 }
 
 export async function readClaim(
