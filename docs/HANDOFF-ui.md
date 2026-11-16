@@ -91,6 +91,8 @@ Lighthouse mobile on production after the backend pass: Accessibility, Best Prac
 
 ## 8. Open UI items
 
+Current list (16 Nov 2026, supersedes the items below where they differ): [UI-NEXT.md](UI-NEXT.md).
+
 1. Home Performance (84 now, 74 earlier). The main costs are the hero stage, the globe and the freight video.
 2. README screenshots now live in `docs/images/` (home, sample inbox, consent), captured from the live site at 390-pixel width on 16 Nov 2026. Retake all of them after any UI change. A live AI verdict could not be captured from the box (no Gemini Nano; App Check rejects automated Chrome). A short GIF of the sample-inbox verdict would still help.
 3. `/app/` as a bigger dashboard.
