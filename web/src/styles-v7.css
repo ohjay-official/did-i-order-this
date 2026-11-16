@@ -442,6 +442,8 @@
   --top: calc(64px + clamp(220px, 34vh, 330px));
   --hot: #e24a2b;
   --hot-soft: #fde4d4;
+  /* white text needs 4.5:1, #e24a2b gives 4.0:1, #c4451c gives 4.9:1 */
+  --hot-text-bg: #c4451c;
   position: relative;
   overflow: hidden;
   min-height: calc(var(--top) + var(--ch) + 110px);
@@ -494,7 +496,7 @@
   margin-top: 20px;
   padding: 0 22px;
   border-radius: 999px;
-  background: var(--hot);
+  background: var(--hot-text-bg);
   color: #fff;
   font-size: 14px;
   font-weight: 500;
@@ -766,7 +768,7 @@
 
 .belt-pill-num {
   padding: 0 11px 0 13px;
-  background: var(--hot);
+  background: var(--hot-text-bg);
   color: #fff;
 }
 
