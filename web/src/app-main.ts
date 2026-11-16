@@ -2,6 +2,7 @@ import { mountInsights } from "./site/insights.ts";
 import { InboxApp } from "./ui/InboxApp.ts";
 import { mountShell } from "./site/shell.ts";
 import "./styles-v6.css";
+import "./styles-v7.css";
 
 mountShell(document, { current: "/app/" });
 
