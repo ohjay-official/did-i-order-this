@@ -15,6 +15,28 @@ export const SAMPLE_NOTE =
   "On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.";
 export const NOT_SENT_NOTE = "The email was not sent to the cloud.";
 
+/**
+ * A cloud read that never answers must not leave the judge on a spinner. This
+ * happens when the reCAPTCHA script for App Check cannot load (offline, or a
+ * blocker), because the SDK then waits for a token forever.
+ */
+export const CLOUD_TIMEOUT_MS = 20_000;
+
+export class CloudTimeoutError extends Error {
+  constructor() {
+    super("The cloud did not answer in time.");
+    this.name = "CloudTimeoutError";
+  }
+}
+
+export function withTimeout<T>(work: Promise<T>, ms: number = CLOUD_TIMEOUT_MS): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new CloudTimeoutError()), ms);
+  });
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
+}
+
 export type SampleFallbackReason = "not_configured" | "no_cloud" | "declined" | "cloud_failed";
 
 export type CheckFlowResult =
@@ -32,6 +54,7 @@ export interface CheckFlowDeps {
   /** Called once the judge has agreed (or a remembered yes applies) and the cloud read starts. */
   onCloudStart?: () => void;
   warn?: (message: string, error: unknown) => void;
+  cloudTimeoutMs?: number;
 }
 
 function sample(thread: SampleThread, reason: SampleFallbackReason, detail = ""): CheckFlowResult {
@@ -73,7 +96,10 @@ export async function runCheckFlow(
 
   deps.onCloudStart?.();
   try {
-    const second = await deps.readClaim(email.text, "only_in_cloud");
+    const second = await withTimeout(
+      deps.readClaim(email.text, "only_in_cloud"),
+      deps.cloudTimeoutMs ?? CLOUD_TIMEOUT_MS,
+    );
     return {
       kind: "ai",
       claim: second.claim,

@@ -7,7 +7,7 @@ import { NoOnDeviceModelError } from "../ai/onDevice.ts";
 import type { ReadClaimMode } from "../ai/readClaim.ts";
 import { demoSeed, formatEmailText, sampleThreads } from "../demo/seed.ts";
 import { getOfficialPack } from "../packs/official.ts";
-import { NOT_SENT_NOTE, SAMPLE_NOTE, runCheckFlow, type CheckFlowDeps } from "./checkFlow.ts";
+import { CLOUD_TIMEOUT_MS, NOT_SENT_NOTE, SAMPLE_NOTE, runCheckFlow, withTimeout, type CheckFlowDeps } from "./checkFlow.ts";
 
 const dhl = sampleThreads[0];
 const PASTED = "From: Someone <a@b.example>\nSubject: Hello\n\nPay this fee.";
@@ -98,6 +98,24 @@ describe("sample inbox check flow", () => {
     if (result.kind !== "sample") throw new Error("expected sample");
     expect(result.detail).toContain("The cloud could not be reached.");
     expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it("a cloud read that never answers (reCAPTCHA blocked) falls back after the timeout", async () => {
+    const t = deps({ cloudTimeoutMs: 20, cloud: () => new Promise(() => undefined) });
+    const result = await runCheckFlow(thread, t.deps);
+    expect(result).toMatchObject({
+      kind: "sample",
+      reason: "cloud_failed",
+      detail: "The cloud check could not run. The cloud did not answer in time. Check your connection and try again.",
+    });
+    const pastedResult = await runCheckFlow(pasted, t.deps);
+    expect(pastedResult).toMatchObject({ kind: "error", canLimited: true });
+    expect(CLOUD_TIMEOUT_MS).toBe(20_000);
+  });
+
+  it("withTimeout passes a prompt answer through untouched", async () => {
+    await expect(withTimeout(Promise.resolve("ok"), 50)).resolves.toBe("ok");
+    await expect(withTimeout(Promise.reject(new Error("boom")), 50)).rejects.toThrow("boom");
   });
 
   it("no Firebase config or no cloud AI: sample thread uses the prepared claim, pasted email gets the limited check", async () => {

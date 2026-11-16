@@ -23,6 +23,11 @@ describe("describeAiError", () => {
       "Cloud reads are limited to 10 a minute.",
     );
   });
+  it("explains a cloud read that did not answer in time", () => {
+    expect(describeAiError(new Error("The cloud did not answer in time."))).toBe(
+      "The cloud did not answer in time. Check your connection and try again.",
+    );
+  });
   it("never echoes unknown raw text", () => {
     expect(describeAiError(new Error("secret-ish internal detail"))).toBe("The AI read failed for an unknown reason.");
   });

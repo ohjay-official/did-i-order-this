@@ -3,6 +3,7 @@ import { readClaim } from "../ai/readClaim.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { loadLedger, saveSender, saveShipment } from "../ledger/store.ts";
 import { prepareTryChip } from "../demo/shipmentDemo.ts";
+import { withTimeout } from "../ui/checkFlow.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
 import { mountStage } from "./stage.ts";
@@ -91,7 +92,7 @@ async function runChecker(emailText: string, mode: Mode): Promise<HeroResult> {
 
     if (mode === "cloud" && isCloudAiAvailable()) {
       try {
-        const second = await readClaim(emailText, "only_in_cloud");
+        const second = await withTimeout(readClaim(emailText, "only_in_cloud"));
         const verdict = decideVerdict(second.claim, ledger, pack, second.inferenceSource);
         return {
           kind: "verdict",
