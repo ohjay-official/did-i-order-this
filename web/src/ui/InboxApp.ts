@@ -245,7 +245,7 @@ export class InboxApp {
 
   private renderResult(): string {
     if (this.check.status === "idle") {
-      if (this.note) return `<p class="note">${escapeHtml(this.note)}</p>`;
+      if (this.note) return `<p class="note pane-note" role="status">${escapeHtml(this.note)}</p>`;
       if (this.mode === "thread") {
         return `<p class="empty-state">Check this email to compare it with the orders stored on this device.</p>`;
       }
@@ -309,7 +309,7 @@ export class InboxApp {
         }
         ${
           usedSampleClaim
-            ? `<p class="note">${escapeHtml(SAMPLE_NOTE)}</p>`
+            ? `<p class="note sample-note">${escapeHtml(SAMPLE_NOTE)}</p>`
             : ""
         }
         ${fallbackDetail ? `<p class="note fallback-detail" data-fallback-detail>${escapeHtml(fallbackDetail)}</p>` : ""}
