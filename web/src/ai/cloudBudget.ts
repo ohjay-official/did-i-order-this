@@ -4,7 +4,8 @@
  * enforcement and the project's Gemini free-tier quota). It cannot stop a
  * determined caller, but it stops loops, double clicks and runaway retries.
  */
-export const CLOUD_PER_MINUTE = 4;
+// Matches the server-side Firebase AI Logic quota of 10 requests a minute per user.
+export const CLOUD_PER_MINUTE = 10;
 export const CLOUD_PER_SESSION = 30;
 const KEY = "dio.cloudCalls.v1";
 

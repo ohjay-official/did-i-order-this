@@ -8,6 +8,9 @@ export function describeAiError(error: unknown): string {
   if (error instanceof CloudBudgetError) return error.message;
   const raw = error instanceof Error ? `${error.name} ${error.message} ${String((error as { code?: unknown }).code ?? "")}` : String(error);
   const text = raw.toLowerCase();
+  if (/did not answer in time/.test(text)) {
+    return "The cloud did not answer in time. Check your connection and try again.";
+  }
   if (/429|resource_exhausted|quota|rate limit|too many requests/.test(text)) {
     return "The cloud limit for this project was reached. Wait a minute and try again, or run a limited check.";
   }

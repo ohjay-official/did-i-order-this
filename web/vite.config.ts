@@ -61,6 +61,7 @@ export default defineConfig({
         pricing: path.resolve(root, "pricing/index.html"),
         about: path.resolve(root, "about/index.html"),
         app: path.resolve(root, "app/index.html"),
+        extensionDemo: path.resolve(root, "extension-demo/index.html"),
         notFound: path.resolve(root, "404.html"),
         og: path.resolve(root, "og.html"),
       },

@@ -1,7 +1,9 @@
 import { decideVerdict, runLimitedCheck, type Verdict } from "@did-i-order-this/core";
 import { readClaim } from "../ai/readClaim.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
-import { loadLedger } from "../ledger/store.ts";
+import { loadLedger, saveSender, saveShipment } from "../ledger/store.ts";
+import { prepareTryChip } from "../demo/shipmentDemo.ts";
+import { withTimeout } from "../ui/checkFlow.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
 import { mountStage } from "./stage.ts";
@@ -17,6 +19,7 @@ interface HeroResult {
   sourceLabel: string;
   reasons: string[];
   sampleNote?: string;
+  demoNote?: string;
 }
 
 function prefersReducedMotion(): boolean {
@@ -39,6 +42,7 @@ function matchSample(emailText: string): SampleThread | undefined {
 function renderResult(result: HeroResult, stamped: boolean): string {
   const tone = result.outcome ?? "neutral";
   const note = result.sampleNote ? `<p class="hero-note">${escapeHtml(result.sampleNote)}</p>` : "";
+  const demoNote = result.demoNote ? `<p class="hero-note" data-demo-note>${escapeHtml(result.demoNote)}</p>` : "";
   const showStamp = !result.sampleNote;
   const stamp = showStamp
     ? `<p class="source-label${stamped ? " is-stamped" : ""}">${escapeHtml(result.sourceLabel)}</p>`
@@ -53,6 +57,7 @@ function renderResult(result: HeroResult, stamped: boolean): string {
       <h2 class="headline">${escapeHtml(result.headline)}</h2>
       ${stamp}
       ${note}
+      ${demoNote}
       <ul class="reasons">${reasons}</ul>
     </div>
   `;
@@ -87,7 +92,7 @@ async function runChecker(emailText: string, mode: Mode): Promise<HeroResult> {
 
     if (mode === "cloud" && isCloudAiAvailable()) {
       try {
-        const second = await readClaim(emailText, "only_in_cloud");
+        const second = await withTimeout(readClaim(emailText, "only_in_cloud"));
         const verdict = decideVerdict(second.claim, ledger, pack, second.inferenceSource);
         return {
           kind: "verdict",
@@ -180,7 +185,7 @@ export function mountLanding(root: ParentNode = document): void {
     window.requestAnimationFrame(() => stamp?.classList.add("is-stamped"));
   };
 
-  const run = async (emailText: string, displayText?: string) => {
+  const run = async (emailText: string, displayText?: string, demoNote = "") => {
     const trimmed = emailText.trim();
     if (!trimmed) {
       input.focus();
@@ -202,7 +207,8 @@ export function mountLanding(root: ParentNode = document): void {
         : "Checking against the orders stored on this device",
     );
     try {
-      const result = await runChecker(trimmed, mode);
+      const checked = await runChecker(trimmed, mode);
+      const result = demoNote ? { ...checked, demoNote } : checked;
       if (current !== token) return;
       if (prefersReducedMotion()) {
         showResult(result);
@@ -261,7 +267,9 @@ export function mountLanding(root: ParentNode = document): void {
       });
       const text = formatEmailText(thread);
       const label = (button.textContent || thread.subject).trim();
-      void run(text, label);
+      void prepareTryChip(thread.id, { shipment: saveShipment, sender: saveSender })
+        .catch(() => "")
+        .then((demoNote) => run(text, label, demoNote));
     });
   });
 

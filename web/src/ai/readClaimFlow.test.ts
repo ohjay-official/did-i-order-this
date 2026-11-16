@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   prompts: [] as string[],
   initCalls: 0,
   initErrors: [] as Error[],
+  hasApi: true,
 }));
 
 vi.mock("firebase/ai", () => ({
@@ -41,6 +42,11 @@ vi.mock("firebase/ai", () => ({
 
 vi.mock("../firebase/app.ts", () => ({ getFirebaseApp: () => ({}) }));
 
+vi.mock("./onDevice.ts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./onDevice.ts")>();
+  return { ...actual, hasOnDeviceApi: () => state.hasApi };
+});
+
 const take = vi.fn();
 vi.mock("./cloudBudget.ts", () => ({ cloudBudget: { take: () => take() } }));
 
@@ -59,6 +65,7 @@ beforeEach(() => {
   state.prompts = [];
   state.initCalls = 0;
   state.initErrors = [];
+  state.hasApi = true;
   take.mockReset();
 });
 
@@ -94,16 +101,37 @@ describe("readClaim through Firebase AI Logic", () => {
     expect(state.prompts).toHaveLength(0);
   });
 
-  it("retries the on-device warm-up while Chrome says the model is not ready yet", async () => {
+  it("retries the on-device warm-up while Chrome has just started", async () => {
     vi.useFakeTimers();
+    const now = vi.spyOn(performance, "now").mockReturnValue(1_000);
     state.initErrors.push(new Error("Prompt API is not available in this environment."));
     state.responses.push({ text: GOOD, inferenceSource: "on_device" });
     const pending = readClaim("email body", "only_on_device");
-    await vi.advanceTimersByTimeAsync(2500);
+    await vi.advanceTimersByTimeAsync(1500);
     const result = await pending;
+    now.mockRestore();
     vi.useRealTimers();
     expect(state.initCalls).toBe(2);
     expect(result.inferenceSource).toBe("on_device");
+  });
+
+  it("fails fast with no retry once the page is past the warm-up window", async () => {
+    const now = vi.spyOn(performance, "now").mockReturnValue(60_000);
+    state.initErrors.push(new Error("Prompt API is not available in this environment."));
+    const started = Date.now();
+    await expect(readClaim("email body", "only_on_device")).rejects.toThrow("not available");
+    now.mockRestore();
+    expect(state.initCalls).toBe(1);
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+
+  it("never sends an on-device request anywhere when the browser has no on-device API", async () => {
+    state.hasApi = false;
+    state.responses.push({ text: GOOD, inferenceSource: "in_cloud" });
+    await expect(readClaim("email body", "only_on_device")).rejects.toThrow(/on-device model/);
+    expect(state.params).toHaveLength(0);
+    expect(state.prompts).toHaveLength(0);
+    expect(take).not.toHaveBeenCalled();
   });
 
   it("does not retry other warm-up failures", async () => {

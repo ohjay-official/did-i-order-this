@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Extension test fixture | Did I Order This?</title>
+    <meta name="description" content="A Gmail-like test page for the Did I Order This? Chrome extension. It is a fixture, not Gmail, and holds only fictional sample emails." />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; max-width: 760px; color: #1b1916; background: #fff; }
+      .a3s { white-space: pre-wrap; }
+    </style>
+  </head>
+  <body class="extension-demo-page">
+    <header class="fixture-banner" data-fixture-banner>
+      <p class="fixture-label"><strong>Extension test fixture.</strong> This page imitates an open Gmail thread so you can try the Did I Order This? extension without signing in to Gmail. It is not Gmail, and these are fictional sample emails, not your mail.</p>
+      <p>Load the extension, open its side panel on this page, then pick a sample email below. The side panel checks only on this device. Without on-device AI it offers a limited check, and the full sample walk is in the <a href="/app/">sample inbox</a>. Back to the <a href="/extension/">extension page</a>.</p>
+      <nav aria-label="Sample emails">
+        <ul class="fixture-threads">
+          <li><button type="button" data-fixture-thread="thread-1-carrier-lure" aria-pressed="true">DHL Express Desk: Your parcel is held. Pay the release fee.</button></li>
+          <li><button type="button" data-fixture-thread="thread-2-shipment-notice" aria-pressed="false">Northwind Outfitters: Your order has shipped</button></li>
+          <li><button type="button" data-fixture-thread="thread-3-safe-carrier" aria-pressed="false">UPS: UPS delivery update for 1Z999AA10123456784</button></li>
+          <li><button type="button" data-fixture-thread="thread-4-neutral-renewal" aria-pressed="false">Streamhut Billing: Your Streamhut invoice is due</button></li>
+          <li><button type="button" data-fixture-thread="thread-5-wrong-tracking" aria-pressed="false">DHL Express Desk: Duty payment required for your shipment</button></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <div role="main" class="fixture-thread" data-fixture-main>
+        <h2 class="hP">Your parcel is held. Pay the release fee.</h2>
+        <p class="fixture-from"><span class="gD" email="alerts@dhl-parcel-desk.example">DHL Express Desk</span> <span class="go">&lt;alerts@dhl-parcel-desk.example&gt;</span></p>
+        <p class="fixture-date"><span class="g3" title="12 Nov 2026">12 Nov 2026</span></p>
+        <div class="a3s aiL">Dear customer,
+
+Your parcel could not be delivered and is being held at a DHL facility.
+Tracking number: GM123456789012345
+
+A customs release fee of $2.99 is due. Pay the fee today or the parcel will be returned.
+
+DHL Express Desk</div>
+      </div>
+    </main>
+    <script type="module" src="/src/extension-demo-main.ts"></script>
+  </body>
+</html>
