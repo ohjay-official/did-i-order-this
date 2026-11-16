@@ -1,6 +1,6 @@
 # Victory test run, 16 Nov 2026
 
-Severe pre-submit test plan, run from the build machine on 16 Nov 2026 between 21:00 and 22:30 Africa/Lagos (UTC+1), against production `9098021` unless a row says otherwise. The machine has desktop Chrome 156 with no Gemini Nano; reCAPTCHA Enterprise rejects its automated Chrome, so App Check fails there by design. On-device rows ran on public GitHub runners with Nano.
+Severe pre-submit test plan, run from the build machine on the evening of 16 Nov 2026 and finished by 21:25 Africa/Lagos (UTC+1), against production `9098021` unless a row says otherwise. The machine has desktop Chrome 156 with no Gemini Nano; reCAPTCHA Enterprise rejects its automated Chrome, so App Check fails there by design. On-device rows ran on public GitHub runners with Nano.
 
 PASS means the row's pass rule held. OPEN means only the owner can run it, or it waits on something else.
 
