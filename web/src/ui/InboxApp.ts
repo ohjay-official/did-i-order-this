@@ -496,9 +496,15 @@ export class InboxApp {
     window.requestAnimationFrame(() => {
       const result = this.root.querySelector<HTMLElement>(".result");
       if (!result) return;
+      const card = result.getBoundingClientRect();
       const head = (result.querySelector<HTMLElement>(".headline") ?? result).getBoundingClientRect();
       const cover = parseFloat(getComputedStyle(result).scrollMarginTop) || 0;
-      if (head.top >= cover && head.bottom <= window.innerHeight - 16) return;
+      // Leave the page alone when the whole card already fits, or when the headline sits
+      // in the upper part of the screen with room for the reasons under it. A headline
+      // that is merely visible near the bottom edge (y=754 of 800 on a laptop) still scrolls.
+      const fits = card.top >= cover && card.bottom <= window.innerHeight;
+      const headHigh = head.top >= cover && head.top <= cover + (window.innerHeight - cover) * 0.4;
+      if (fits || headHigh) return;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       result.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
     });
