@@ -45,7 +45,7 @@ Stack: TypeScript, Vite 7 multi-page app (no framework), plain CSS, three 0.160.
 - **Type (self-hosted woff2 in `web/public/fonts/`):** Instrument Sans 400/500 (`--font`, body), Syne 400/500 (`--display`, headings), IBM Plex Mono 400 (`--mono`, labels, dates, source labels), Newsreader 400/500 (declared in base, little used now).
 - **Shape:** pill buttons (`--radius-btn: 999px`), cards 20px, panels 28px. Soft warm shadows (`--shadow`, `--shadow-sm`).
 - **Motion:** `--ease: cubic-bezier(0.22, 1, 0.36, 1)`. Hero stage loop runs at about 15 fps, pauses off-screen (IntersectionObserver) and starts when idle. Globe module is lazy-loaded. Freight clip is scroll-mapped. `prefers-reduced-motion` is handled in CSS (all three sheets) and in JS (`landing.ts`, `pages.ts`, `flow.ts`, `freight.ts`).
-- **Logo:** parcel-tape question mark. Sources in `/home/box/hackathons/buildhybridai-2026/logo/final/` (`mark.svg`, `mark-small.svg`, `favicon.svg`, `app-icon.svg`, `app-icon-maskable.svg`, `lockup.svg`, `lockup-night.svg`, `lockup-stacked.svg`, `wordmark.svg`); concept sheet at `logo/concept-sheet.png`. Shipped copies in `web/public/brand/` and inline as `LOGO_MARK` in `shell.ts`.
+- **Logo:** parcel-tape question mark. Sources are kept outside this repo (`mark.svg`, `mark-small.svg`, `favicon.svg`, `app-icon.svg`, `app-icon-maskable.svg`, `lockup.svg`, `lockup-night.svg`, `lockup-stacked.svg`, `wordmark.svg`). Shipped copies in `web/public/brand/` and inline as `LOGO_MARK` in `shell.ts`.
 - **Credit:** the CSS headers credit the unslop checklist (Damir Sokolovsky, CC BY 4.0). Keep that line.
 
 ## 5. Oh-Jay's design rules
@@ -61,13 +61,13 @@ Stack: TypeScript, Vite 7 multi-page app (no framework), plain CSS, three 0.160.
 
 ## 6. History v1 to v6.2
 
-Screens for every round are in `/home/box/hackathons/buildhybridai-2026/ui-v1/` to `ui-v6-2/`.
+Screens for every round are kept outside this repo.
 
 - **v1, v2:** he called them AI slop.
 - **v3:** he loved the hero (live checker on a warm colour field). Keep its spirit.
 - **v4:** "every single page is still blank". Too empty.
 - **v5:** product UI in every section (density pass).
-- **v6 (15 Nov), brief at `/home/box/hackathons/buildhybridai-2026/brief-v6.txt`:** five pasted prompts mapped to sections.
+- **v6 (15 Nov), brief kept outside this repo:** five pasted prompts mapped to sections.
   - "For Noor" photo globe letter (ostra) for the sample-box section: **adapted.** The photo globe and its constants were matched to the ostra spec; the letter layout, fictional names and copy were not used.
   - KV freight scroll hero for "Try it on the sample inbox": **adapted** with a real handling clip, scroll-mapped. The literal reach-stacker render story, "OUR SERVICES" letters and cyan cards were not copied.
   - Shipcraft CTA and footer: **adapted** as the night footer with the marble hands. The Shipcraft brand, newsletter field and amber sail mark were not used.
@@ -80,7 +80,7 @@ Screens for every round are in `/home/box/hackathons/buildhybridai-2026/ui-v1/` 
 
 ## 7. Current state per page (15 Nov)
 
-Lighthouse mobile on production after the backend pass: Accessibility, Best Practices and SEO are 100 on all 9 routes. Performance: home 84 on the latest run (74 on the earlier v6.2 run; it varies), 100 on the other routes. Reports: `/home/box/hackathons/buildhybridai-2026/ui-v6-2/lighthouse-post-backend/`, `lighthouse/` and `lighthouse-scores.md`.
+Lighthouse mobile on production after the backend pass (15 Nov): Accessibility, Best Practices and SEO 100 on all 9 routes; home Performance 84. Superseded: the current scores are in the README (17 Nov, `fcbfb0c`: Performance 98 to 100, the rest 100). Reports are kept outside this repo.
 
 - **Home `/`:** v6 flow complete (hero with live chips, globe, freight scroll, night footer). Heaviest page. The hero check works on device or in the cloud after consent.
 - **`/app/`:** works end to end; the layout is a two-column inbox plus result card. Functional, not yet the "bigger dashboard" Oh-Jay wants.
@@ -145,10 +145,8 @@ A live cloud check needs a headed Chrome (reCAPTCHA Enterprise rejects headless 
 
 ## 13. Evidence and references
 
-- `/home/box/hackathons/buildhybridai-2026/`: `spec.md`, `rules.md`, `brief.md`, `brief-v6.txt`, `demo-script.md`, `HANDOFF-to-Grok.md`.
-- UI rounds: `ui-v1/` to `ui-v6-2/` (v6.2 has `checklist.md`, `lighthouse-scores.md`, `lighthouse/*.html`).
-- Logo: `logo/` (`concept-sheet.png`, `concepts/`, `final/`).
-- On-device proof: `evidence/on-device-demo-43219012008/` and `evidence/on-device-demo-43682923396/` (15 Nov site re-run: "Checked on this device"). Extension proof: `evidence/extension-on-device-43685102643/` and <https://github.com/ohjay-official/nano-film/actions/runs/43685102643>. All runs: <https://github.com/ohjay-official/nano-film/actions>.
+- Briefs, the spec, UI rounds, logo concepts and Lighthouse reports are kept outside this repo.
+- On-device proof: runs 43219012008 and 43682923396 (15 Nov site re-run: "Checked on this device"); extension proof: <https://github.com/ohjay-official/nano-film/actions/runs/43685102643>. The current runs are listed in the README. All runs: <https://github.com/ohjay-official/nano-film/actions>.
 - README: `README.md` in the repo (rewritten 16 Nov to Oh-Jay's readme-playbook skill and merged to `main`). The film line is `TBD-post-build: film URL`.
 
 ## 14. Non-UI items waiting on Oh-Jay (not for Claude to do)
