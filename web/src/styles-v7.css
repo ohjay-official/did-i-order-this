@@ -2605,3 +2605,16 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
 .mock-consent .btn-row {
   margin-top: 14px;
 }
+
+/* ---------- /app/: where a revealed verdict lands (UI-NEXT 11) ---------- */
+.app-page .result {
+  /* site header (64px) + sticky Sample data bar (~44px) + air */
+  scroll-margin-top: 124px;
+}
+
+@media (max-width: 700px) {
+  .app-page .result {
+    /* phones: 73px site header + the stuck Sample data bar */
+    scroll-margin-top: 148px;
+  }
+}

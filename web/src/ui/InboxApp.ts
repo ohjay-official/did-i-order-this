@@ -180,6 +180,7 @@ export class InboxApp {
     });
     this.root.querySelector("[data-action=limited]")?.addEventListener("click", () => {
       this.runLimited();
+      this.revealResult();
     });
     this.root.querySelector("[data-action=load-shipment-demo]")?.addEventListener("click", () => {
       void this.loadShipmentDemo();
@@ -489,7 +490,29 @@ export class InboxApp {
     this.render();
   }
 
+  // After a check the verdict often renders below the fold on a phone; bring it into
+  // view, landing under the sticky header (scroll-margin-top in styles-v7.css).
+  private revealResult(): void {
+    window.requestAnimationFrame(() => {
+      const result = this.root.querySelector<HTMLElement>(".result");
+      if (!result) return;
+      const head = (result.querySelector<HTMLElement>(".headline") ?? result).getBoundingClientRect();
+      const cover = parseFloat(getComputedStyle(result).scrollMarginTop) || 0;
+      if (head.top >= cover && head.bottom <= window.innerHeight - 16) return;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      result.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
+    });
+  }
+
   private async runCheck(): Promise<void> {
+    try {
+      await this.runCheckInner();
+    } finally {
+      this.revealResult();
+    }
+  }
+
+  private async runCheckInner(): Promise<void> {
     const current = this.currentEmail();
     if (!current) return;
     this.check = { status: "checking", where: "device" };
