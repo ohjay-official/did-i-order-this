@@ -8,10 +8,11 @@ PASS means the row's pass rule held. OPEN means only the owner can run it, or it
 
 | ID | Result | Evidence |
 | --- | --- | --- |
-| A1 | PARTIAL. No login; first DHL check shows **Check this email in the cloud?** with the free-tier review sentence. **Check in the cloud** on this machine fails App Check (automation), and the page falls back to the prepared claim: **Warning**, **You're not expecting any parcel right now.**, **The cloud check could not run. This page could not prove it is the real site (App Check). Reload the page and try again.** A real cloud verdict needs a human browser. | Scripted walk at 1280 px, headed Chrome |
+| A1 | PASS on a Galaxy S25 in Chrome Android (17 Nov 2026, production `db64fcc`): no login; first DHL check, **Check in the cloud**, **Warning**, **You're not expecting any parcel right now.**, **Checked in the cloud**. The automated machine used for the 16 Nov scripted walk is still PARTIAL: **Check in the cloud** fails App Check there, and the page falls back to the prepared claim with **The cloud check could not run. This page could not prove it is the real site (App Check). Reload the page and try again.** | S25 Chrome Android; scripted walk at 1280 px still shows the App Check fallback |
 | A2 | PASS. **Checked on this device**, `on_device`, same headline, no consent. | [nano-film 43947306478](https://github.com/ohjay-official/nano-film/actions/runs/43947306478) |
 | A3 | PASS. Loader, UPS **Safe**, second DHL **This tracking number is not one of your shipments.**, Streamhut **Neutral**, **Reset demo data** back to **1 order and 0 expected parcels**. After a cloud yes, later sample threads skip the dialog. | Scripted walk, 1280 and 390 px |
-| A4, A5 | OPEN: Oh-Jay's S25 (Chrome Android) and iPhone Safari. | |
+| A4 | PASS. Galaxy S25, Chrome Android, 17 Nov 2026, about 04:00 to 04:15 Africa/Lagos, production `db64fcc`. Step 1: **1 order and 0 expected parcels**. Step 2: first DHL, cloud yes, **Warning**, **You're not expecting any parcel right now.**, **Checked in the cloud**, **Ask me each time**. Step 3: **Load the matching shipment demo**, UPS, **Safe**, **This tracking number matches a shipment you are expecting.**, **Checked in the cloud**, no second consent dialog, **1 order and 1 expected parcel**. The first screenshot was in Chrome desktop-site mode; later ones used the phone layout. Both were fine. | Phone screenshots kept off this repo (browser chrome). Box evidence: `evidence/s25-cloud-2026-11-17/` on the build machine |
+| A5 | OPEN: iPhone Safari. Optional now that A4 and the Android in-app browsers have passed. | |
 | A6 | NOT RUN: no Firefox on the build machine. | |
 | A7 | PASS. No sideways scroll on 11 routes (9 sitemap routes, `/extension-demo/`, the 404) at 375, 390 and 1280 px. | `scrollWidth - clientWidth` |
 | A8 | PASS. Fake DHL warns; Real UPS stores the shipment first and shows **Safe**; Fake DHL afterwards says **This tracking number is not one of your shipments.** | Scripted run on `/` |
@@ -78,3 +79,21 @@ PASS means the row's pass rule held. OPEN means only the owner can run it, or it
 - G1: OPEN until the film exists.
 - G2: scorecard in the build notes, outside this repo.
 - G3 and G4: run from the build machine by following only the README and the live site. Mismatches found were fixed in the README in this run. A run by a separate AI session with no prior context is still to do once the repo is public.
+
+## Addendum, 17 Nov 2026 (Africa/Lagos)
+
+UI-NEXT 11 and 12 landed on `main` (`720cdbd`, `598cf21`) and were checked live on production:
+
+- After **Check this email** and **Do not send**, at 390 x 844 the verdict headline sits at y=153 (was about 830). The same landing after **Run a limited check** stays in view (y=691 of 844, already visible so the page does not scroll again). Instant scroll under `prefers-reduced-motion` (headline already at y=153 after 80 ms).
+- At 1280 x 800 after **Do not send**, the headline sits at y=754 of 800 and is treated as already visible, so the reasons sit below the fold. Handed to the UI owner as UI-NEXT item 14. Desktop demo bar stays sticky; no SAMPLE DATA tag on the card.
+- No sideways scroll on 11 routes at 375, 390 and 1280 px. Do-not-break selectors and the text "prepared for this sample thread" are intact. The SAMPLE DATA tag is a CSS `::before`, so `textContent` and `innerText` of `.result`, `.outcome` and `.headline` do not include it.
+- On-device proofs re-run on production `598cf21`: nano-film [44009266512](https://github.com/ohjay-official/nano-film/actions/runs/44009266512) (site) and [44009272463](https://github.com/ohjay-official/nano-film/actions/runs/44009272463) (extension), both **Checked on this device**, `on_device`, no consent.
+
+In-app browsers on the same S25, after the matching shipment demo was loaded, first DHL thread, cloud check, production `598cf21`:
+
+- Telegram in-app (about 04:18): PASS. **Warning**, **This tracking number is not one of your shipments.**, **Checked in the cloud**, **SAMPLE DATA** tag, **Ask me each time**. Claim text: **Claims to be: DHL (carrier)**, **Email kind: carrier_update**.
+- X in-app (about 04:26): PASS. Same verdict and labels as Telegram. Claim text: **Claims to be: DHL Express Desk (carrier)**, **Email kind: delivery_problem**.
+- WhatsApp on Android: N/A. It has no in-app browser and opens Chrome.
+- The model-filled claim text varied; the verdict was the same, because code decides it. No product fix.
+
+Phone originals stay on the build machine only. The Telegram and X shots include a status bar with personal notifications.
