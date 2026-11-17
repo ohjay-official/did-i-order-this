@@ -152,7 +152,6 @@ A live cloud check needs a headed Chrome (reCAPTCHA Enterprise rejects headless 
 ## 14. Non-UI items waiting on Oh-Jay (not for Claude to do)
 
 - Add the demo film link in place of `TBD-post-build: film URL` in the README after filming.
-- Make the repo public (about 28 Nov) and show Apache-2.0 in the About box. The README repo link only works after that.
-- Confirm the rights to the supplied media (hero desk photo, globe texture, hands, freight clip) before the repo goes public.
+- Done 17 Nov 2026: the repo is public and the About box shows Apache-2.0.
 - Decide whether the downloadable extension zip may carry the Firebase web config. It holds the same public web API key that the live site's JavaScript already serves (key locked to the site's referrer, no reCAPTCHA key). The rules forbid production API keys in the repo, form and testing instructions; the zip is a build output, not in the repo.
 - Extension on-device proof is done: [nano-film run 43685102643](https://github.com/ohjay-official/nano-film/actions/runs/43685102643). Caveat: the runner could not sign into Gmail, so it added a local fixture host to the installed manifest's content script matches. The zip JavaScript was unchanged.
