@@ -85,7 +85,7 @@ PASS means the row's pass rule held. OPEN means only the owner can run it, or it
 UI-NEXT 11 and 12 landed on `main` (`720cdbd`, `598cf21`) and were checked live on production:
 
 - After **Check this email** and **Do not send**, at 390 x 844 the verdict headline sits at y=153 (was about 830). The same landing after **Run a limited check** stays in view (y=691 of 844, already visible so the page does not scroll again). Instant scroll under `prefers-reduced-motion` (headline already at y=153 after 80 ms).
-- At 1280 x 800 after **Do not send**, the headline sits at y=754 of 800 and is treated as already visible, so the reasons sit below the fold. Handed to the UI owner as UI-NEXT item 14. Desktop demo bar stays sticky; no SAMPLE DATA tag on the card.
+- At 1280 x 800 after **Do not send**, the headline sat at y=754 of 800 on `598cf21` (reasons below the fold). Claude landed UI-NEXT 14 (`352c69e`): re-checked live, headline y=160, card bottom 557 of 800. 390 x 844 still y=153.
 - No sideways scroll on 11 routes at 375, 390 and 1280 px. Do-not-break selectors and the text "prepared for this sample thread" are intact. The SAMPLE DATA tag is a CSS `::before`, so `textContent` and `innerText` of `.result`, `.outcome` and `.headline` do not include it.
 - On-device proofs re-run on production `598cf21`: nano-film [44009266512](https://github.com/ohjay-official/nano-film/actions/runs/44009266512) (site) and [44009272463](https://github.com/ohjay-official/nano-film/actions/runs/44009272463) (extension), both **Checked on this device**, `on_device`, no consent.
 
