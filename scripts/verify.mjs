@@ -103,18 +103,44 @@ function audit() {
     record("dependency audit", false, "npm audit did not return JSON");
     return;
   }
-  // Accepted: @grpc/grpc-js is a Node-only transport pulled in by the Firestore
-  // part of the firebase package. This app never imports Firestore, and the
-  // browser bundles contain no grpc code (checked below).
-  const ACCEPTED = new Set(["@grpc/grpc-js", "@firebase/firestore", "@firebase/firestore-compat", "firebase"]);
-  const open = Object.entries(data.vulnerabilities || {}).filter(
-    ([name, v]) => (v.severity === "high" || v.severity === "critical") && !ACCEPTED.has(name),
-  );
+  // Accepted advisories, by id. Any other high or critical advisory fails.
+  // - GHSA-m9gg-hp2v-232j: @grpc/grpc-js, a Node-only transport pulled in by the
+  //   Firestore part of the firebase package. This app never imports Firestore,
+  //   and the browser bundles contain no grpc code (checked below).
+  // - GHSA-fc5q-39xc-vjpf: picomatch ReDoS (published 19 Oct 2026, no patched
+  //   release). It reaches only build and test tools (vite, vitest,
+  //   typescript-eslint), which parse globs from this repo's own config. It must
+  //   stay out of the production dependency tree (checked below).
+  const ACCEPTED = new Set(["GHSA-m9gg-hp2v-232j", "GHSA-fc5q-39xc-vjpf"]);
+  const DEV_ONLY = new Set(["GHSA-fc5q-39xc-vjpf"]);
+  const rootAdvisories = (report) => {
+    const ids = new Set();
+    for (const v of Object.values(report.vulnerabilities || {})) {
+      for (const via of v.via || []) {
+        if (typeof via === "object" && (via.severity === "high" || via.severity === "critical")) {
+          ids.add(String(via.url || via.source).split("/").pop());
+        }
+      }
+    }
+    return ids;
+  };
+  const all = rootAdvisories(data);
+  const open = [...all].filter((id) => !ACCEPTED.has(id));
+  let prod;
+  try {
+    prod = rootAdvisories(JSON.parse(spawnSync("npm", ["audit", "--omit=dev", "--json"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }).stdout));
+  } catch {
+    record("dependency audit", false, "npm audit --omit=dev did not return JSON");
+    return;
+  }
+  const leaked = [...prod].filter((id) => DEV_ONLY.has(id));
   const counts = data.metadata?.vulnerabilities || {};
   record(
-    "dependency audit (high/critical, excluding accepted grpc-js chain)",
-    open.length === 0,
-    open.length ? open.map(([n, v]) => `${v.severity} ${n}`).join(", ") : `critical ${counts.critical ?? 0}, high ${counts.high ?? 0} (all accepted), moderate ${counts.moderate ?? 0}`,
+    "dependency audit (high/critical, excluding accepted advisories)",
+    open.length === 0 && leaked.length === 0,
+    open.length || leaked.length
+      ? [...open.map((id) => `open ${id}`), ...leaked.map((id) => `dev-only advisory in production deps ${id}`)].join(", ")
+      : `critical ${counts.critical ?? 0}, high ${counts.high ?? 0} (accepted: ${[...all].join(", ") || "none"}), moderate ${counts.moderate ?? 0}`,
   );
   if (existsSync("web/dist")) {
     const js = [];
