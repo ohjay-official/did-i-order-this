@@ -77,6 +77,14 @@
       a { color: var(--ink); }
       ul { margin: 0; padding-left: 1.1rem; }
       input[type="file"] { display: none; }
+      .track-form { margin: 0 0 14px; }
+      .track-form label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 500; }
+      .track-row { display: flex; gap: 8px; }
+      .track-row input { flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid rgba(28, 20, 16, 0.2); border-radius: 8px; background: #fffdf9; color: inherit; font: 13px ui-monospace, Menlo, monospace; }
+      .track-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+      .track-row .btn { flex: 0 0 auto; }
+      .track-note { margin: 6px 0 0; color: var(--secondary); font-size: 12px; }
+      .track-note.is-error { color: var(--warning-ink); }
     </style>
   </head>
   <body>

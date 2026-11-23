@@ -2,6 +2,7 @@ import {
   FILE_TOO_LARGE_MESSAGE,
   isExpectedShipment,
   MAX_IMPORT_BYTES,
+  ManualTrackingError,
   OrderHistoryParseError,
   canSaveShipmentFromClaim,
   decideVerdict,
@@ -30,7 +31,7 @@ import { NOT_CHECKED_HEADLINE, SAMPLE_NOTE, runCheckFlow } from "./checkFlow.ts"
 import { appCheckGate } from "../ai/appCheckGate.ts";
 import { isNextStepReason, suggestNextStep } from "../ai/nextStep.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
-import { ledgerForCheck, loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
+import { addExpectedTracking, ledgerForCheck, loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { importNoteText } from "../ledger/importNote.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { wireModalKeys } from "./dialogKeys.ts";
@@ -72,6 +73,9 @@ export class InboxApp {
   private check: CheckState = { status: "idle" };
   private note = "";
   private importNote = "";
+  private trackNote = "Stored on this device as expected for 30 days. Copy the number from the store's or carrier's own site."
+  private trackError = false;
+  private trackDraft = "";
   /** Bumped on every check and every switch of email; a result from an older check is dropped. */
   private checkSeq = 0;
 
@@ -129,7 +133,7 @@ export class InboxApp {
     const orderLabel = this.ledger.orders.length === 1 ? "1 order" : `${this.ledger.orders.length} orders`;
 
     this.root.innerHTML = `
-      <p class="demo-bar" role="note"><span class="demo-bar-tag">Sample data</span><span class="demo-bar-text">The five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail. Fictional samples; not affiliated with DHL or UPS.</span></p>
+      <p class="demo-bar" role="note"><span class="demo-bar-tag">Sample data</span><span class="demo-bar-text">Fictional emails, orders and parcels, not your real mail. Not affiliated with DHL or UPS.</span></p>
       <header class="app-header">
         <div>
           <p class="eyebrow">Sample inbox</p>
@@ -145,6 +149,17 @@ export class InboxApp {
             </label>
             <button type="button" class="btn btn-secondary" data-action="reset">Reset demo data</button>
           </div>
+          <details class="track-wrap"${this.trackOpen() ? " open" : ""}>
+          <summary>Waiting for a parcel? Add its tracking number</summary>
+          <form class="track-form" data-track-form novalidate>
+            <label class="visually-hidden" for="app-track">Tracking number you are waiting for</label>
+            <div class="track-row">
+              <input id="app-track" data-track-input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="60" placeholder="Tracking number" value="${escapeHtml(this.trackDraft)}" aria-describedby="app-track-note" />
+              <button type="submit" class="btn btn-secondary" data-action="add-tracking">Add</button>
+            </div>
+            <p id="app-track-note" class="track-note${this.trackError ? " is-error" : ""}" role="status">${escapeHtml(this.trackNote)}</p>
+          </form>
+          </details>
         </div>
       </header>
       ${this.importNote ? `<p class="note import-note">${escapeHtml(this.importNote)}</p>` : ""}
@@ -198,6 +213,11 @@ export class InboxApp {
     });
     this.root.querySelector("[data-action=save]")?.addEventListener("click", () => {
       void this.saveShipment();
+    });
+    this.root.querySelector<HTMLFormElement>("[data-track-form]")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const input = this.root.querySelector<HTMLInputElement>("[data-track-input]");
+      void this.addTracking(input?.value ?? "");
     });
     this.root.querySelector("[data-action=limited]")?.addEventListener("click", () => {
       this.runLimited();
@@ -635,6 +655,32 @@ export class InboxApp {
       return;
     }
     this.runLimited();
+  }
+
+  // Open on wide screens; on phones it starts folded so the inbox stays near the top,
+  // and stays open once the person has used it.
+  private trackTouched = false;
+  private trackOpen(): boolean {
+    return this.trackTouched || window.matchMedia("(min-width: 701px)").matches;
+  }
+
+  private async addTracking(value: string): Promise<void> {
+    this.trackTouched = true;
+    this.trackDraft = value;
+    try {
+      const shipment = await addExpectedTracking({ trackingNumber: value });
+      this.ledger = await loadLedger();
+      this.trackDraft = "";
+      this.trackError = false;
+      const carrier = shipment.carrier ? ` (${shipment.carrier})` : "";
+      this.trackNote = `Added ${shipment.trackingNumber}${carrier} as an expected parcel on this device for 30 days.`;
+    } catch (error) {
+      this.trackError = true;
+      this.trackNote =
+        error instanceof ManualTrackingError ? error.message : "This number could not be saved on this device.";
+    }
+    this.render();
+    this.root.querySelector<HTMLInputElement>("[data-track-input]")?.focus();
   }
 
   private async saveShipment(): Promise<void> {

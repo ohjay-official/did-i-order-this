@@ -2637,3 +2637,121 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
     scroll-margin-top: 84px;
   }
 }
+
+/* ---------- /app/: add a tracking number you are waiting for (UI-NEXT 32) ---------- */
+.track-form {
+  width: min(100%, 420px);
+  margin-top: 12px;
+  text-align: left;
+}
+
+.track-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.track-row {
+  display: flex;
+  gap: 8px;
+}
+
+.track-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: #fffdf9;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.track-row input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(196, 69, 28, 0.35);
+  outline-offset: 1px;
+}
+
+.track-row .btn {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: 40px;
+  padding: 0 16px;
+}
+
+.track-note {
+  margin: 6px 0 0;
+  color: var(--secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.track-note.is-error {
+  color: #8b2a16;
+}
+
+@media (max-width: 700px) {
+  .app-page .track-form {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
+.track-wrap {
+  width: min(100%, 420px);
+  margin-top: 12px;
+  text-align: left;
+}
+
+.track-wrap > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.track-wrap > summary::-webkit-details-marker {
+  display: none;
+}
+
+.track-wrap > summary::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.track-wrap[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.track-wrap > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.track-wrap .track-form {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@media (max-width: 700px) {
+  .app-page .track-wrap {
+    width: 100%;
+    margin-top: 4px;
+  }
+}

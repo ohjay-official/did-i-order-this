@@ -13,13 +13,14 @@ import {
   type LedgerSnapshot,
   type LimitedCheckResult,
   type Verdict,
+  ManualTrackingError,
 } from "@did-i-order-this/core";
 import { readClaim } from "../../web/src/ai/readClaim.ts";
 import { checkOnDeviceReady } from "./onDeviceCheck.ts";
 import { describeAiError } from "../../web/src/ai/aiError.ts";
 import { isFirebaseConfigured } from "../../web/src/firebase/app.ts";
 import { getOfficialPack } from "../../web/src/packs/official.ts";
-import { clearLedger, loadLedger, saveOrder, saveSender, saveShipment } from "./ledger.ts";
+import { addExpectedTracking, clearLedger, loadLedger, saveOrder, saveSender, saveShipment } from "./ledger.ts";
 import {
   HOSTED_APP_URL,
   MESSAGE,
@@ -46,6 +47,8 @@ let emailReason = "Open a Gmail thread. The side panel reads the open thread's e
 let ledger: LedgerSnapshot = { orders: [], shipments: [], senders: [] };
 let view: ViewState = { status: "idle" };
 let importNote = "";
+let trackNote = "Stored in this extension as expected for 30 days. Copy the number from the store's or carrier's own site.";
+let trackError = false;
 
 function escapeHtml(value: string): string {
   return value
@@ -67,6 +70,14 @@ function render(): void {
       <button type="button" class="btn btn-secondary" data-action="clear">Clear saved orders</button>
     </div>
     ${importNote ? `<p class="note">${escapeHtml(importNote)}</p>` : ""}
+    <form class="track-form" data-track-form novalidate>
+      <label for="panel-track">Waiting for a parcel? Add its tracking number</label>
+      <div class="track-row">
+        <input id="panel-track" data-track-input type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="60" placeholder="Tracking number" aria-describedby="panel-track-note" />
+        <button type="submit" class="btn btn-secondary" data-action="add-tracking">Add</button>
+      </div>
+      <p id="panel-track-note" class="track-note${trackError ? " is-error" : ""}" role="status">${escapeHtml(trackNote)}</p>
+    </form>
     <section class="email">
       ${
         email
@@ -95,12 +106,34 @@ function render(): void {
   root.querySelector("[data-action=save]")?.addEventListener("click", () => {
     void saveCurrentShipment();
   });
+  root.querySelector<HTMLFormElement>("[data-track-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = root.querySelector<HTMLInputElement>("[data-track-input]");
+    void addTracking(input?.value ?? "");
+  });
   root.querySelector<HTMLInputElement>("[data-action=import]")?.addEventListener("change", (event) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
     if (file) void importFile(file);
   });
+}
+
+async function addTracking(value: string): Promise<void> {
+  try {
+    const shipment = await addExpectedTracking({ trackingNumber: value });
+    ledger = await loadLedger();
+    trackError = false;
+    const carrier = shipment.carrier ? ` (${shipment.carrier})` : "";
+    trackNote = `Added ${shipment.trackingNumber}${carrier} as an expected parcel in this extension for 30 days.`;
+  } catch (error) {
+    trackError = true;
+    trackNote = error instanceof ManualTrackingError ? error.message : "This number could not be saved.";
+  }
+  render();
+  const input = root.querySelector<HTMLInputElement>("[data-track-input]");
+  if (input && trackError) input.value = value;
+  input?.focus();
 }
 
 function renderResult(): string {
