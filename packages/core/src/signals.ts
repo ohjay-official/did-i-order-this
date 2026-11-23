@@ -130,6 +130,24 @@ const WWW_HOST = /\bwww\.[a-z0-9-]+(?:\.[a-z0-9-]+)+/gi;
 const EMAIL_HOST = /[a-z0-9._%+-]+@([a-z0-9-]+(?:\.[a-z0-9-]+)+)/gi;
 const BARE_HOST = new RegExp(String.raw`(?<![@\w.-])((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:${BARE_TLDS}))(?![\w-])`, "gi");
 
+// Any other dotted name whose last label is letters counts too (round 6), unless
+// that label is a common file extension, so "ups-customs.pw" or "is.gd/x" is a
+// link while "label.pdf" is not. Over-matching only costs Safe, never adds it.
+const FILE_EXTS = "pdf|png|jpe?g|gif|webp|svg|bmp|tiff?|heic|docx?|xlsx?|pptx?|odt|rtf|txt|csv|zip|rar|7z|gz|eml|msg|ics|vcf|html?|xml|json|mp[34]|mov|wav";
+const ANY_HOST = new RegExp(
+  String.raw`(?<![@\w.-])((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?!(?:${FILE_EXTS})(?![a-z0-9-]))[a-z]{2,24})(?![\w-])`,
+  "gi",
+);
+const IPV4_HOST = /(?<![\w.])(\d{1,3}(?:\.\d{1,3}){3})(?![\w.]*\d)/g;
+
+/** Dots written another way: ideographic and full-width stops, %2e, and " . " between name parts. */
+function normaliseDots(text: string): string {
+  return text
+    .replace(/[。．｡․﹒]/g, ".")
+    .replace(/%2e/gi, ".")
+    .replace(/(?<=[a-z0-9])[ \t]+\.[ \t]*(?=[a-z0-9])/gi, ".");
+}
+
 const FULL_URL = /\b(?:https?|hxxps?):\/\/[^\s<>"')\]]+/gi;
 
 /**
@@ -194,17 +212,27 @@ export function readLinkHosts(text: string): string[] {
     if (host.includes(".")) hosts.add(host);
   };
   // A google.com/url?q= wrapper counts as the site it sends you to, not as google.com.
-  const unwrapped = text.replace(FULL_URL, (url) => {
+  const unwrapped = normaliseDots(text).replace(FULL_URL, (url) => {
     const inner = unwrapRedirect(url);
     return inner === url ? url : ` ${inner} `;
   });
   for (const m of unwrapped.matchAll(FULL_URL)) {
     const hostMatch = /^(?:https?|hxxps?):\/\/([^\s/?#<>"')\]]+)/i.exec(m[0]);
-    if (hostMatch) add(hostMatch[1]);
+    if (!hostMatch) continue;
+    add(hostMatch[1]);
+    // Also read the host the way a browser does (it decodes %2E and folds width).
+    try {
+      const parsed = new URL(m[0].replace(/^hxxp/i, "http")).hostname;
+      add(parsed.includes(".") ? parsed : "unreadable-target.invalid");
+    } catch {
+      add("unreadable-target.invalid");
+    }
   }
   for (const m of unwrapped.matchAll(WWW_HOST)) add(m[0]);
   for (const m of unwrapped.matchAll(EMAIL_HOST)) add(m[1]);
   for (const m of unwrapped.matchAll(BARE_HOST)) add(m[1]);
+  for (const m of unwrapped.matchAll(ANY_HOST)) add(m[1]);
+  for (const m of unwrapped.matchAll(IPV4_HOST)) add(m[1]);
   return [...hosts];
 }
 
@@ -374,7 +402,8 @@ const COORDINATED = /\s*\b[a-z]+(?:\s+[a-z]+)?\s+(?:or|and|nor)\s*$/i;
 
 function hasDemand(pattern: RegExp, text: string): boolean {
   for (const match of text.matchAll(pattern)) {
-    const before = text.slice(0, match.index);
+    // Look back at most 300 characters: a clause is short, and a whole-prefix scan per match is quadratic (round 6).
+    const before = text.slice(Math.max(0, (match.index ?? 0) - 300), match.index);
     const clauseStart = Math.max(...[".", "!", "?", "\n", ":", ";", ","].map((mark) => before.lastIndexOf(mark)));
     let clause = before.slice(clauseStart + 1);
     if (CONDITION.test(clause)) return true;

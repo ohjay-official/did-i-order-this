@@ -31,7 +31,7 @@ describe("mixed-sender Gmail threads", () => {
     const ledger: LedgerSnapshot = {
       orders: [],
       senders: [],
-      shipments: [{ id: "s", trackingNumber: T, carrier: "UPS", expected: true, source: "import", confirmedAt: "x" }],
+      shipments: [{ id: "s", trackingNumber: T, carrier: "UPS", expected: true, expectedUntil: "2999-01-01T00:00:00Z", source: "import", confirmedAt: "x" }],
     };
     const claim = reconcileClaim(
       { claimed_party: { name: "UPS", role: "carrier" }, asked_action: "none", cited_numbers: [{ kind: "tracking", value: T }], email_kind: "carrier_update" },

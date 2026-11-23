@@ -1,7 +1,7 @@
 /**
  * Round 5 regressions: every lure from the round 5 cold judge (H2, attack.ts)
  * and the round 4 security audit (J2-1, J2-5), run as a verified Gmail sender
- * from a vetted store (target.com) and from ups.com with the model labelling
+ * from a vetted store (ikea.com) and from ups.com with the model labelling
  * the request "none". Each gave Safe on main eedce9a. Controls stay Safe.
  */
 import { describe, expect, it } from "vitest";
@@ -33,14 +33,14 @@ const TGT = "TGT40021187";
 const EBAY = "12-34567-89012";
 const ledger: LedgerSnapshot = {
   orders: [
-    { id: "o1", merchant: "Target", senderDomain: "target.com", orderId: TGT, source: "import", confirmedAt: now },
+    { id: "o1", merchant: "IKEA", senderDomain: "ikea.com", orderId: TGT, source: "import", confirmedAt: now },
     { id: "o2", merchant: "eBay", senderDomain: "ebay.com", orderId: EBAY, source: "import", confirmedAt: now },
     { id: "o3", merchant: "Etsy", senderDomain: "etsy.com", orderId: "3141592653", source: "import", confirmedAt: now },
   ],
   shipments: [{ id: "s1", trackingNumber: T, carrier: "UPS", expected: true, source: "import", confirmedAt: now }],
   senders: [],
 };
-const storeClaim = (num = TGT, name = "Target"): EmailClaim => ({
+const storeClaim = (num = TGT, name = "IKEA"): EmailClaim => ({
   claimed_party: { name, role: "merchant" },
   asked_action: "none",
   cited_numbers: [{ kind: "order", value: num }],
@@ -57,7 +57,7 @@ function verified(fromDomain: string, body: string, claim: EmailClaim, options: 
   const c = reconcileClaim(claim, text, fromDomain);
   return decideVerdict(c, ledger, pack, "on_device", { emailText: text, senderCheck: "verified", ...options });
 }
-const asStore = (body: string, options?: VerdictOptions) => verified("target.com", `About order ${TGT}: ${body}`, storeClaim(), options);
+const asStore = (body: string, options?: VerdictOptions) => verified("ikea.com", `About order ${TGT}: ${body}`, storeClaim(), options);
 const asUps = (body: string, options?: VerdictOptions) => verified("ups.com", `Your UPS package ${T} is on its way. ${body}`, upsClaim, options);
 
 /** Cold judge round 5, H2 (attack.ts): 16 of 17 were Safe with a "none" label. */
@@ -138,7 +138,7 @@ describe("H2 and J2-1: every lure stops Safe on the vetted store and the carrier
 describe("controls stay Safe", () => {
   const clean = [
     "Your order has shipped and arrives on Nov 26, 2026. Order total $24.00. Thanks for shopping with us.",
-    "We packed your items. Track them on target.com. Order date 2026-11-20.",
+    "We packed your items. Track them on ikea.com. Order date 2026-11-20.",
   ];
   for (const body of clean) {
     it(`store: ${body.slice(0, 40)}`, () => expect(asStore(body).outcome).toBe("safe"));
@@ -208,7 +208,7 @@ describe("J2-5: only the sender's own site may be linked from a Safe", () => {
   it("ups.com linking to its own subdomain stays Safe", () => {
     expect(asUps("Arrives tomorrow.", { linkHosts: ["wwwapps.ups.com", "ups.com"] }).outcome).toBe("safe");
   });
-  it("target.com linking to ups.com tracking is not Safe (only the store's own site)", () => {
+  it("ikea.com linking to ups.com tracking is not Safe (only the store's own site)", () => {
     const v = asStore("Your order has shipped.", { linkHosts: ["ups.com"] });
     expect(v.outcome).toBe("neutral");
     expect(v.headline).toBe(OTHER_SITE_HEADLINE);
@@ -228,15 +228,15 @@ describe("decision 3: marketplaces that relay member text are off the vetted lis
     const v = verified("ebay.com", `Your order ${EBAY} has shipped.`, storeClaim(EBAY, "eBay"));
     expect(v.headline).toBe(STORE_UNVERIFIED_HEADLINE);
   });
-  it("16 stores remain, all p=reject", () => {
-    expect(pack.storeDomains).toHaveLength(16);
+  it("14 stores remain (round 6 removed target.com and bestbuy.com), all p=reject", () => {
+    expect(pack.storeDomains).toHaveLength(14);
     for (const entry of pack.storeDomains ?? []) expect(entry.dmarc).toBe("reject");
   });
 });
 
 describe("saving a shipment from a store email needs the same clean text", () => {
   const notice = (body: string): [EmailClaim, VerdictOptions] => [
-    { claimed_party: { name: "Target", role: "merchant", domain: "target.com" }, asked_action: "none", cited_numbers: [{ kind: "order", value: TGT }, { kind: "tracking", value: "1Z999AA10123456785" }], email_kind: "shipment_notice" },
+    { claimed_party: { name: "IKEA", role: "merchant", domain: "ikea.com" }, asked_action: "none", cited_numbers: [{ kind: "order", value: TGT }, { kind: "tracking", value: "1Z999AA10123456785" }], email_kind: "shipment_notice" },
     { emailText: `Order ${TGT} shipped with tracking 1Z999AA10123456785. ${body}`, senderCheck: "verified" },
   ];
   it("is refused with a handle, foreign text or hidden text", () => {

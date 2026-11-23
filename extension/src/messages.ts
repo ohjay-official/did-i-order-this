@@ -42,6 +42,8 @@ export type ExtractedEmail = {
   hiddenText?: boolean;
   /** Any hidden words at all in the bodies (Gmail's own folding aside). Stops Safe. */
   hiddenAny?: boolean;
+  /** An attachment or embedded frame the extension does not read. Never Safe (round 6). */
+  unreadContent?: boolean;
   /** The text was longer than MAX_EMAIL_CHARS and was cut. */
   truncated?: boolean;
   /** Gmail's own flags on the open message. */
@@ -91,6 +93,7 @@ export function sanitizeEmail(value: unknown): ExtractedEmail | null {
   if (images.length) email.imageHosts = images;
   if (v.hiddenText === true) email.hiddenText = true;
   if (v.hiddenAny === true) email.hiddenAny = true;
+  if (v.unreadContent === true) email.unreadContent = true;
   const flags = Array.isArray(v.gmailFlags) ? GMAIL_FLAGS.filter((flag) => (v.gmailFlags as unknown[]).includes(flag)) : [];
   if (flags.length) email.gmailFlags = flags;
   // A page can only mark itself as a fixture (a downgrade); the background sets the real value.

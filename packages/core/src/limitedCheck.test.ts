@@ -39,6 +39,7 @@ describe("runLimitedCheck", () => {
             id: "s1",
             trackingNumber: "1Z999AA10123456784",
             expected: true,
+            expectedUntil: "2999-01-01T00:00:00Z",
             source: "import",
             confirmedAt: "demo",
           },

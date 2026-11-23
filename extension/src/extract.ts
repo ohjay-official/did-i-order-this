@@ -148,6 +148,10 @@ interface BodyRead {
  * goes into hidden elements too and tests every text node against the styles
  * of all its ancestors, so a visible child inside a hidden parent is read.
  */
+function inFoldOf(element: Element, folded: boolean): boolean {
+  return folded || element.matches(GMAIL_FOLDED);
+}
+
 function readVisible(root: Element): BodyRead {
   const parts: string[] = [];
   let visibleLetters = 0;
@@ -170,6 +174,13 @@ function readVisible(root: Element): BodyRead {
     const element = node as Element;
     if (SKIP_TAGS.has(element.tagName)) return;
     const next = nextHideState(element, state);
+    // Round 6: an image's alt and title text is shown to the reader (or read
+    // aloud) and can carry a lure, so it is read like text.
+    if (element.tagName === "IMG" || element.tagName === "AREA" || (element.tagName === "INPUT" && element.getAttribute("type") === "image")) {
+      const said = [element.getAttribute("alt"), element.getAttribute("title")].filter(Boolean).join(" ");
+      if (said.trim()) walk(element.ownerDocument.createTextNode(` ${said} `), next, inFoldOf(element, folded));
+      return;
+    }
     const inFold = folded || element.matches(GMAIL_FOLDED);
     const block = BLOCK_TAGS.has(element.tagName);
     if (block) parts.push("\n");
@@ -252,6 +263,7 @@ export function readGmailFlags(doc: Document, main: Element | Document, bodies: 
   const lang = (doc.documentElement?.getAttribute("lang") ?? "").trim().toLowerCase();
   const onGmail = (doc.location?.hostname ?? "") === "mail.google.com";
   if (lang ? !lang.startsWith("en") : onGmail) flags.add("foreign_ui");
+
   return [...flags];
 }
 
@@ -307,6 +319,9 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
   const hiddenAny = hiddenLetters > 0;
   const { linkHosts, imageHosts } = readTargets(bodies);
   const gmailFlags = readGmailFlags(doc, main, bodies);
+  // Round 6: attachments and embedded frames are not read, so they could hold
+  // the real ask. A message with either can't be Safe.
+  const unreadContent = Boolean(main.querySelector(".aQH, [download_url], .aZo")) || bodies.some((el) => el.querySelector("iframe, object, embed, frame") !== null);
   const lines = [
     `From: ${fromName}${fromEmail ? ` <${fromEmail}>` : ""}`,
     `Subject: ${subject}`,
@@ -325,6 +340,7 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
     ...(imageHosts.length ? { imageHosts } : {}),
     ...(hiddenText ? { hiddenText: true } : {}),
     ...(hiddenAny ? { hiddenAny: true } : {}),
+    ...(unreadContent ? { unreadContent: true } : {}),
     ...(gmailFlags.length ? { gmailFlags } : {}),
   };
 }

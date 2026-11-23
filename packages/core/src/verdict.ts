@@ -357,7 +357,7 @@ export function canSaveShipmentFromClaim(
   if ((options.senderCheck ?? "pasted") !== "verified") return false;
   // Without the pack the store cannot be checked against the vetted list.
   if (!pack) return false;
-  if (textWasCut(options) || claim.asked_action !== "none") return false;
+  if (textWasCut(options) || options.unreadContent || claim.asked_action !== "none") return false;
   const signals = signalsForVerdict(options, pack);
   // A notice that asks to pay, log in, download or confirm is not saved, even from the store's domain.
   if (storeAsksRisky(claim, signals)) return false;
@@ -449,6 +449,8 @@ export interface VerdictOptions {
   truncated?: boolean;
   /** The caller found any hidden words at all in the email (a preheader too). Never Safe. */
   hiddenAny?: boolean;
+  /** The caller found an attachment or embedded frame it could not read. Never Safe. */
+  unreadContent?: boolean;
 }
 
 /** The most text the model reads. The verdict reads all of it, but a longer email is never Safe. */
@@ -491,6 +493,10 @@ export const TOO_LONG_HEADLINE =
   "This email is too long to check fully, so it can't be Safe. Open the parcel or order in the official app or site.";
 export const TOO_LONG_REASON =
   "The AI read only the first 20,000 characters of this email, so a request later in it could be missed.";
+export const UNREAD_CONTENT_HEADLINE =
+  "This number matches, but the email has an attachment or embedded content these checks can't read, so it can't be Safe. Open the parcel or order in the official app or site.";
+export const UNREAD_CONTENT_REASON =
+  "Attachments and embedded frames are not read, so a request inside them could be missed.";
 export const LABEL_NOT_NONE_HEADLINE =
   "This number matches, but the AI read could not rule out a request in this email. Open it in the official app or site.";
 export const LABEL_NOT_NONE_REASON =
@@ -551,6 +557,7 @@ function capSafe(
   if (senderCheck === "fixture") return neutral(FIXTURE_HEADLINE, FIXTURE_SENDER_REASON);
   if (senderCheck !== "verified") return neutral(parcel ? PASTED_PARCEL_HEADLINE : PASTED_ORDER_HEADLINE, PASTED_SENDER_REASON);
   if (textWasCut(options)) return neutral(TOO_LONG_HEADLINE, TOO_LONG_REASON);
+  if (options.unreadContent) return neutral(UNREAD_CONTENT_HEADLINE, UNREAD_CONTENT_REASON);
   if (claim.asked_action !== "none") return neutral(LABEL_NOT_NONE_HEADLINE, LABEL_NOT_NONE_REASON);
   const signals = signalsForVerdict(options, pack);
   if (signals.offPlatform.length) {

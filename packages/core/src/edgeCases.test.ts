@@ -109,7 +109,7 @@ describe("decideVerdict edge cases", () => {
   });
 
   it("an unclassified email that cites an expected parcel is safe; a stored but not expected one warns; otherwise neutral", () => {
-    const shipment = { id: "s", trackingNumber: "1Z999AA10123456784", expected: true, source: "import" as const, confirmedAt: "x" };
+    const shipment = { id: "s", trackingNumber: "1Z999AA10123456784", expected: true, expectedUntil: "2999-01-01T00:00:00Z", source: "import" as const, confirmedAt: "x" };
     const other = claim({ email_kind: "other", cited_numbers: [{ kind: "other", value: "1Z999AA10123456784" }] });
     // Safe only from the carrier's official domain; with no readable domain it is a leaked-number warning.
     expect(decideVerdict(other, { ...empty, shipments: [shipment] }, pack).outcome).toBe("warning");
@@ -178,7 +178,7 @@ describe("limited check edge cases", () => {
     const ledger: LedgerSnapshot = {
       ...empty,
       shipments: [
-        { id: "a", trackingNumber: "1Z999AA10123456784", expected: true, source: "import", confirmedAt: "x" },
+        { id: "a", trackingNumber: "1Z999AA10123456784", expected: true, expectedUntil: "2999-01-01T00:00:00Z", source: "import", confirmedAt: "x" },
         { id: "b", trackingNumber: "123456789012", expected: false, source: "import", confirmedAt: "x" },
       ],
     };

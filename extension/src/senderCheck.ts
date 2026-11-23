@@ -26,5 +26,6 @@ export function verdictOptionsForEmail(email: ExtractedEmail) {
     hiddenText: email.hiddenText === true,
     hiddenAny: email.hiddenAny === true,
     truncated: email.truncated === true,
+    unreadContent: email.unreadContent === true,
   };
 }

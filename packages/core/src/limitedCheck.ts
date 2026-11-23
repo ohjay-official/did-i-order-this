@@ -105,10 +105,27 @@ export function runLimitedCheck(
   if (signals.asksToLogIn || signals.asksToDownload) {
     lure.push("The wording asks you to log in, sign in or download, which a real delivery or billing notice rarely needs.");
   }
+  // Round 6: the same off-site floors the full verdict uses, so a call-back or
+  // outside-site lure from an official sender is not shown as reassuring.
+  if (signals.asksToCall || signals.offPlatform.length > 0) {
+    lure.push("It gives a phone number, app, handle or payment method outside the official site. A real notice sends you to the official site or app.");
+  }
+  if (signals.amountDue) lure.push("It names an amount to pay. Check it in the official app or site, not through this email.");
+  const listed = [
+    ...pack.officialDomains.map((entry) => normalizeDomain(entry.domain)),
+    ...(pack.storeDomains ?? []).map((entry) => normalizeDomain(entry.domain)),
+  ];
+  // The sender's own domain is already covered by the domain line, so it is not repeated here.
+  const own = normalizeDomain(emailMeta.fromDomain ?? "");
+  const outside = signals.linkHosts.filter(
+    (host) => !(own && (host === own || host.endsWith(`.${own}`))) && !listed.some((domain) => host === domain || host.endsWith(`.${domain}`)),
+  );
+  const siteLines = outside.length > 0 ? [`It names a site that is not on the official list: ${outside.slice(0, 3).join(", ")}.`] : [];
+  if (signals.hiddenText) lure.push("It has hidden text, which a real notice has no reason to include.");
 
   return {
     headline: "Limited check only. This is not a full verdict.",
-    findings: [...lure, ...leaked, ...domainLines, ...numberLines],
+    findings: [...lure, ...leaked, ...siteLines, ...domainLines, ...numberLines],
     inferenceSourceLabel: "Limited check (no AI)",
   };
 }

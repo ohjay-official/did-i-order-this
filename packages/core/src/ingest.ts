@@ -1,3 +1,4 @@
+import { expectedUntilFrom } from "./expected.ts";
 import { inferCarrierFromTracking, normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
 import type { EmailClaim, LedgerOrder, LedgerSender, LedgerShipment } from "./types.ts";
 
@@ -31,6 +32,8 @@ export function ingestShipmentFromClaim(
     orderId: order ? normalizeOrderId(order.value) : undefined,
     merchant: claim.claimed_party.role === "merchant" ? claim.claimed_party.name : undefined,
     expected: true,
+    // Round 6: a saved notice stops counting after the same window as an import or a typed-in number.
+    expectedUntil: expectedUntilFrom(new Date()),
     source: "shipment_email",
     confirmedAt: nowIso(),
   };

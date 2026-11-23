@@ -12,9 +12,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  */
 export function isExpectedShipment(shipment: LedgerShipment, now: Date = new Date()): boolean {
   if (shipment.expected !== true) return false;
-  if (!shipment.expectedUntil) return true;
-  const until = Date.parse(shipment.expectedUntil);
-  return Number.isFinite(until) ? until > now.getTime() : true;
+  // Round 6: a row with no end date or an unreadable one (saved before expectedUntil
+  // existed) counts for EXPECTED_WINDOW_DAYS after confirmedAt, and never forever.
+  const until = Date.parse(shipment.expectedUntil ?? "");
+  if (Number.isFinite(until)) return until > now.getTime();
+  const confirmed = Date.parse(shipment.confirmedAt ?? "");
+  return Number.isFinite(confirmed) && confirmed + EXPECTED_WINDOW_DAYS * DAY_MS > now.getTime();
 }
 
 /** The end of the expected window that starts at `from` (an order date or now). */

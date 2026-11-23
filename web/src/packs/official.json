@@ -49,18 +49,6 @@
   ],
   "storeDomains": [
     {
-      "domain": "target.com",
-      "name": "Target",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
-      "domain": "bestbuy.com",
-      "name": "Best Buy",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
       "domain": "ikea.com",
       "name": "IKEA",
       "dmarc": "reject",

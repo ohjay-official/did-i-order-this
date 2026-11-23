@@ -110,7 +110,8 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   }
 
   if (type === MESSAGE.GET_EMAIL) {
-    if (sender.id !== chrome.runtime.id) return;
+    // Only the extension's own pages (the side panel) may read a stored email; a content script never can (round 6).
+    if (sender.id !== chrome.runtime.id || sender.tab) return;
     const request = message as GetEmailMessage;
     const pick = (): Entry | undefined => {
       let entry: Entry | undefined;
