@@ -1,6 +1,13 @@
 import type { OfficialPack } from "@did-i-order-this/core";
 import pack from "./official.json";
 
+// Rule: a domain goes on this list only if it publishes DMARC with p=reject,
+// so mail that forges it is refused by receiving servers. Every entry was
+// checked on 2026-11-23 (dns.google, _dmarc.<domain> TXT): dhl.com, ups.com,
+// usps.com, fedex.com, dhl.de, royalmail.com, evri.com, dpd.co.uk and
+// paypal.com all publish p=reject. dpd.com publishes no DMARC record, so it
+// was removed on 2026-11-23.
+//
 // Sources for the official carrier domains in official.json (JSON cannot hold
 // comments). Each was checked on 2026-11-23 against the operator's own site:
 // - dhl.com, ups.com, usps.com, fedex.com: the carriers' own home domains.
@@ -9,7 +16,7 @@ import pack from "./official.json";
 // - royalmail.com: linked as Royal Mail from its parent group's site,
 //   internationaldistributionservices.com (formerly royalmailgroup.com, which redirects there).
 // - evri.com: the site of Evri Limited, formerly Hermes UK.
-// - dpd.com and dpd.co.uk: dpd.com is the DPD group site and links to dpd.co.uk as DPD UK.
+// - dpd.co.uk: linked as DPD UK from the DPD group site, dpd.com (dpd.com itself is not listed: no DMARC).
 // Not added: dhl.co.uk (no verifiable response on 2026-11-23; DHL's UK pages live on dhl.com)
 // and amazon.com (a store, so a carrier role would misroute Amazon order emails).
 export function getOfficialPack(): OfficialPack {

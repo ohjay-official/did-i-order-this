@@ -27,6 +27,7 @@ import {
   type EmailTextMessage,
   type ExtractedEmail,
 } from "./messages.ts";
+import { senderCheckForEmail } from "./senderCheck.ts";
 
 type ViewState =
   | { status: "idle" }
@@ -134,7 +135,12 @@ function runLimited(): void {
   if (!email) return;
   view = {
     status: "limited",
-    result: runLimitedCheck(email.text, { fromDomain: email.fromDomain }, ledger, getOfficialPack()),
+    result: runLimitedCheck(
+      email.text,
+      { fromDomain: email.fromDomain, senderVerified: senderCheckForEmail(email) === "verified" },
+      ledger,
+      getOfficialPack(),
+    ),
   };
   render();
 }
@@ -159,14 +165,13 @@ async function runCheck(): Promise<void> {
     const result = await readClaim(checking.text, "only_on_device", { senderDomain: checking.fromDomain });
     // Gmail moved to another email while this one was read: drop the stale result.
     if (email?.text !== checking.text) return;
-    const verdict = decideVerdict(result.claim, ledger, getOfficialPack(), result.inferenceSource, {
-      emailText: checking.text,
-    });
+    const options = { emailText: checking.text, senderCheck: senderCheckForEmail(checking) };
+    const verdict = decideVerdict(result.claim, ledger, getOfficialPack(), result.inferenceSource, options);
     view = {
       status: "done",
       verdict,
       claim: result.claim,
-      canSave: canSaveShipmentFromClaim(result.claim, ledger, getOfficialPack(), { emailText: checking.text }),
+      canSave: canSaveShipmentFromClaim(result.claim, ledger, getOfficialPack(), options),
       saved: false,
     };
   } catch (error) {

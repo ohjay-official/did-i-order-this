@@ -31,7 +31,7 @@ describe("sample inbox walk-through (the demo film order)", () => {
   it("thread 1: a fee lure with an empty parcel list gets the exact warning headline", () => {
     const ledger: LedgerSnapshot = demoSeed();
     expect(ledger.shipments).toHaveLength(0);
-    const verdict = decideVerdict(thread("thread-1-carrier-lure").expectedClaim, ledger, pack, "on_device");
+    const verdict = decideVerdict(thread("thread-1-carrier-lure").expectedClaim, ledger, pack, "on_device", { senderCheck: "verified" });
     expect(verdict.outcome).toBe("warning");
     expect(verdict.headline).toBe(NOTHING_EXPECTED_HEADLINE);
     expect(verdict.inferenceSourceLabel).toBe("Checked on this device");
@@ -40,7 +40,7 @@ describe("sample inbox walk-through (the demo film order)", () => {
   it("thread 2 then 3: confirming a shipment notice makes the real carrier email safe", () => {
     const ledger: LedgerSnapshot = demoSeed();
     const notice = thread("thread-2-shipment-notice");
-    const noticeVerdict = decideVerdict(notice.expectedClaim, ledger, pack, "in_cloud");
+    const noticeVerdict = decideVerdict(notice.expectedClaim, ledger, pack, "in_cloud", { senderCheck: "verified" });
     expect(noticeVerdict.inferenceSourceLabel).toBe("Checked in the cloud");
 
     const shipment = ingestShipmentFromClaim(notice.expectedClaim, {
@@ -59,21 +59,21 @@ describe("sample inbox walk-through (the demo film order)", () => {
     expect(sender?.domain).toBe("shop.northwind-outfitters.example");
 
     const withShipment: LedgerSnapshot = { ...ledger, shipments: [shipment!] };
-    const safe = decideVerdict(thread("thread-3-safe-carrier").expectedClaim, withShipment, pack, "on_device");
+    const safe = decideVerdict(thread("thread-3-safe-carrier").expectedClaim, withShipment, pack, "on_device", { senderCheck: "verified" });
     expect(safe.outcome).toBe("safe");
     expect(safe.headline).toBe("This tracking number matches a shipment you are expecting.");
 
-    const wrong = decideVerdict(thread("thread-5-wrong-tracking").expectedClaim, withShipment, pack, "on_device");
+    const wrong = decideVerdict(thread("thread-5-wrong-tracking").expectedClaim, withShipment, pack, "on_device", { senderCheck: "verified" });
     expect(wrong.outcome).toBe("warning");
     expect(wrong.headline).toBe("This tracking number is not one of your shipments.");
 
-    const lureAgain = decideVerdict(thread("thread-1-carrier-lure").expectedClaim, withShipment, pack);
+    const lureAgain = decideVerdict(thread("thread-1-carrier-lure").expectedClaim, withShipment, pack, undefined, { senderCheck: "verified" });
     expect(lureAgain.outcome).toBe("warning");
     expect(lureAgain.inferenceSourceLabel).toBe("Check not completed");
   });
 
   it("thread 4: a renewal invoice is not called a scam", () => {
-    const verdict = decideVerdict(thread("thread-4-neutral-renewal").expectedClaim, demoSeed(), pack, "on_device");
+    const verdict = decideVerdict(thread("thread-4-neutral-renewal").expectedClaim, demoSeed(), pack, "on_device", { senderCheck: "verified" });
     expect(verdict.outcome).not.toBe("warning");
   });
 

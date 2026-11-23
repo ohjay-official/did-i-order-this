@@ -1,4 +1,12 @@
-import { findOfficialDomain, looksLikeTracking, normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
+import {
+  findOfficialDomain,
+  inferCarrierFromTracking,
+  isFreeMailDomain,
+  looksLikeTracking,
+  normalizeDomain,
+  normalizeOrderId,
+  normalizeTracking,
+} from "./normalize.ts";
 import { carrierNames, readTextSignals, type TextSignals } from "./signals.ts";
 import {
   LOOKALIKE_MATCH_HEADLINE,
@@ -50,18 +58,22 @@ function lureApplies(claim: EmailClaim, appliesTo: OfficialPack["lureTemplates"]
 
 /**
  * Asks that a real notice rarely needs: money, a login, or a download. Read
- * from the model's label and, in code, from the email text, so a model that
- * labels a fee demand "none" does not hide it.
+ * in code from the email text (fee, payment, login and download wording, and
+ * a money amount said to be due), and also from the model's label, which can
+ * only add to it: a model that labels a fee demand "none" does not hide it.
  */
 function asksForRiskyAction(claim: EmailClaim, signals: TextSignals = NO_TEXT): boolean {
   return (
     claim.asked_action === "pay" ||
     claim.asked_action === "log_in" ||
     claim.asked_action === "download" ||
-    signals.asksToPay ||
-    signals.asksToLogIn ||
-    signals.asksToDownload
+    textAsksRisky(signals)
   );
+}
+
+/** The code-detected part only: no model label involved. */
+export function textAsksRisky(signals: TextSignals): boolean {
+  return signals.asksToPay || signals.asksToLogIn || signals.asksToDownload || signals.parcelFeeLure || signals.amountDue;
 }
 
 /**
@@ -69,19 +81,93 @@ function asksForRiskyAction(claim: EmailClaim, signals: TextSignals = NO_TEXT): 
  * from the model or the text, a "confirm" label, or parcel-fee wording.
  */
 function storeAsksRisky(claim: EmailClaim, signals: TextSignals): boolean {
-  return asksForRiskyAction(claim, signals) || claim.asked_action === "confirm" || signals.parcelFeeLure;
+  return asksForRiskyAction(claim, signals) || claim.asked_action === "confirm";
 }
 
-/** Safe on a tracking match needs the carrier's own official domain (or a subdomain of it). */
-function fromOfficialCarrier(claim: EmailClaim, pack: OfficialPack): boolean {
+/** Hosts in the text that are neither the given domain (or its subdomains) nor an official pack domain. */
+function outsideHosts(signals: TextSignals, pack: OfficialPack, ownDomain?: string): string[] {
+  return signals.linkHosts.filter((host) => {
+    if (ownDomain && sameSender(host, ownDomain)) return false;
+    return !findOfficial(pack, host);
+  });
+}
+
+/** Common long names for carriers in order files and shipment records. */
+const CARRIER_ALIASES: Record<string, string> = {
+  "united parcel service": "ups",
+  "federal express": "fedex",
+  "united states postal service": "usps",
+  "us postal service": "usps",
+  "u.s. postal service": "usps",
+  "deutsche post": "dhl",
+  hermes: "evri",
+};
+
+function carrierKey(name: string | undefined): string {
+  const n = (name ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  if (!n) return "";
+  for (const [alias, key] of Object.entries(CARRIER_ALIASES)) if (n.includes(alias)) return key;
+  return n;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** "DHL" names the same carrier as "DHL Express"; "DPD" does not name "UPS". */
+function namesSameCarrier(official: string, other: string | undefined): boolean {
+  const a = carrierKey(official);
+  const b = carrierKey(other);
+  if (!a || !b) return false;
+  return a === b || new RegExp(`(^|[^a-z0-9])${escapeRegExp(a)}([^a-z0-9]|$)`).test(b);
+}
+
+type CarrierSender = "same_carrier" | "other_official" | "unknown_carrier" | "unofficial";
+
+/**
+ * Whether the sender is the official domain of the carrier that holds this
+ * parcel: the carrier stored with the shipment, and the carrier its number
+ * implies (1Z means UPS), whichever are known. Any official carrier domain is
+ * not enough: a dpd.com sender cannot vouch for a UPS parcel.
+ */
+function carrierSender(claim: EmailClaim, pack: OfficialPack, shipment: LedgerShipment): CarrierSender {
   const domain = claim.claimed_party.domain;
-  return Boolean(domain) && findOfficial(pack, domain as string)?.role === "carrier";
+  const official = domain ? findOfficial(pack, domain) : undefined;
+  if (!official || official.role !== "carrier") return "unofficial";
+  const stored = shipment.carrier?.trim();
+  const implied = inferCarrierFromTracking(shipment.trackingNumber);
+  if (!stored && !implied) return "unknown_carrier";
+  if (stored && !namesSameCarrier(official.name, stored)) return "other_official";
+  if (implied && !namesSameCarrier(official.name, implied)) return "other_official";
+  return "same_carrier";
 }
 
 export const LEAKED_NUMBER_REASON =
   "It cites your real tracking number from an unofficial sender, so the number has likely leaked. Use the carrier's own app or site instead of this email.";
 export const RISKY_ORDER_MATCH_HEADLINE =
-  "This order number matches your order, but this email asks you to pay, log in or download.";
+  "This order number matches your order, but this email asks you to pay, log in or download, or links to another site.";
+export const OFFICIAL_RISKY_HEADLINE =
+  "This parcel is yours, but this email asks you to pay, log in or download. Do that only in the carrier's own app.";
+export const OFFICIAL_RISKY_REASON =
+  "It asks you to pay, log in or download. The carrier's own app or site is the place to do that, even when the email looks right.";
+export const OFFICIAL_LINK_HEADLINE =
+  "This parcel is yours, but this email links to a site that is not the carrier's. Open the parcel in the carrier's own app.";
+export const UNKNOWN_CARRIER_HEADLINE =
+  "This tracking number matches your parcel, but its carrier is not on record, so the sender cannot be checked against it.";
+export const FREE_MAIL_ORDER_HEADLINE =
+  "This order number is in your stored orders, but it was sent from a free email address that anyone can use.";
+export const PASTED_PARCEL_HEADLINE =
+  "This number matches your parcel, but a pasted email can't prove who sent it. Open your parcel in the carrier's app.";
+export const PASTED_ORDER_HEADLINE =
+  "This number matches your order, but a pasted email can't prove who sent it. Open your order on the store's own site.";
+export const PASTED_SENDER_REASON =
+  "The sender in pasted text is whatever the text says, so it cannot be verified. Only a sender the app reads itself (the Chrome extension in Gmail, or a built-in sample) can give Safe.";
+export const MIXED_PARCEL_HEADLINE =
+  "This number matches your parcel, but this thread has messages from more than one sender, so it can't be Safe. Open the parcel in the carrier's app.";
+export const MIXED_ORDER_HEADLINE =
+  "This number matches your order, but this thread has messages from more than one sender, so it can't be Safe. Open the order on the store's own site.";
+export const MIXED_SENDER_REASON =
+  "The open Gmail thread mixes messages from different senders, so the first sender cannot vouch for the rest. Open the newest message on its own.";
 export const ORDER_FROM_OTHER_SENDER_HEADLINE =
   "This order number is in your stored orders, but this email is not from that store's domain.";
 export const ORDER_FROM_OTHER_SENDER_REASON =
@@ -97,6 +183,11 @@ function sameSender(senderDomain: string | undefined, orderDomain: string): bool
   const sender = normalizeDomain(senderDomain);
   const order = normalizeDomain(orderDomain);
   return sender === order || sender.endsWith(`.${order}`);
+}
+
+/** An order stored for a free email domain never proves which store sent an email. */
+function provesStore(orderDomain: string): boolean {
+  return Boolean(orderDomain) && !isFreeMailDomain(orderDomain);
 }
 
 function isStoreClaim(claim: EmailClaim): boolean {
@@ -174,14 +265,16 @@ function findMatchingShipment(
 function findMatchingOrder(
   claim: EmailClaim,
   orders: LedgerOrder[],
-): { cited: string[]; match?: LedgerOrder; elsewhere?: LedgerOrder } {
+): { cited: string[]; match?: LedgerOrder; elsewhere?: LedgerOrder; freeMail?: LedgerOrder } {
   const cited = citedOrderValues(claim);
   const domain = claim.claimed_party.domain;
   const hits = orders.filter((order) => cited.includes(normalizeOrderId(order.orderId)));
-  const match = hits.find((order) => sameSender(domain, order.senderDomain));
+  const match = hits.find((order) => provesStore(order.senderDomain) && sameSender(domain, order.senderDomain));
+  // An order kept for a free email domain (gmail.com and the like) proves nothing about the sender.
+  const freeMail = match ? undefined : hits.find((order) => !provesStore(order.senderDomain) && sameSender(domain, order.senderDomain));
   // A stored order number in an email from another domain: the number has leaked.
-  const elsewhere = match ? undefined : hits[0];
-  return { cited, match, elsewhere };
+  const elsewhere = match || freeMail ? undefined : hits[0];
+  return { cited, match, elsewhere, freeMail };
 }
 
 /**
@@ -197,10 +290,15 @@ export function canSaveShipmentFromClaim(
   options: VerdictOptions = {},
 ): boolean {
   if (claim.email_kind !== "shipment_notice") return false;
+  // Only a sender the app reads itself can plant an expected parcel; pasted text cannot.
+  if ((options.senderCheck ?? "pasted") !== "verified") return false;
   // A notice that asks to pay, log in, download or confirm is not saved, even from the store's domain.
   if (storeAsksRisky(claim, pack ? readTextSignals(options.emailText, pack) : NO_TEXT)) return false;
   if (!claim.cited_numbers.some((item) => item.kind === "tracking" && item.value)) return false;
-  return Boolean(findMatchingOrder(claim, ledger.orders).match);
+  const { match } = findMatchingOrder(claim, ledger.orders);
+  if (!match) return false;
+  if (pack && outsideHosts(readTextSignals(options.emailText, pack), pack, match.senderDomain).length) return false;
+  return true;
 }
 
 export function isKnownSender(
@@ -216,13 +314,15 @@ export function isKnownSender(
 }
 
 /** Lure notes come first, then the domain line, so the most important reason is not the one a small screen cuts. */
-function packReasons(claim: EmailClaim, pack: OfficialPack, signals: TextSignals = NO_TEXT): string[] {
+function packReasons(claim: EmailClaim, pack: OfficialPack, signals: TextSignals = NO_TEXT, senderCheck: SenderCheck = "pasted"): string[] {
   const reasons: string[] = [];
   const domainReasons: string[] = [];
   const domain = claim.claimed_party.domain;
   if (domain) {
     const official = findOfficial(pack, domain);
-    if (official) {
+    if (official && senderCheck !== "verified") {
+      domainReasons.push(`The From line names ${domain}, which is listed as official for ${official.name}, but that line cannot be verified here.`);
+    } else if (official) {
       domainReasons.push(`The claimed domain ${domain} is listed as official for ${official.name}.`);
     } else {
       domainReasons.push(`The claimed domain ${domain} is not in the official-domain pack.`);
@@ -247,6 +347,15 @@ function packReasons(claim: EmailClaim, pack: OfficialPack, signals: TextSignals
   return [...reasons, ...domainReasons];
 }
 
+/**
+ * Where the sender domain came from. "verified": the app read it itself
+ * (Gmail's sender in the Chrome extension, or a built-in sample whose sender
+ * the app sets). "pasted": typed or pasted text, where the From line is
+ * whatever the text says. "mixed_thread": a Gmail thread with more than one
+ * sender. Only "verified" can give Safe; the others cap a match at Neutral.
+ */
+export type SenderCheck = "verified" | "pasted" | "mixed_thread";
+
 export interface VerdictOptions {
   /**
    * The raw email text. When given, the verdict also reads fee, payment, login
@@ -254,11 +363,21 @@ export interface VerdictOptions {
    * so a mislabelled claim cannot hide them.
    */
   emailText?: string;
+  /** Defaults to "pasted", so a caller that does not say gets no Safe. */
+  senderCheck?: SenderCheck;
 }
 
 export const STORED_NOT_EXPECTED_HEADLINE =
   "This tracking number is stored on this device, but it is not a parcel you are expecting.";
 
+type MatchKind = "parcel" | "order";
+type InnerVerdict = Verdict & { matchKind?: MatchKind };
+
+/**
+ * The verdict. Safe needs a sender the app verified itself (senderCheck
+ * "verified"): a pasted or mixed-thread email that would be Safe is capped at
+ * Neutral and says why, so the From line in pasted text never earns Safe.
+ */
 export function decideVerdict(
   claim: EmailClaim,
   ledger: LedgerSnapshot,
@@ -266,11 +385,112 @@ export function decideVerdict(
   inferenceSource?: InferenceSourceValue,
   options: VerdictOptions = {},
 ): Verdict {
+  const senderCheck: SenderCheck = options.senderCheck ?? "pasted";
+  const { matchKind, ...verdict } = decideInner(claim, ledger, pack, inferenceSource, options, senderCheck);
+  if (verdict.outcome !== "safe" || senderCheck === "verified") return verdict;
+  const parcel = matchKind !== "order";
+  const headline =
+    senderCheck === "mixed_thread"
+      ? parcel
+        ? MIXED_PARCEL_HEADLINE
+        : MIXED_ORDER_HEADLINE
+      : parcel
+        ? PASTED_PARCEL_HEADLINE
+        : PASTED_ORDER_HEADLINE;
+  const why = senderCheck === "mixed_thread" ? MIXED_SENDER_REASON : PASTED_SENDER_REASON;
+  return { ...verdict, outcome: "neutral", headline, reasons: [why, ...verdict.reasons] };
+}
+
+function decideInner(
+  claim: EmailClaim,
+  ledger: LedgerSnapshot,
+  pack: OfficialPack,
+  inferenceSource: InferenceSourceValue | undefined,
+  options: VerdictOptions,
+  senderCheck: SenderCheck,
+): InnerVerdict {
   const inferenceSourceLabel = labelForSource(inferenceSource);
   const signals = readTextSignals(options.emailText, pack);
   const risky = asksForRiskyAction(claim, signals);
-  const reasonsFor = () => packReasons(claim, pack, signals);
+  const reasonsFor = () => packReasons(claim, pack, signals, senderCheck);
   const carrierInText = signals.carrierNamed || signals.carrierTracking || signals.parcelFeeLure;
+
+  /**
+   * A tracking number that matches an expected parcel. Safe only when all hold:
+   * the sender is the official domain of the same carrier as the parcel, the
+   * email asks nothing risky (read in code, whatever the model labelled), and
+   * it links to no host outside the official list.
+   */
+  const parcelMatch = (match: LedgerShipment, lead: string[], headline: string): InnerVerdict => {
+    const sender = carrierSender(claim, pack, match);
+    if (sender === "unofficial" || sender === "other_official") {
+      // A tracking number is not proof of the sender: it can leak from a
+      // store, a marketplace or an earlier email. A missing or unreadable
+      // domain counts as unofficial.
+      const leaked = [LEAKED_NUMBER_REASON, ...lead, "This tracking number matches a shipment stored on this device."];
+      if (sender === "other_official") {
+        const official = findOfficial(pack, claim.claimed_party.domain as string);
+        leaked.push(`The sender's domain is official for ${official?.name}, but this parcel is with ${match.carrier ?? inferCarrierFromTracking(match.trackingNumber)}.`);
+      }
+      if (!claim.claimed_party.domain) leaked.push("The sender's domain could not be read, so it cannot be the carrier's official domain.");
+      leaked.push(...reasonsFor());
+      return { outcome: "warning", headline: LOOKALIKE_MATCH_HEADLINE, reasons: leaked, inferenceSourceLabel };
+    }
+    if (sender === "unknown_carrier") {
+      return {
+        outcome: "neutral",
+        headline: UNKNOWN_CARRIER_HEADLINE,
+        reasons: [...lead, "The stored parcel has no carrier on record and its number does not show one.", ...reasonsFor()],
+        inferenceSourceLabel,
+      };
+    }
+    if (risky) {
+      return {
+        outcome: "warning",
+        headline: OFFICIAL_RISKY_HEADLINE,
+        reasons: [OFFICIAL_RISKY_REASON, ...lead, "This tracking number matches a shipment stored on this device.", ...reasonsFor()],
+        inferenceSourceLabel,
+      };
+    }
+    const outside = outsideHosts(signals, pack);
+    if (outside.length) {
+      return {
+        outcome: "warning",
+        headline: OFFICIAL_LINK_HEADLINE,
+        reasons: [
+          `It links to ${outside.slice(0, 3).join(", ")}, which is not on the official-domain list.`,
+          ...lead,
+          "This tracking number matches a shipment stored on this device.",
+          ...reasonsFor(),
+        ],
+        inferenceSourceLabel,
+      };
+    }
+    return {
+      outcome: "safe",
+      headline,
+      reasons: [...lead, "This tracking number matches a shipment stored on this device.", ...reasonsFor()],
+      inferenceSourceLabel,
+      matchKind: "parcel",
+    };
+  };
+
+  /** Outside links for an order match: hosts that are neither the store's domain nor official. */
+  const orderLinkReason = (order: LedgerOrder): string | undefined => {
+    const outside = outsideHosts(signals, pack, order.senderDomain);
+    return outside.length ? `It links to ${outside.slice(0, 3).join(", ")}, which is not the store's own site.` : undefined;
+  };
+
+  const freeMailVerdict = (lead: string[]): InnerVerdict => ({
+    outcome: "warning",
+    headline: FREE_MAIL_ORDER_HEADLINE,
+    reasons: [
+      "The order was stored for a free email domain, which anyone can send from, so a matching number proves nothing about the sender.",
+      ...lead,
+      ...reasonsFor(),
+    ],
+    inferenceSourceLabel,
+  });
 
   if (isOutOfScopeLogin(claim) && !carrierInText) {
     return {
@@ -294,26 +514,7 @@ export function decideVerdict(
     } else {
       reasons.push(`Cited tracking number: ${cited.join(", ")}.`);
     }
-    if (match) {
-      if (!fromOfficialCarrier(claim, pack)) {
-        // A tracking number is not proof of the sender: it can leak from a
-        // store, a marketplace or an earlier email. Only the carrier's own
-        // official domain gives Safe, whatever the email asks and however the
-        // model labelled it. A missing or unreadable domain counts as unofficial.
-        const leaked = [LEAKED_NUMBER_REASON, ...reasons, "This tracking number matches a shipment stored on this device."];
-        if (!claim.claimed_party.domain) leaked.push("The sender's domain could not be read, so it cannot be the carrier's official domain.");
-        leaked.push(...reasonsFor());
-        return { outcome: "warning", headline: LOOKALIKE_MATCH_HEADLINE, reasons: leaked, inferenceSourceLabel };
-      }
-      reasons.push("This tracking number matches a shipment stored on this device.");
-      reasons.push(...reasonsFor());
-      return {
-        outcome: "safe",
-        headline: "This tracking number matches a shipment you are expecting.",
-        reasons,
-        inferenceSourceLabel,
-      };
-    }
+    if (match) return parcelMatch(match, reasons, "This tracking number matches a shipment you are expecting.");
     if (stored) {
       reasons.push("This tracking number is stored on this device, but not as a parcel you are expecting (for example, it was already delivered).");
       reasons.push(...reasonsFor());
@@ -335,9 +536,19 @@ export function decideVerdict(
   }
 
   if (isInformativeShipmentNotice(claim, signals)) {
-    const { match } = findMatchingOrder(claim, ledger.orders);
+    const { match, elsewhere, freeMail } = findMatchingOrder(claim, ledger.orders);
     const reasons: string[] = [];
+    if (freeMail) return freeMailVerdict(reasons);
     if (match) {
+      const link = orderLinkReason(match);
+      if (link) {
+        return {
+          outcome: "warning",
+          headline: RISKY_ORDER_MATCH_HEADLINE,
+          reasons: [link, RISKY_ORDER_REASON, "This shipment notice cites an order stored on this device, from the same sender.", ...reasonsFor()],
+          inferenceSourceLabel,
+        };
+      }
       reasons.push("This shipment notice cites an order stored on this device, from the same sender.");
       reasons.push("Confirm to save the tracking number on this device.");
       reasons.push(...reasonsFor());
@@ -345,6 +556,15 @@ export function decideVerdict(
         outcome: "safe",
         headline: "This shipment notice matches an order stored on this device.",
         reasons,
+        inferenceSourceLabel,
+        matchKind: "order",
+      };
+    }
+    if (elsewhere) {
+      return {
+        outcome: "warning",
+        headline: ORDER_FROM_OTHER_SENDER_HEADLINE,
+        reasons: [ORDER_FROM_OTHER_SENDER_REASON, ...reasonsFor()],
         inferenceSourceLabel,
       };
     }
@@ -359,10 +579,11 @@ export function decideVerdict(
   }
 
   if (isBillingClaim(claim) || isStoreClaim(claim)) {
-    const { cited, match, elsewhere } = findMatchingOrder(claim, ledger.orders);
+    const { cited, match, elsewhere, freeMail } = findMatchingOrder(claim, ledger.orders);
     const known = isKnownSender(claim, ledger);
     const reasons: string[] = [];
     if (cited.length) reasons.push(`Cited number: ${cited.join(", ")}.`);
+    if (freeMail) return freeMailVerdict(reasons);
     if (elsewhere) {
       return {
         outcome: "warning",
@@ -371,11 +592,18 @@ export function decideVerdict(
         inferenceSourceLabel,
       };
     }
-    if (match && storeAsksRisky(claim, signals)) {
+    const link = match ? orderLinkReason(match) : undefined;
+    if (match && (storeAsksRisky(claim, signals) || link)) {
       return {
         outcome: "warning",
         headline: RISKY_ORDER_MATCH_HEADLINE,
-        reasons: [RISKY_ORDER_REASON, ...reasons, "This number matches an order stored on this device, from the same sender.", ...reasonsFor()],
+        reasons: [
+          ...(storeAsksRisky(claim, signals) ? [RISKY_ORDER_REASON] : []),
+          ...(link ? [link] : []),
+          ...reasons,
+          "This number matches an order stored on this device, from the same sender.",
+          ...reasonsFor(),
+        ],
         inferenceSourceLabel,
       };
     }
@@ -387,6 +615,7 @@ export function decideVerdict(
         headline: "This number matches an order stored on this device.",
         reasons,
         inferenceSourceLabel,
+        matchKind: "order",
       };
     }
     if (known) {
@@ -409,7 +638,8 @@ export function decideVerdict(
     };
   }
 
-  const { match: orderMatch, elsewhere: orderElsewhere } = findMatchingOrder(claim, ledger.orders);
+  const { match: orderMatch, elsewhere: orderElsewhere, freeMail: orderFreeMail } = findMatchingOrder(claim, ledger.orders);
+  if (orderFreeMail) return freeMailVerdict([]);
   if (orderElsewhere) {
     return {
       outcome: "warning",
@@ -418,11 +648,17 @@ export function decideVerdict(
       inferenceSourceLabel,
     };
   }
-  if (orderMatch && storeAsksRisky(claim, signals)) {
+  const orderLink = orderMatch ? orderLinkReason(orderMatch) : undefined;
+  if (orderMatch && (storeAsksRisky(claim, signals) || orderLink)) {
     return {
       outcome: "warning",
       headline: RISKY_ORDER_MATCH_HEADLINE,
-      reasons: [RISKY_ORDER_REASON, "A cited number matched an order stored on this device, from the same sender.", ...reasonsFor()],
+      reasons: [
+        ...(storeAsksRisky(claim, signals) ? [RISKY_ORDER_REASON] : []),
+        ...(orderLink ? [orderLink] : []),
+        "A cited number matched an order stored on this device, from the same sender.",
+        ...reasonsFor(),
+      ],
       inferenceSourceLabel,
     };
   }
@@ -432,24 +668,12 @@ export function decideVerdict(
       headline: "A cited number matches an item stored on this device.",
       reasons: ["A cited number matched an order stored on this device, from the same sender.", ...reasonsFor()],
       inferenceSourceLabel,
+      matchKind: "order",
     };
   }
   const shipment = findMatchingShipment(claim, ledger.shipments);
   if (shipment.match) {
-    if (!fromOfficialCarrier(claim, pack)) {
-      return {
-        outcome: "warning",
-        headline: LOOKALIKE_MATCH_HEADLINE,
-        reasons: [LEAKED_NUMBER_REASON, "A cited number matched a shipment stored on this device.", ...reasonsFor()],
-        inferenceSourceLabel,
-      };
-    }
-    return {
-      outcome: "safe",
-      headline: "A cited number matches an item stored on this device.",
-      reasons: ["A cited number matched a shipment you are expecting.", ...reasonsFor()],
-      inferenceSourceLabel,
-    };
+    return parcelMatch(shipment.match, ["A cited number matched a shipment you are expecting."], "A cited number matches an item stored on this device.");
   }
   if (shipment.stored) {
     return {

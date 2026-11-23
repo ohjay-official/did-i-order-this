@@ -17,6 +17,14 @@ export interface TextSignals {
   asksToDownload: boolean;
   /** Parcel-hold wording: a release, customs, duty or redelivery fee. */
   parcelFeeLure: boolean;
+  /**
+   * A non-zero money amount next to "needed", "required", "due", "cover",
+   * "adjustment", "remaining", "balance", "outstanding" or "owed", or
+   * "cover ... cost/fee": a softer way to ask for money.
+   */
+  amountDue: boolean;
+  /** Hosts the text links to or names: URLs, www. names, email addresses and bare domain names. */
+  linkHosts: string[];
   /** A carrier from the official pack is named in the text. */
   carrierNamed: boolean;
   /** The text holds a carrier-shaped tracking number. */
@@ -28,6 +36,8 @@ export const NO_SIGNALS: TextSignals = {
   asksToLogIn: false,
   asksToDownload: false,
   parcelFeeLure: false,
+  amountDue: false,
+  linkHosts: [],
   carrierNamed: false,
   carrierTracking: false,
 };
@@ -61,6 +71,57 @@ export function normalizeForSignals(text: string): string {
     .replace(/\p{Cf}/gu, "")
     .replace(LOOKALIKE_RE, (ch) => LOOKALIKES[ch] ?? ch)
     .replace(/[^\S\n]+/g, " ");
+}
+
+/**
+ * The same text with letter-spaced words joined: "p a y" and "p\u00b7ay"
+ * become "pay". Runs of single letters split by spaces are joined, and a
+ * single letter followed by a dot-like separator is joined to what follows.
+ */
+export function joinSpacedLetters(text: string): string {
+  const runs = text.replace(/\b[a-z](?:[ \t\u00b7\u2022.\-_]+[a-z]\b){2,}/gi, (run) => run.replace(/[ \t\u00b7\u2022.\-_]+/g, ""));
+  return runs.replace(/\b([a-z])[\u00b7\u2022._-]+(?=[a-z])/gi, "$1");
+}
+
+const MONEY = String.raw`(?:[$\u20ac\u00a3]\s?(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s?(?:usd|eur|gbp|dollars?|euros?|pounds?)\b)`;
+const DUE_WORD = String.raw`\b(?:needed|required|due|cover|adjustment|remaining|balance|outstanding|owed|owing)\b`;
+const AMOUNT_NEAR = new RegExp(`${MONEY}[^.!?\n]{0,40}?${DUE_WORD}|${DUE_WORD}[^.!?\n]{0,40}?${MONEY}`, "gi");
+const COVER_COST = /\bcover\b[^.!?\n]{0,40}?\b(?:cost|costs|fee|fees|charge|charges|shipping|postage|delivery)\b/i;
+
+function isZero(amount: string | undefined): boolean {
+  return amount !== undefined && Number(amount.replace(",", ".")) === 0;
+}
+
+function hasAmountDue(text: string): boolean {
+  if (COVER_COST.test(text)) return true;
+  for (const match of text.matchAll(AMOUNT_NEAR)) {
+    const amount = match[1] ?? match[2] ?? match[3] ?? match[4];
+    if (!isZero(amount)) return true;
+  }
+  return false;
+}
+
+// Bare names are counted only with common or reserved top-level domains, so a
+// file name like label.pdf or a price like 1.99 is not taken for a link.
+const BARE_TLDS =
+  "com|net|org|info|biz|io|co|uk|de|us|eu|fr|nl|es|it|ca|au|ru|cn|in|me|ly|link|click|live|xyz|top|shop|online|site|app|store|support|help|delivery|parcel|express|services|example|test|invalid";
+const URL_HOST = /\b(?:https?|hxxps?):\/\/([^\s/?#<>"')\]]+)/gi;
+const WWW_HOST = /\bwww\.[a-z0-9-]+(?:\.[a-z0-9-]+)+/gi;
+const EMAIL_HOST = /[a-z0-9._%+-]+@([a-z0-9-]+(?:\.[a-z0-9-]+)+)/gi;
+const BARE_HOST = new RegExp(String.raw`(?<![@\w.-])((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:${BARE_TLDS}))(?![\w-])`, "gi");
+
+/** Every host the text links to or names, lower case, without "www.", user info or port. */
+export function readLinkHosts(text: string): string[] {
+  const hosts = new Set<string>();
+  const add = (raw: string) => {
+    const host = raw.replace(/^.*@/, "").replace(/:\d+$/, "").toLowerCase().replace(/^www\./, "").replace(/\.+$/, "");
+    if (host.includes(".")) hosts.add(host);
+  };
+  for (const m of text.matchAll(URL_HOST)) add(m[1]);
+  for (const m of text.matchAll(WWW_HOST)) add(m[0]);
+  for (const m of text.matchAll(EMAIL_HOST)) add(m[1]);
+  for (const m of text.matchAll(BARE_HOST)) add(m[1]);
+  return [...hosts];
 }
 
 const PAY = new RegExp(
@@ -131,11 +192,16 @@ export function namesCarrier(text: string, pack: OfficialPack): boolean {
 export function readTextSignals(emailText: string | undefined, pack: OfficialPack): TextSignals {
   if (!emailText) return NO_SIGNALS;
   const text = normalizeForSignals(emailText);
+  // Patterns also run on a copy with letter-spaced words joined ("p a y").
+  const joined = joinSpacedLetters(text);
+  const demand = (pattern: RegExp) => hasDemand(pattern, text) || (joined !== text && hasDemand(pattern, joined));
   return {
-    asksToPay: hasDemand(PAY, text),
-    asksToLogIn: hasDemand(LOG_IN, text),
-    asksToDownload: hasDemand(DOWNLOAD, text),
-    parcelFeeLure: PARCEL_FEE.test(text),
+    asksToPay: demand(PAY),
+    asksToLogIn: demand(LOG_IN),
+    asksToDownload: demand(DOWNLOAD),
+    parcelFeeLure: PARCEL_FEE.test(text) || PARCEL_FEE.test(joined),
+    amountDue: hasAmountDue(text),
+    linkHosts: readLinkHosts(text),
     carrierNamed: namesCarrier(text, pack),
     carrierTracking: extractCandidateNumbers(text).some(looksLikeCarrierTracking),
   };

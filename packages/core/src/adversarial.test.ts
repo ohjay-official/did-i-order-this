@@ -44,7 +44,7 @@ const storeClaim = (asked: EmailClaim["asked_action"], kind: EmailClaim["email_k
   email_kind: kind,
 });
 const run = (text: string, model: EmailClaim) =>
-  decideVerdict(reconcileClaim(model, text, senderDomainFromHeader(text)), ledger, pack, "on_device", { emailText: text });
+  decideVerdict(reconcileClaim(model, text, senderDomainFromHeader(text)), ledger, pack, "on_device", { emailText: text, senderCheck: "verified" });
 const UNOFFICIAL = "UPS <billing@ups-release.example>";
 
 describe("W1 to W10: a real tracking number from an unofficial sender never gives Safe", () => {
@@ -94,7 +94,7 @@ describe("added official carrier domains (Royal Mail, Evri, DPD, DHL Germany)", 
   };
   const rmRun = (from: string) => {
     const text = `From: ${from}\nSubject: Your Royal Mail item ${RM}\n\nYour Royal Mail item ${RM} is on its way.`;
-    return decideVerdict(reconcileClaim(rmClaim, text, senderDomainFromHeader(text)), rmLedger, pack, "on_device", { emailText: text });
+    return decideVerdict(reconcileClaim(rmClaim, text, senderDomainFromHeader(text)), rmLedger, pack, "on_device", { emailText: text, senderCheck: "verified" });
   };
   it("is Safe from royalmail.com and Warning from a lookalike", () => {
     expect(rmRun("Royal Mail <no-reply@royalmail.com>").outcome).toBe("safe");
@@ -103,7 +103,7 @@ describe("added official carrier domains (Royal Mail, Evri, DPD, DHL Germany)", 
     expect(fake.reasons[0]).toBe(LEAKED_NUMBER_REASON);
   });
   it("lists each added domain as an official carrier", () => {
-    for (const domain of ["dhl.de", "royalmail.com", "evri.com", "dpd.co.uk", "dpd.com"]) {
+    for (const domain of ["dhl.de", "royalmail.com", "evri.com", "dpd.co.uk"]) {
       expect(pack.officialDomains.find((d) => d.domain === domain)?.role).toBe("carrier");
     }
   });
@@ -233,8 +233,9 @@ describe("S1 to S4: store and billing matches", () => {
   it("a shipment notice that asks for anything risky cannot be saved, even from the store", async () => {
     const { canSaveShipmentFromClaim } = await import("./index.ts");
     const notice: EmailClaim = { ...storeClaim("none", "shipment_notice"), cited_numbers: [{ kind: "order", value: "NW-10001" }, { kind: "tracking", value: "1Z000AA10000000001" }] };
-    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped." })).toBe(true);
-    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped. Pay the customs fee." })).toBe(false);
+    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped.", senderCheck: "verified" })).toBe(true);
+    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped." })).toBe(false);
+    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped. Pay the customs fee.", senderCheck: "verified" })).toBe(false);
     expect(canSaveShipmentFromClaim({ ...notice, asked_action: "confirm" }, ledger)).toBe(false);
   });
 });

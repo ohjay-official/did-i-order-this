@@ -37,7 +37,7 @@ describe("Load the matching shipment demo", () => {
     expect(ledger.orders).toHaveLength(1);
     expect(ledger.shipments).toHaveLength(0);
     expect(hasMatchingShipmentDemo(ledger)).toBe(false);
-    expect(decideVerdict(claimOf("thread-1-carrier-lure"), ledger, pack).headline).toBe(NOTHING_EXPECTED_HEADLINE);
+    expect(decideVerdict(claimOf("thread-1-carrier-lure"), ledger, pack, undefined, { senderCheck: "verified" }).headline).toBe(NOTHING_EXPECTED_HEADLINE);
   });
 
   it("builds the UPS parcel from the Northwind notice, labelled as demo data", () => {
@@ -60,13 +60,13 @@ describe("Load the matching shipment demo", () => {
     await loadMatchingShipmentDemo(store.save);
     const ledger = store.snapshot();
     expect(hasMatchingShipmentDemo(ledger)).toBe(true);
-    const ups = decideVerdict(claimOf("thread-3-safe-carrier"), ledger, pack);
+    const ups = decideVerdict(claimOf("thread-3-safe-carrier"), ledger, pack, undefined, { senderCheck: "verified" });
     expect(ups.outcome).toBe("safe");
     expect(ups.headline).toBe("This tracking number matches a shipment you are expecting.");
-    const wrong = decideVerdict(claimOf("thread-5-wrong-tracking"), ledger, pack);
+    const wrong = decideVerdict(claimOf("thread-5-wrong-tracking"), ledger, pack, undefined, { senderCheck: "verified" });
     expect(wrong.outcome).toBe("warning");
     expect(wrong.headline).toBe("This tracking number is not one of your shipments.");
-    const streamhut = decideVerdict(claimOf("thread-4-neutral-renewal"), ledger, pack);
+    const streamhut = decideVerdict(claimOf("thread-4-neutral-renewal"), ledger, pack, undefined, { senderCheck: "verified" });
     expect(streamhut.headline).toBe("You have no history with this sender.");
   });
 
@@ -88,7 +88,7 @@ describe("homepage UPS chip", () => {
     const store = fakeStore(demoSeed());
     const note = await prepareTryChip("thread-3-safe-carrier", store.save);
     expect(note).toBe(CHIP_DEMO_NOTE);
-    const verdict = decideVerdict(claimOf("thread-3-safe-carrier"), store.snapshot(), pack);
+    const verdict = decideVerdict(claimOf("thread-3-safe-carrier"), store.snapshot(), pack, undefined, { senderCheck: "verified" });
     expect(verdict.outcome).toBe("safe");
     expect(verdict.headline).toBe("This tracking number matches a shipment you are expecting.");
   });

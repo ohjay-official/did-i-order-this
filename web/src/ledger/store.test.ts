@@ -30,7 +30,7 @@ describe("ledger store on a brand-new device", () => {
     expect(ledger.orders).toHaveLength(1);
     expect(ledger.shipments.map((s) => s.trackingNumber)).toContain("1Z999AA10123456784");
     const ups = sampleThreads.find((t) => t.id === SHIPMENT_NEXT_THREAD_ID)!;
-    const verdict = decideVerdict(ups.expectedClaim, ledger, getOfficialPack(), undefined);
+    const verdict = decideVerdict(ups.expectedClaim, ledger, getOfficialPack(), undefined, { senderCheck: "verified" });
     expect(verdict.outcome).toBe("safe");
     expect(verdict.headline).not.toBe(NOTHING_EXPECTED_HEADLINE);
   });

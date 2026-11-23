@@ -55,7 +55,8 @@ export function mountBelt(root: ParentNode = document): void {
   const pack = getOfficialPack();
   const ledger = demoSeed();
   const threads = sampleThreads;
-  const outcomes = threads.map((t) => decideVerdict(t.expectedClaim, ledger, pack, "on_device"));
+  // Built-in samples: the app sets their sender, so it counts as verified.
+  const outcomes = threads.map((t) => decideVerdict(t.expectedClaim, ledger, pack, "on_device", { senderCheck: "verified" }));
 
   cardsEl.innerHTML = threads.map(cardHtml).join("");
   codesEl.innerHTML = threads

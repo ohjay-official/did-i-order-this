@@ -37,15 +37,18 @@ function defaultStore(): BudgetStore {
 export class CloudBudget {
   private readonly store: BudgetStore;
   private readonly now: () => number;
+  private readonly key: string;
 
-  constructor(store: BudgetStore = defaultStore(), now: () => number = () => Date.now()) {
+  /** Each budget has its own storage key, so the next-step tip never spends the email-read budget. */
+  constructor(store: BudgetStore = defaultStore(), now: () => number = () => Date.now(), key: string = KEY) {
     this.store = store;
     this.now = now;
+    this.key = key;
   }
 
   private read(): number[] {
     try {
-      const raw = JSON.parse(this.store.getItem(KEY) ?? "[]");
+      const raw = JSON.parse(this.store.getItem(this.key) ?? "[]");
       return Array.isArray(raw) ? raw.filter((n): n is number => typeof n === "number") : [];
     } catch {
       return [];
@@ -71,7 +74,7 @@ export class CloudBudget {
       );
     }
     calls.push(t);
-    this.store.setItem(KEY, JSON.stringify(calls));
+    this.store.setItem(this.key, JSON.stringify(calls));
   }
 
   remaining(): number {

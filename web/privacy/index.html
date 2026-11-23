@@ -42,7 +42,7 @@
               <li>/ Cloud only after you agree</li>
               <li>/ No account, no mailbox scan</li>
             </ul>
-            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes. On the hosted site, a next-step tip may still load Google reCAPTCHA and send only the verdict category, a brand name only when the sender is official or the verdict already names that brand, and the action type. Choosing Do not send skips that tip too.</p>
+            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes. On the hosted site, a next-step tip uses the cloud only after you agreed to the cloud for that check, and then sends only the verdict category, the action type and a brand name when the sender is official. Otherwise it runs on your device or not at all.</p>
           </div>
           <div class="priv-bottom">
             <div>
@@ -95,7 +95,7 @@
               <div class="flow-item"><span class="flow-dot"></span><div><h4>The text of that one email</h4><p>And only on the hosted site, after a consent dialog.</p></div></div>
               <div class="flow-item"><span class="flow-dot"></span><div><h4>Nothing, if you choose Do not send</h4><p>You can still run a limited check with no AI.</p></div></div>
               <div class="flow-item"><span class="flow-dot"></span><div><h4>Nothing from the Chrome extension</h4><p>The side panel never sends mail to the cloud.</p></div></div>
-              <div class="flow-item"><span class="flow-dot"></span><div><h4>App Check on production cloud</h4><p>reCAPTCHA Enterprise protects production cloud calls, including the next-step tip. It does not read your inbox.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>App Check on production cloud</h4><p>reCAPTCHA Enterprise protects production cloud calls, including a cloud next-step tip. It loads only after you agree to the cloud. It does not read your inbox.</p></div></div>
             </div>
           </div>
         </div>
@@ -148,7 +148,7 @@
       <li><strong>Orders, tracking numbers and senders you save.</strong> Stored only on your device: in this browser's IndexedDB on the website, or in <code>chrome.storage.local</code> in the extension. They are never uploaded.</li>
       <li><strong>Files you import</strong> (CSV or ZIP order history). Read in the browser and turned into saved orders. The files are not uploaded.</li>
       <li><strong>Email text you paste or open.</strong> Read on your device. The email text leaves the device only in the cloud-email case below.</li>
-      <li><strong>A next-step tip on the hosted site.</strong> After a verdict, the site may send only the verdict outcome, our headline, a brand name only when the real sender domain is official or the verdict text already names a claimed brand from our official list, and the action type (pay, log in, download, or none). It never sends the email body, tracking or order numbers, or the sender address. This step loads App Check and reCAPTCHA. The extension does not make this call, and choosing <em>Do not send</em> skips it.</li>
+      <li><strong>A next-step tip on the hosted site.</strong> After a verdict, the site may pick one fixed next-step sentence. In the cloud, and only after you agreed to the cloud for that check (Check in the cloud, or the home page&#39;s cloud mode), it sends only the verdict outcome, the action type (pay, log in, download, or none) and a brand name when the real sender domain is official. It never sends the email body, tracking or order numbers, or the sender address. Without that agreement it runs on your device or not at all. The extension does not make this call.</li>
       <li><strong>Usage analytics.</strong> Page views and performance numbers, described under Analytics. No email text, no saved orders, no names.</li>
     </ul>
     <p>We do not ask for a name, an email address, a phone number or a payment card, and we do not use the Gmail API or scan a mailbox.</p>
@@ -157,7 +157,7 @@
     <ol>
       <li>Every check starts on your device, using Chrome's built-in model through Firebase AI Logic.</li>
       <li>If on-device AI is not available, the hosted site asks first. Only if you choose <em>Check in the cloud</em> does the text of that one email go to the cloud. You can choose <em>Do not send</em> or run a limited check with no AI instead.</li>
-      <li>After a verdict on the hosted site, a separate next-step tip may be requested in the cloud. That call does not include the email body. It does load App Check and reCAPTCHA, even when the email itself was read on the device. Choosing <em>Do not send</em> skips this tip.</li>
+      <li>After a verdict on the hosted site, a separate next-step tip may be picked. It goes to the cloud only after you agreed to the cloud for that check, and it never includes the email body; only then does it load App Check and reCAPTCHA. Otherwise it runs on your device, or not at all.</li>
       <li>The Chrome extension never sends email text to the cloud, and it does not request a next-step tip.</li>
       <li>The verdict is computed on your device by comparing the model's reading with the orders you saved. A failed next-step call never changes that verdict.</li>
     </ol>

@@ -18,7 +18,7 @@ const check = (id: string, ledger: LedgerSnapshot, claim?: EmailClaim) => {
   const t = thread(id);
   const text = formatEmailText(t);
   const c = claim ? reconcileClaim(claim, text, senderDomainFromHeader(text)) : t.expectedClaim;
-  return decideVerdict(c, ledger, pack, "on_device", { emailText: text });
+  return decideVerdict(c, ledger, pack, "on_device", { emailText: text, senderCheck: "verified" });
 };
 
 describe("documented sample results", () => {

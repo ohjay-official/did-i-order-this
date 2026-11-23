@@ -459,7 +459,7 @@ export class InboxApp {
     if (!current) return;
     const result = runLimitedCheck(
       current.text,
-      { fromDomain: current.fromDomain },
+      { fromDomain: current.fromDomain, senderVerified: Boolean(current.sample) },
       ledgerForCheck(this.ledger, Boolean(current.sample)),
       getOfficialPack(),
     );
@@ -470,7 +470,9 @@ export class InboxApp {
   private finishWithSampleClaim(thread: SampleThread, emailKey: string, fallbackDetail = ""): void {
     const claim = thread.expectedClaim;
     const ledger = ledgerForCheck(this.ledger, true);
-    const verdict = decideVerdict(claim, ledger, getOfficialPack(), undefined, { emailText: formatEmailText(thread) });
+    // A built-in sample's sender is set by the app, so it counts as verified.
+    const options = { emailText: formatEmailText(thread), senderCheck: "verified" as const };
+    const verdict = decideVerdict(claim, ledger, getOfficialPack(), undefined, options);
     this.check = {
       status: "done",
       verdict,
@@ -478,7 +480,7 @@ export class InboxApp {
       usedSampleClaim: true,
       fallbackDetail,
       cloudConsentRemembered: false,
-      canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), { emailText: formatEmailText(thread) }),
+      canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), options),
       saved: false,
       emailKey,
     };
@@ -494,7 +496,9 @@ export class InboxApp {
   ): void {
     // Demo rows count only for the fictional sample emails, never for someone's own mail.
     const ledger = ledgerForCheck(this.ledger, Boolean(email.sample));
-    const verdict = decideVerdict(claim, ledger, getOfficialPack(), inferenceSource, { emailText: email.text });
+    // Pasted text is whatever it says, so its sender can never give Safe; a built-in sample's can.
+    const options = { emailText: email.text, senderCheck: email.sample ? ("verified" as const) : ("pasted" as const) };
+    const verdict = decideVerdict(claim, ledger, getOfficialPack(), inferenceSource, options);
     this.check = {
       status: "done",
       verdict,
@@ -502,21 +506,28 @@ export class InboxApp {
       usedSampleClaim: false,
       fallbackDetail: "",
       cloudConsentRemembered,
-      canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), { emailText: email.text }),
+      canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), options),
       saved: false,
       emailKey,
     };
     this.render();
     const seq = this.checkSeq;
     const senderDomain = email.fromDomain ?? senderDomainFromHeader(email.text);
-    void this.attachNextStep(emailKey, seq, senderDomain);
+    // The tip may use the cloud only when this check's email read went to the cloud after a yes.
+    void this.attachNextStep(emailKey, seq, senderDomain, email.text, inferenceSource === "in_cloud");
   }
 
   /**
    * After the verdict is already on screen, try a non-blocking next-step tip.
    * Failures leave the verdict as it is.
    */
-  private async attachNextStep(emailKey: string, seq: number, senderDomain?: string): Promise<void> {
+  private async attachNextStep(
+    emailKey: string,
+    seq: number,
+    senderDomain: string | undefined,
+    emailText: string,
+    cloudAgreed: boolean,
+  ): Promise<void> {
     if (this.check.status !== "done" || this.check.usedSampleClaim) return;
     const { claim, verdict } = this.check;
     const line = await suggestNextStep({
@@ -524,6 +535,8 @@ export class InboxApp {
       verdict,
       pack: getOfficialPack(),
       senderDomain,
+      emailText,
+      cloudAgreed,
     });
     if (!line) return;
     if (seq !== this.checkSeq) return;

@@ -32,14 +32,12 @@ vi.mock("firebase/ai", () => ({
       },
     };
   },
-  Schema: new Proxy(
-    {},
-    { get: () => (arg: unknown) => ({ schema: arg }) },
-  ),
+  Schema: new Proxy({}, { get: () => (arg: unknown) => ({ schema: arg }) }),
 }));
 
 vi.mock("../firebase/app.ts", () => ({
   getFirebaseApp: () => ({ name: "cloud" }),
+  getOnDeviceFirebaseApp: () => ({ name: "on-device" }),
   ensureAppCheckToken: async () => {
     state.tokenCalls += 1;
   },
@@ -47,7 +45,7 @@ vi.mock("../firebase/app.ts", () => ({
   isCloudAiAvailable: () => true,
 }));
 
-const { generateNextStepAdvice, buildNextStepPayload } = await import("./nextStep.ts");
+const { generateNextStepChoice, buildNextStepPayload, buildNextStepPrompt, templatesFor } = await import("./nextStep.ts");
 const { getOfficialPack } = await import("../packs/official.ts");
 
 const pack = getOfficialPack();
@@ -60,34 +58,43 @@ beforeEach(() => {
   state.tokenCalls = 0;
 });
 
-describe("generateNextStepAdvice", () => {
-  it("uses PREFER_IN_CLOUD on the cloud Firebase app and returns the SDK source", async () => {
-    state.responses.push({
-      text: JSON.stringify({ advice: "Pay DHL fees only on dhl.com." }),
-      inferenceSource: "in_cloud",
-    });
-    const payload = buildNextStepPayload({
-      claim: {
-        claimed_party: { name: "DHL", role: "carrier", domain: "dhl-parcel-desk.example" },
-        asked_action: "pay",
-        cited_numbers: [{ kind: "tracking", value: "GM123456789012345" }],
-        email_kind: "carrier_update",
-      },
-      verdict: {
-        outcome: "warning",
-        headline: "You're not expecting any parcel right now.",
-        reasons: ["The email claims to be DHL, but you are not expecting a parcel."],
-      },
-      pack,
-      senderDomain: "dhl-parcel-desk.example",
-    });
-    const result = await generateNextStepAdvice(payload, pack);
+const payload = () =>
+  buildNextStepPayload({
+    claim: {
+      claimed_party: { name: "DHL", role: "carrier", domain: "dhl-parcel-desk.example" },
+      asked_action: "pay",
+      cited_numbers: [{ kind: "tracking", value: "GM123456789012345" }],
+      email_kind: "carrier_update",
+    },
+    verdict: { outcome: "warning", headline: "You're not expecting any parcel right now.", reasons: [] },
+    pack,
+    senderDomain: "dhl-parcel-desk.example",
+  });
+
+describe("generateNextStepChoice", () => {
+  it("in the cloud: the App Check app, ONLY_IN_CLOUD, and only template ids in the prompt", async () => {
+    state.responses.push({ text: JSON.stringify({ template: "warn_pay_report" }), inferenceSource: "in_cloud" });
+    const p = payload();
+    const templates = templatesFor(p);
+    const result = await generateNextStepChoice(buildNextStepPrompt(p, templates), templates.map((t) => t.id), [], "cloud");
     expect(state.apps).toEqual(["cloud"]);
-    expect(state.params[0]?.mode).toBe("prefer_in_cloud");
-    expect(result).toEqual({ text: "Pay DHL fees only on dhl.com.", inferenceSource: "in_cloud" });
-    expect(state.prompts[0]).toContain('"brand":"DHL"');
-    expect(state.prompts[0]).toContain("Do not say the email is genuine");
+    expect(state.params[0]?.mode).toBe("only_in_cloud");
+    expect(result).toEqual({ raw: JSON.stringify({ template: "warn_pay_report" }), inferenceSource: "in_cloud" });
     expect(state.prompts[0]).not.toContain("GM123456789012345");
     expect(state.prompts[0]).not.toContain("dhl-parcel-desk.example");
+    expect(state.prompts[0]).not.toContain('"brand":"DHL"');
+  });
+  it("on this device: the app with no App Check and ONLY_ON_DEVICE", async () => {
+    state.responses.push({ text: "{}", inferenceSource: "on_device" });
+    await generateNextStepChoice("x", ["warn_report"], [], "device");
+    expect(state.apps).toEqual(["on-device"]);
+    expect(state.params[0]?.mode).toBe("only_on_device");
+    expect(state.tokenCalls).toBe(0);
+  });
+  it("refuses a reply from somewhere other than asked", async () => {
+    state.responses.push({ text: "{}", inferenceSource: "in_cloud" });
+    await expect(generateNextStepChoice("x", ["warn_report"], [], "device")).rejects.toThrow(/other than asked/);
+    state.responses.push({ text: "{}", inferenceSource: "mystery" });
+    await expect(generateNextStepChoice("x", ["warn_report"], [], "cloud")).rejects.toThrow(/inferenceSource/);
   });
 });
