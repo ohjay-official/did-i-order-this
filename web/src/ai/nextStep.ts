@@ -11,7 +11,7 @@ import {
 import { AppCheckBlockedError, AppCheckGate } from "./appCheckGate.ts";
 import { isAppCheckError } from "./aiError.ts";
 import { CloudBudget } from "./cloudBudget.ts";
-import { hasOnDeviceApi } from "./onDevice.ts";
+import { assertOnDeviceAdapter, hasOnDeviceApi, withCloudFetchBlocked } from "./onDevice.ts";
 import { withTimeout } from "../ui/checkFlow.ts";
 
 /**
@@ -218,7 +218,10 @@ export async function generateNextStepChoice(
     },
     onDeviceParams: { promptOptions: { responseConstraint: schema } },
   });
-  const result = await model.generateContent(prompt);
+  // The device path must never fall through to the cloud: no adapter, no call,
+  // and Google AI hosts are blocked while it runs.
+  if (where === "device") assertOnDeviceAdapter(model);
+  const result = where === "device" ? await withCloudFetchBlocked(() => model.generateContent(prompt)) : await model.generateContent(prompt);
   const source = mapInferenceSource(result.response.inferenceSource);
   if ((where === "device") !== (source === "on_device")) throw new Error("The tip ran somewhere other than asked.");
   return { raw: result.response.text(), inferenceSource: source };

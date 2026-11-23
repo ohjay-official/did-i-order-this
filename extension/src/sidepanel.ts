@@ -1,4 +1,6 @@
 import {
+  FILE_TOO_LARGE_MESSAGE,
+  MAX_IMPORT_BYTES,
   OrderHistoryParseError,
   canSaveShipmentFromClaim,
   decideVerdict,
@@ -144,9 +146,36 @@ function runLimited(): void {
   render();
 }
 
+/** The whole extracted email, so a change in flags, senders, links or hidden text counts as a change. */
+function sameEmail(a: ExtractedEmail | null, b: ExtractedEmail | null): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Has the page read the open thread again, so the check uses what Gmail shows now. */
+async function rereadEmail(): Promise<ExtractedEmail | null> {
+  try {
+    const current = (await chrome.runtime.sendMessage({ ...(await emailRequest()), fresh: true })) as EmailTextMessage | undefined;
+    if (current?.type !== MESSAGE.EMAIL_TEXT) return email;
+    return sanitizeEmail(current.email);
+  } catch {
+    return email;
+  }
+}
+
 async function runCheck(): Promise<void> {
   if (!email || view.status === "checking") return;
-  const checking = email;
+  view = { status: "checking" };
+  render();
+  const fresh = await rereadEmail();
+  if (!fresh) {
+    email = null;
+    view = { status: "idle" };
+    render();
+    return;
+  }
+  // Check what the page shows now; a refresh that landed meanwhile may have reset the view.
+  email = fresh;
+  const checking = fresh;
   view = { status: "checking" };
   render();
   if (!isFirebaseConfigured()) {
@@ -163,7 +192,7 @@ async function runCheck(): Promise<void> {
     // The sender domain is Gmail's own record of the address, not text parsed from the display name.
     const result = await readClaim(checking.text, "only_on_device", { senderDomain: checking.fromDomain });
     // Gmail moved to another email while this one was read: drop the stale result.
-    if (email?.text !== checking.text) return;
+    if (!sameEmail(email, checking)) return;
     const options = verdictOptionsForEmail(checking);
     const verdict = decideVerdict(result.claim, ledger, getOfficialPack(), result.inferenceSource, options);
     view = {
@@ -174,7 +203,7 @@ async function runCheck(): Promise<void> {
       saved: false,
     };
   } catch (error) {
-    if (email?.text !== checking.text) return;
+    if (!sameEmail(email, checking)) return;
     const detail = `The AI read could not run. ${describeAiError(error)}`;
     view = {
       status: "error",
@@ -204,6 +233,8 @@ async function saveCurrentShipment(): Promise<void> {
 
 async function importFile(file: File): Promise<void> {
   try {
+    // Refuse a file over the cap before reading any of it into memory.
+    if (file.size > MAX_IMPORT_BYTES) throw new OrderHistoryParseError(FILE_TOO_LARGE_MESSAGE);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const parsed = parseOrderHistoryFile({ name: file.name, bytes });
     for (const order of parsed.orders) {
@@ -219,7 +250,7 @@ async function importFile(file: File): Promise<void> {
     }
     for (const shipment of parsed.shipments) await saveShipment(shipment);
     ledger = await loadLedger();
-    importNote = `Imported ${parsed.orders.length} orders on this device. The file was not uploaded.`;
+    importNote = `Imported ${parsed.orders.length} orders on this device. The file was not uploaded. Import only files you exported yourself: a CSV decides which store each order belongs to.`;
   } catch (error) {
     importNote =
       error instanceof OrderHistoryParseError ? error.message : "This file could not be imported. It was not uploaded.";
@@ -255,8 +286,8 @@ async function refreshEmail(): Promise<void> {
     return;
   }
   const next = sanitizeEmail(current.email);
-  // Same thread as before (another tab changed): keep the current result on screen.
-  if (next && email && next.text === email.text && next.fixture === email.fixture) return;
+  // Same email as before, flags and all (another tab changed): keep the current result on screen.
+  if (next && email && sameEmail(next, email)) return;
   applyEmailMessage({ ...current, email: next });
 }
 

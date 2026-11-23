@@ -1,6 +1,7 @@
 import { Unzip, UnzipInflate, type UnzipFile } from "fflate";
 import { inferCarrierFromTracking, isAsciiDomain, isFreeMailDomain, looksLikeTracking, normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
 import type { LedgerOrder, LedgerShipment } from "./types.ts";
+import { importedExpectation } from "./expected.ts";
 
 export class OrderHistoryParseError extends Error {
   constructor(message: string) {
@@ -168,6 +169,14 @@ function detectFormat(headers: string[]): "amazon" | "paypal" | "generic" {
   throw new OrderHistoryParseError("This file is not a recognised Amazon, PayPal, or generic order-history CSV.");
 }
 
+/** Amazon order status words that mean the parcel is not on its way any more. */
+const AMAZON_DONE = /deliver|refund|closed|cancel|return/i;
+
+function amazonExpectation(statusRaw: string, order: LedgerOrder | undefined): { expected: boolean; expectedUntil?: string } {
+  if (AMAZON_DONE.test(statusRaw) || order?.status === "delivered" || order?.status === "refunded") return { expected: false };
+  return importedExpectation(order?.date);
+}
+
 function parseAmazon(headers: string[], rows: string[][]): { orders: LedgerOrder[]; shipments: LedgerShipment[] } {
   const orderIdCol = findColumn(headers, ["order id"]);
   const dateCol = findColumn(headers, ["order date"]);
@@ -220,7 +229,9 @@ function parseAmazon(headers: string[], rows: string[][]): { orders: LedgerOrder
         carrier: tracking.carrier,
         orderId,
         merchant,
-        expected: (ordersById.get(orderId)?.status ?? "") !== "delivered" && (ordersById.get(orderId)?.status ?? "") !== "refunded",
+        // Delivered, refunded, closed or cancelled orders, and any order older
+        // than the expected window, are history, not parcels on their way.
+        ...amazonExpectation(cell(row, statusCol), ordersById.get(orderId)),
         source: "import",
         confirmedAt,
       });
@@ -337,7 +348,7 @@ function parseGeneric(headers: string[], rows: string[][]): { orders: LedgerOrde
         carrier: tracking.carrier,
         orderId,
         merchant: ordersById.get(orderId)?.merchant,
-        expected: true,
+        ...importedExpectation(ordersById.get(orderId)?.date),
         source: "import",
         confirmedAt,
       });
@@ -359,6 +370,8 @@ function parseCsvText(text: string): { orders: LedgerOrder[]; shipments: LedgerS
 
 /** Order-history files are small. These caps keep a crafted file from filling the tab's memory. */
 export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+/** Shown when a file is over MAX_IMPORT_BYTES. Callers check File.size first, before reading the file. */
+export const FILE_TOO_LARGE_MESSAGE = "This file is larger than 25 MB, which is too big for an order history. It was not imported.";
 export const MAX_ZIP_ENTRY_BYTES = 50 * 1024 * 1024;
 /** The cap on all CSV entries of one ZIP together, so many entries just under the per-entry cap cannot add up. */
 export const MAX_ZIP_TOTAL_BYTES = 50 * 1024 * 1024;
@@ -435,7 +448,7 @@ export function parseOrderHistoryFile(file: OrderHistoryFile): { orders: LedgerO
     throw new OrderHistoryParseError("This file is empty.");
   }
   if (file.bytes.length > MAX_IMPORT_BYTES) {
-    throw new OrderHistoryParseError("This file is larger than 25 MB, which is too big for an order history. It was not imported.");
+    throw new OrderHistoryParseError(FILE_TOO_LARGE_MESSAGE);
   }
   if (name.endsWith(".zip")) {
     return parseCsvText(csvFromZip(file.bytes));

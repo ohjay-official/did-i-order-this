@@ -6,3 +6,4 @@ export * from "./importCsv.ts";
 export * from "./limitedCheck.ts";
 export * from "./reconcile.ts";
 export * from "./signals.ts";
+export * from "./expected.ts";

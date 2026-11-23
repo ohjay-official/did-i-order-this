@@ -6,7 +6,7 @@ import type { ExtractedEmail } from "./messages.ts";
  * one-sender thread counts as verified, unless:
  * - the page is not Gmail (the extension's test page): "fixture";
  * - Gmail shows the message in Spam, with a warning banner, or with a "via"
- *   sender: "flagged";
+ *   sender, or Gmail is shown in a language those checks can't read: "flagged";
  * - the thread has more than one sender domain: "mixed_thread".
  * Each of these caps a match at Neutral.
  */
@@ -24,6 +24,7 @@ export function verdictOptionsForEmail(email: ExtractedEmail) {
     linkHosts: email.linkHosts ?? [],
     imageHosts: email.imageHosts ?? [],
     hiddenText: email.hiddenText === true,
+    hiddenAny: email.hiddenAny === true,
     truncated: email.truncated === true,
   };
 }

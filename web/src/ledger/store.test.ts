@@ -65,3 +65,29 @@ describe("ledger store on a brand-new device", () => {
     expect(own.senders).toHaveLength(0);
   });
 });
+
+describe("adding one tracking number by hand (round 5, M1)", () => {
+  beforeEach(deleteDb);
+
+  it("stores it as an expected parcel for 30 days, with the carrier read from the number", async () => {
+    const { addExpectedTracking } = await import("./store.ts");
+    const { isExpectedShipment, EXPECTED_WINDOW_DAYS } = await import("@did-i-order-this/core");
+    const saved = await addExpectedTracking({ trackingNumber: "1z 999 aa1 0123 4567 84" });
+    expect(saved.trackingNumber).toBe("1Z999AA10123456784");
+    expect(saved.carrier).toBe("UPS");
+    expect(saved.source).toBe("manual");
+    const ledger = await loadLedger();
+    const row = ledger.shipments.find((s) => s.trackingNumber === "1Z999AA10123456784")!;
+    expect(isExpectedShipment(row)).toBe(true);
+    const later = new Date(Date.now() + (EXPECTED_WINDOW_DAYS + 1) * 86_400_000);
+    expect(isExpectedShipment(row, later)).toBe(false);
+  });
+
+  it("refuses text that is not a tracking number, and adds nothing", async () => {
+    const { addExpectedTracking } = await import("./store.ts");
+    await expect(addExpectedTracking({ trackingNumber: "hello" })).rejects.toThrow(/does not look like a tracking number/);
+    await expect(addExpectedTracking({ trackingNumber: "   " })).rejects.toThrow(/Type the tracking number/);
+    const ledger = await loadLedger();
+    expect(ledger.shipments.filter((s) => s.source === "manual")).toHaveLength(0);
+  });
+});

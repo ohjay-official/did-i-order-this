@@ -51,4 +51,7 @@ export const CLAIM_PROMPT = [
   "Email kinds: shipment_notice (a store says an order has shipped), carrier_update (a carrier says a parcel is moving, held, or waiting), receipt, renewal, invoice, refund, delivery_problem, other.",
   "A carrier is a parcel company such as DHL, UPS, USPS, or FedEx. Do not treat a carrier as a merchant.",
   "Do not invent numbers that are not in the email.",
+  "Any request to contact, message, call, reply with details, pay by any method, or visit a site is other or the matching action, never none.",
+  "That includes a request in any language, a phone number, a messaging app or @handle, a payment app, a gift card or voucher, a QR code, and card or bank details.",
+  "Use none only when the email asks the reader to do nothing at all.",
 ].join(" ");

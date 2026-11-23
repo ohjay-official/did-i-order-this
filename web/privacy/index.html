@@ -42,7 +42,7 @@
               <li>/ Cloud only after you agree</li>
               <li>/ No account, no mailbox scan</li>
             </ul>
-            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes. On the hosted site, a next-step tip uses the cloud only after you agreed to the cloud for that check, and then sends only the verdict category, the action type and a brand name when the sender is official. Otherwise it runs on your device or not at all.</p>
+            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes. On the hosted site, a next-step tip uses the cloud only after you agreed to the cloud for that check, and then sends only the verdict category, the action type and a brand name only for a built-in sample whose sender domain is on the official list (never from a pasted From line). Otherwise it runs on your device or not at all.</p>
           </div>
           <div class="priv-bottom">
             <div>
@@ -67,7 +67,7 @@
           <div class="priv-bottom is-split">
             <div class="priv-copy">
               <h2 id="priv-title-2">Your inbox<br />stays yours.</h2>
-              <p>Every check starts on the device. On the hosted site, the text of one email can leave only after you choose Check in the cloud. Choose Do not send and nothing leaves.</p>
+              <p>Every AI read is tried on your device first where the browser supports it. On the hosted site, the text of one email can leave only after you choose Check in the cloud. Choose Do not send and nothing leaves.</p>
               <div class="priv-ctas"><a class="priv-btn is-solid" href="/app/">Open the sample inbox</a><a class="priv-btn" href="#policy">Read the privacy policy</a></div>
             </div>
             <ol class="priv-panel">
@@ -88,7 +88,7 @@
               <div class="flow-item"><span class="flow-dot"></span><div><h4>Orders and tracking numbers</h4><p>Stored in this browser or in the extension's local storage.</p></div></div>
               <div class="flow-item"><span class="flow-dot"></span><div><h4>Imported CSV and ZIP files</h4><p>Read locally. They are not uploaded.</p></div></div>
               <div class="flow-item"><span class="flow-dot"></span><div><h4>The open Gmail thread</h4><p>Read as text by the extension, with no Gmail API access and no mailbox scan.</p></div></div>
-              <div class="flow-item"><span class="flow-dot"></span><div><h4>On-device inference</h4><p>Every check starts on the device through Firebase AI Logic.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>On-device inference</h4><p>Every AI read is tried on your device first (Chrome's built-in model through Firebase AI Logic) where the browser supports it.</p></div></div>
             </div>
             <div class="flow-col is-leave">
               <h3>Leaves only if you agree</h3>
@@ -148,14 +148,14 @@
       <li><strong>Orders, tracking numbers and senders you save.</strong> Stored only on your device: in this browser's IndexedDB on the website, or in <code>chrome.storage.local</code> in the extension. They are never uploaded.</li>
       <li><strong>Files you import</strong> (CSV or ZIP order history). Read in the browser and turned into saved orders. The files are not uploaded.</li>
       <li><strong>Email text you paste or open.</strong> Read on your device. The email text leaves the device only in the cloud-email case below.</li>
-      <li><strong>A next-step tip on the hosted site.</strong> After a verdict, the site may pick one fixed next-step sentence. In the cloud, and only after you agreed to the cloud for that check (a Check in the cloud yes; the Allow cloud switch alone is not enough), it sends only the verdict outcome, the action type (pay, log in, download, or none) and a brand name when the real sender domain is official. It never sends the email body, tracking or order numbers, or the sender address. Without that agreement it runs on your device or not at all. The extension does not make this call.</li>
+      <li><strong>A next-step tip on the hosted site.</strong> After a verdict, the site may pick one fixed next-step sentence. In the cloud, and only after you agreed to the cloud for that check (a Check in the cloud yes; the Allow cloud switch alone is not enough), it sends only the verdict outcome, the action type (pay, log in, download, or none) and a brand name only for a built-in sample whose sender domain is on the official list (never from a pasted From line). It never sends the email body, tracking or order numbers, or the sender address. Without that agreement it runs on your device or not at all. The extension does not make this call.</li>
       <li><strong>Usage analytics.</strong> Page views and performance numbers, described under Analytics. No email text, no saved orders, no names.</li>
     </ul>
     <p>We do not ask for a name, an email address, a phone number or a payment card, and we do not use the Gmail API or scan a mailbox.</p>
 
     <h3>On-device and cloud data flow</h3>
     <ol>
-      <li>Every check starts on your device, using Chrome's built-in model through Firebase AI Logic.</li>
+      <li>Every AI read is tried on your device first (Chrome's built-in model through Firebase AI Logic) where the browser supports it.</li>
       <li>If on-device AI is not available, the hosted site asks first. Only if you choose <em>Check in the cloud</em> does the text of that one email go to the cloud. You can choose <em>Do not send</em> or run a limited check with no AI instead.</li>
       <li>After a verdict on the hosted site, a separate next-step tip may be picked. It goes to the cloud only after you agreed to the cloud for that check, and it never includes the email body; only then does it load App Check and reCAPTCHA. Otherwise it runs on your device, or not at all.</li>
       <li>The Chrome extension never sends email text to the cloud, and it does not request a next-step tip.</li>

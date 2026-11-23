@@ -1,7 +1,7 @@
 import { GoogleAIBackend, InferenceMode, getAI, getGenerativeModel } from "firebase/ai";
 import { getOnDeviceFirebaseApp } from "../../web/src/firebase/app.ts";
 import { ON_DEVICE_CREATE_OPTIONS } from "../../web/src/ai/readClaim.ts";
-import { NoOnDeviceModelError, hasOnDeviceApi, warmUpOnDevice } from "../../web/src/ai/onDevice.ts";
+import { NoOnDeviceModelError, assertOnDeviceAdapter, hasOnDeviceApi, warmUpOnDevice, withCloudFetchBlocked } from "../../web/src/ai/onDevice.ts";
 
 export interface OnDeviceCheckDeps {
   hasApi: () => boolean;
@@ -27,5 +27,7 @@ const defaultDeps: OnDeviceCheckDeps = {
  */
 export async function checkOnDeviceReady(deps: OnDeviceCheckDeps = defaultDeps): Promise<void> {
   if (!deps.hasApi()) throw new NoOnDeviceModelError();
-  await warmUpOnDevice(deps.makeModel(), { pageAgeMs: () => Number.POSITIVE_INFINITY });
+  const model = deps.makeModel();
+  assertOnDeviceAdapter(model);
+  await withCloudFetchBlocked(() => warmUpOnDevice(model, { pageAgeMs: () => Number.POSITIVE_INFINITY }));
 }

@@ -1,3 +1,5 @@
+Historical build note (dated). Where it differs from README.md or docs/TESTING.md, those are current.
+
 # Handoff to Claude: UI and UX for "Did I Order This?"
 
 From: Grok Bot (built the code through v6.2 and the 15 Nov backend pass). To: Claude, who owns all remaining UI and UX work.
@@ -9,7 +11,7 @@ Written 15 Nov 2026, Africa/Lagos (UTC+1). Owner: Oh-Jay (GitHub `ohjay-official
 
 ## 2. Repo, branch, deploy
 
-- Repo: `ohjay-official/did-i-order-this` (private until about 28 Nov), branch `main`. Local checkout on the box: `/workspace/did-i-order-this`.
+- Repo: `ohjay-official/did-i-order-this` (now public), branch `main`. Local checkout on the box: `/workspace/did-i-order-this`.
 - Deploy: every push to `main` auto-deploys to production on Vercel at <https://did-i-order-this.vercel.app>. Vercel team `oh-jay-s-projects`, project `did-i-order-this` (`prj_mdBLMAg4cNtDy1Lv7TpGD9vE65I6`, team `team_mbAY3t3bzOPsb0RyQWblamxG`). The Vercel CLI on the box is logged out; use the Vercel connector to list deployments by commit SHA.
 - Build on Vercel (`vercel.json`): web build, extension build, then the judge zip into `web/dist/downloads/`.
 - CI: `.github/workflows/ci.yml` runs `npm run verify -- --offline` on every push. Check it with the GitHub connector (`list_check_runs_for_ref`).

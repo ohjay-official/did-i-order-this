@@ -11,7 +11,10 @@ const hits = [];
 // must be able to see that the API is missing before it asks. That file may
 // test for the name and do nothing else with it.
 const PRESENCE_CHECK_FILE = join("web", "src", "ai", "onDevice.ts");
-const PRESENCE_CHECK = '"LanguageModel" in scope';
+// One test file may name the global, only to stub it: it proves that a falsy
+// value makes the app send nothing (security audit round 4, J2-2).
+const STUB_TEST_FILE = join("web", "src", "ai", "round5.test.ts");
+const PRESENCE_CHECK = 'typeof (scope as { LanguageModel?: unknown }).LanguageModel === "function"';
 
 function walk(dir) {
   let entries;
@@ -32,6 +35,7 @@ function walk(dir) {
     if (!allowedExt.has(extname(name))) continue;
     let text = readFileSync(path, "utf8");
     if (path === PRESENCE_CHECK_FILE) text = text.replace(PRESENCE_CHECK, "");
+    if (path === STUB_TEST_FILE) text = text.replaceAll('vi.stubGlobal("LanguageModel"', "");
     if (text.includes("LanguageModel")) {
       hits.push(path);
     }

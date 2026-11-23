@@ -53,6 +53,82 @@ export function isHiddenElement(element: Element): boolean {
   return false;
 }
 
+/**
+ * Whether text at this point of the tree is hidden, given what its ancestors
+ * set. display:none, the hidden attribute, opacity 0 and a zero-size box with
+ * overflow hidden hide everything inside them. visibility and font size are
+ * inherited, so a child can set them back (a visible child of a
+ * visibility:hidden parent is shown). Offsets add up along the tree, so a
+ * child can move text back on screen.
+ */
+interface HideState {
+  hidden: boolean;
+  visible: boolean;
+  fontPx: number;
+  offX: number;
+  offY: number;
+}
+
+const SHOWN: HideState = { hidden: false, visible: true, fontPx: 16, offX: 0, offY: 0 };
+
+function styleValue(element: Element, name: string): string {
+  const inline = (element as HTMLElement).style?.getPropertyValue?.(name)?.trim().toLowerCase() ?? "";
+  if (inline) return inline;
+  try {
+    return element.ownerDocument?.defaultView?.getComputedStyle?.(element)?.getPropertyValue(name)?.trim().toLowerCase() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function offset(element: Element, names: string[]): number {
+  let sum = 0;
+  for (const name of names) {
+    const n = px(styleValue(element, name));
+    if (Number.isFinite(n)) sum += n;
+  }
+  return sum;
+}
+
+function nextHideState(element: Element, parent: HideState): HideState {
+  let hidden = parent.hidden || element.hasAttribute("hidden");
+  if (styleValue(element, "display") === "none") hidden = true;
+  const opacity = styleValue(element, "opacity");
+  if (opacity !== "" && px(opacity) === 0) hidden = true;
+  const overflowHidden = ["overflow", "overflow-x", "overflow-y"].some((name) => styleValue(element, name) === "hidden");
+  if (overflowHidden && ["max-height", "height", "width", "max-width"].some((name) => px(styleValue(element, name)) === 0)) hidden = true;
+  // A real browser also knows about rules this walk cannot see.
+  const check = (element as Element & { checkVisibility?: (options?: object) => boolean }).checkVisibility;
+  if (typeof check === "function") {
+    try {
+      if (!check.call(element, { opacityProperty: true, visibilityProperty: true })) hidden = true;
+    } catch {
+      // Older browsers: the style rules above still apply.
+    }
+  }
+  const visibility = styleValue(element, "visibility");
+  const visible = visibility ? !(visibility === "hidden" || visibility === "collapse") : parent.visible;
+  const font = styleValue(element, "font-size");
+  let fontPx = parent.fontPx;
+  const size = px(font);
+  if (font && Number.isFinite(size)) {
+    if (/(?:r?em)$/.test(font)) fontPx = parent.fontPx * size;
+    else if (font.endsWith("%")) fontPx = (parent.fontPx * size) / 100;
+    else fontPx = size;
+  }
+  return {
+    hidden,
+    visible,
+    fontPx,
+    offX: parent.offX + offset(element, ["left", "margin-left", "text-indent"]),
+    offY: parent.offY + offset(element, ["top", "margin-top"]),
+  };
+}
+
+function isHiddenState(state: HideState): boolean {
+  return state.hidden || !state.visible || state.fontPx < 2 || state.offX <= -1000 || state.offY <= -1000;
+}
+
 const LETTERS = /\p{L}/gu;
 
 function letterCount(text: string): number {
@@ -67,36 +143,40 @@ interface BodyRead {
   hiddenAfterVisible: boolean;
 }
 
-/** The text a reader sees in one message body, skipping hidden elements, plus what was hidden. */
+/**
+ * The text a reader sees in one message body, plus what was hidden. The walk
+ * goes into hidden elements too and tests every text node against the styles
+ * of all its ancestors, so a visible child inside a hidden parent is read.
+ */
 function readVisible(root: Element): BodyRead {
   const parts: string[] = [];
   let visibleLetters = 0;
   let hiddenLetters = 0;
   let hiddenAfterVisible = false;
-  const walk = (node: Node) => {
+  const walk = (node: Node, state: HideState, folded: boolean) => {
     if (node.nodeType === 3) {
       const data = node.nodeValue ?? "";
-      parts.push(data);
-      visibleLetters += letterCount(data);
-      return;
-    }
-    if (node.nodeType !== 1) return;
-    const element = node as Element;
-    if (SKIP_TAGS.has(element.tagName)) return;
-    if (isHiddenElement(element)) {
-      if (!element.matches(GMAIL_FOLDED) && !element.closest(GMAIL_FOLDED)) {
-        const letters = letterCount(element.textContent ?? "");
+      const letters = letterCount(data);
+      if (!isHiddenState(state)) {
+        parts.push(data);
+        visibleLetters += letters;
+      } else if (!folded) {
         hiddenLetters += letters;
         if (letters >= 3 && visibleLetters > 0) hiddenAfterVisible = true;
       }
       return;
     }
+    if (node.nodeType !== 1) return;
+    const element = node as Element;
+    if (SKIP_TAGS.has(element.tagName)) return;
+    const next = nextHideState(element, state);
+    const inFold = folded || element.matches(GMAIL_FOLDED);
     const block = BLOCK_TAGS.has(element.tagName);
     if (block) parts.push("\n");
-    for (const child of [...element.childNodes]) walk(child);
+    for (const child of [...element.childNodes]) walk(child, next, inFold);
     if (block) parts.push("\n");
   };
-  walk(root);
+  walk(root, SHOWN, false);
   const text = parts
     .join("")
     .replace(/[^\S\n]+/g, " ")
@@ -167,7 +247,25 @@ export function readGmailFlags(doc: Document, main: Element | Document, bodies: 
   const header = sender?.closest("h3, .gE, tr, table") ?? sender?.parentElement;
   const headerText = header && outsideBodies(header) ? header.textContent ?? "" : "";
   if (/\bvia\s+[a-z0-9-]+(?:\.[a-z0-9-]+)+/i.test(headerText)) flags.add("via");
+  // The Spam, banner and "via" checks read English. In Gmail shown in another
+  // language they could miss a warning, so the message can't be Safe.
+  const lang = (doc.documentElement?.getAttribute("lang") ?? "").trim().toLowerCase();
+  const onGmail = (doc.location?.hostname ?? "") === "mail.google.com";
+  if (lang ? !lang.startsWith("en") : onGmail) flags.add("foreign_ui");
   return [...flags];
+}
+
+/**
+ * The domain of a plain address: the part after its only "@". An address with
+ * more than one "@", a quote, a space or brackets (a quoted local part such as
+ * "alerts@ups.com"@evil.example) gives no domain, so it is never official.
+ */
+export function domainOfAddress(address: string): string {
+  const value = address.trim();
+  if ((value.match(/@/g) ?? []).length !== 1) return "";
+  if (/["'\s<>()[\]\\,;:]/.test(value)) return "";
+  const domain = value.slice(value.lastIndexOf("@") + 1).toLowerCase();
+  return /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domain) ? domain : "";
 }
 
 export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
@@ -193,18 +291,20 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
     .filter(Boolean)
     .join("\n\n");
   if (!subject && !body) return null;
-  const fromDomain = fromEmail.includes("@") ? (fromEmail.split("@")[1] ?? "").toLowerCase() : "";
+  const fromDomain = domainOfAddress(fromEmail);
   // An expanded thread can hold messages from more than one sender. The first
   // sender cannot vouch for a later one's text, so such a thread is marked.
   const senderDomains = new Set(
     [...main.querySelectorAll("span.gD[email]")]
       .map((element) => (element.getAttribute("email") ?? "").trim().toLowerCase())
       .filter((address) => address.includes("@"))
-      .map((address) => address.slice(address.lastIndexOf("@") + 1)),
+      .map((address) => domainOfAddress(address) || `unreadable:${address}`),
   );
   const mixedSenders = [...senderDomains].some((domain) => domain !== fromDomain);
   const hiddenLetters = reads.reduce((sum, read) => sum + read.hiddenLetters, 0);
   const hiddenText = reads.some((read) => read.hiddenAfterVisible) || hiddenLetters > MAX_HIDDEN_LETTERS;
+  // Any hidden words at all (a preheader too) stop Safe; only a mismatch counts as a risky ask.
+  const hiddenAny = hiddenLetters > 0;
   const { linkHosts, imageHosts } = readTargets(bodies);
   const gmailFlags = readGmailFlags(doc, main, bodies);
   const lines = [
@@ -224,6 +324,7 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
     ...(linkHosts.length ? { linkHosts } : {}),
     ...(imageHosts.length ? { imageHosts } : {}),
     ...(hiddenText ? { hiddenText: true } : {}),
+    ...(hiddenAny ? { hiddenAny: true } : {}),
     ...(gmailFlags.length ? { gmailFlags } : {}),
   };
 }

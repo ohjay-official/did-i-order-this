@@ -1,3 +1,4 @@
+import { isExpectedShipment } from "./expected.ts";
 import { findOfficialDomain, inferCarrierFromTracking, looksLikeTracking, normalizeDomain, normalizeTracking } from "./normalize.ts";
 import { readTextSignals } from "./signals.ts";
 import type { InferenceSourceLabel, LedgerSnapshot, OfficialPack } from "./types.ts";
@@ -59,7 +60,7 @@ export function runLimitedCheck(
   if (numbers.length === 0) {
     numberLines.push("No tracking-like numbers were found in the email text.");
   } else {
-    const expectedRows = ledger.shipments.filter((item) => item.expected);
+    const expectedRows = ledger.shipments.filter((item) => isExpectedShipment(item));
     const expected = expectedRows.map((item) => normalizeTracking(item.trackingNumber));
     const all = ledger.shipments.map((item) => normalizeTracking(item.trackingNumber));
     for (const value of numbers) {

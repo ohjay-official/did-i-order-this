@@ -49,30 +49,6 @@
   ],
   "storeDomains": [
     {
-      "domain": "ebay.com",
-      "name": "eBay",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
-      "domain": "ebay.co.uk",
-      "name": "eBay",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
-      "domain": "etsy.com",
-      "name": "Etsy",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
-      "domain": "walmart.com",
-      "name": "Walmart",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
       "domain": "target.com",
       "name": "Target",
       "dmarc": "reject",
@@ -109,18 +85,6 @@
       "checked": "2026-11-23"
     },
     {
-      "domain": "temu.com",
-      "name": "Temu",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
-      "domain": "aliexpress.com",
-      "name": "AliExpress",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
       "domain": "nike.com",
       "name": "Nike",
       "dmarc": "reject",
@@ -151,12 +115,6 @@
       "checked": "2026-11-23"
     },
     {
-      "domain": "newegg.com",
-      "name": "Newegg",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
       "domain": "tesco.com",
       "name": "Tesco",
       "dmarc": "reject",
@@ -183,12 +141,6 @@
     {
       "domain": "zalando.com",
       "name": "Zalando",
-      "dmarc": "reject",
-      "checked": "2026-11-23"
-    },
-    {
-      "domain": "jumia.com.ng",
-      "name": "Jumia",
       "dmarc": "reject",
       "checked": "2026-11-23"
     }

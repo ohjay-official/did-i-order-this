@@ -8,6 +8,7 @@ import {
   normalizeTracking,
 } from "./normalize.ts";
 import { carrierNames, readTextSignals, type TextSignals } from "./signals.ts";
+import { isExpectedShipment } from "./expected.ts";
 import {
   LOOKALIKE_MATCH_HEADLINE,
   NOTHING_EXPECTED_HEADLINE,
@@ -24,7 +25,7 @@ import {
 } from "./types.ts";
 
 export function hasExpectedParcel(ledger: { shipments: LedgerShipment[] }): boolean {
-  return ledger.shipments.some((shipment) => shipment.expected === true);
+  return ledger.shipments.some((shipment) => isExpectedShipment(shipment));
 }
 
 export function labelForSource(source?: InferenceSourceValue): InferenceSourceLabel {
@@ -112,6 +113,24 @@ function outsideHosts(signals: TextSignals, pack: OfficialPack, ownDomain?: stri
   return signals.linkHosts.filter((host) => {
     if (ownDomain && sameSender(host, ownDomain)) return false;
     return !findOfficial(pack, host);
+  });
+}
+
+/**
+ * Hosts a Safe may not link to: for a parcel, anything but the sender's own
+ * domain and other domains of the same carrier; for an order, anything but
+ * the store's own domain. Official domains of someone else count too: a
+ * ups.com email has no reason to link to paypal.com or dhl.com.
+ */
+function notOwnHosts(signals: TextSignals, pack: OfficialPack, senderDomain: string | undefined, parcel: boolean): string[] {
+  const sender = senderDomain ? findOfficial(pack, senderDomain) : undefined;
+  return signals.linkHosts.filter((host) => {
+    if (senderDomain && sameSender(host, senderDomain)) return false;
+    if (parcel && sender?.role === "carrier") {
+      const other = findOfficial(pack, host);
+      if (other?.role === "carrier" && namesSameCarrier(sender.name, other.name)) return false;
+    }
+    return true;
   });
 }
 
@@ -294,7 +313,7 @@ function findMatchingShipment(
 ): { cited: string[]; match?: LedgerShipment; stored?: LedgerShipment } {
   const cited = citedTrackingValues(claim);
   const hits = shipments.filter((shipment) => cited.includes(normalizeTracking(shipment.trackingNumber)));
-  return { cited, match: hits.find((shipment) => shipment.expected === true), stored: hits.find((shipment) => !shipment.expected) };
+  return { cited, match: hits.find((shipment) => isExpectedShipment(shipment)), stored: hits.find((shipment) => !isExpectedShipment(shipment)) };
 }
 
 /**
@@ -342,6 +361,8 @@ export function canSaveShipmentFromClaim(
   const signals = signalsForVerdict(options, pack);
   // A notice that asks to pay, log in, download or confirm is not saved, even from the store's domain.
   if (storeAsksRisky(claim, signals)) return false;
+  // Nor one that names a way to pay or reach someone off the site, is not in English, or hides text.
+  if (signals.offPlatform.length || signals.mostlyNonEnglish || options.hiddenAny) return false;
   if (!claim.cited_numbers.some((item) => item.kind === "tracking" && item.value)) return false;
   const { match } = findMatchingOrder(claim, ledger.orders);
   // Only the store's exact domain, on the vetted DMARC p=reject list, can plant a parcel.
@@ -426,6 +447,8 @@ export interface VerdictOptions {
   hiddenText?: boolean;
   /** The caller cut the email text, so the verdict did not read all of it. Never Safe. */
   truncated?: boolean;
+  /** The caller found any hidden words at all in the email (a preheader too). Never Safe. */
+  hiddenAny?: boolean;
 }
 
 /** The most text the model reads. The verdict reads all of it, but a longer email is never Safe. */
@@ -445,9 +468,21 @@ function outsideImageHosts(options: VerdictOptions, pack: OfficialPack, ownDomai
 }
 
 export const FLAGGED_HEADLINE =
-  "This number matches, but Gmail flagged this email (Spam, a warning banner or a \"via\" sender), so it can't be Safe. Open it in the official app or site.";
+  "This number matches, but Gmail flagged this email (Spam, a warning banner or a \"via\" sender) or is shown in a language these checks can't read, so it can't be Safe. Open it in the official app or site.";
 export const FLAGGED_SENDER_REASON =
-  "Gmail shows this message in Spam, with a warning, or as sent \"via\" another domain, so the sender it shows cannot vouch for it.";
+  "Gmail shows this message in Spam, with a warning, or as sent \"via\" another domain, or shows its interface in a language other than English, where those flags can't be read. The sender it shows cannot vouch for it.";
+export const OFF_PLATFORM_HEADLINE =
+  "This number matches, but the email names a way to pay or contact someone outside the official site, so it can't be Safe. Use the official app or site only.";
+export const NON_ENGLISH_HEADLINE =
+  "This number matches, but this email is not in English, and these checks read English only, so it can't be Safe. Open it in the official app or site.";
+export const NON_ENGLISH_REASON =
+  "The code checks for payment, login and contact requests read English wording, so a request in another language could be missed.";
+export const HIDDEN_ANY_HEADLINE =
+  "This number matches, but part of this email is hidden from view, so it can't be Safe. Open it in the official app or site.";
+export const HIDDEN_ANY_REASON =
+  "Some text in this email is hidden from view. Hidden text can carry a request the checks would miss, so a Safe needs none.";
+export const OTHER_SITE_HEADLINE =
+  "This number matches, but the email links to a site that is not the sender's own, so it can't be Safe. Open it in the official app or site.";
 export const FIXTURE_HEADLINE =
   "This number matches, but this is the extension's test page, not Gmail, so it can't be Safe.";
 export const FIXTURE_SENDER_REASON =
@@ -517,6 +552,24 @@ function capSafe(
   if (senderCheck !== "verified") return neutral(parcel ? PASTED_PARCEL_HEADLINE : PASTED_ORDER_HEADLINE, PASTED_SENDER_REASON);
   if (textWasCut(options)) return neutral(TOO_LONG_HEADLINE, TOO_LONG_REASON);
   if (claim.asked_action !== "none") return neutral(LABEL_NOT_NONE_HEADLINE, LABEL_NOT_NONE_REASON);
+  const signals = signalsForVerdict(options, pack);
+  if (signals.offPlatform.length) {
+    return neutral(
+      OFF_PLATFORM_HEADLINE,
+      `It mentions ${signals.offPlatform.slice(0, 3).join(", ")}, a way to pay or reach someone outside the official site.`,
+    );
+  }
+  if (signals.mostlyNonEnglish) return neutral(NON_ENGLISH_HEADLINE, NON_ENGLISH_REASON);
+  if (options.hiddenAny) return neutral(HIDDEN_ANY_HEADLINE, HIDDEN_ANY_REASON);
+  const foreign = notOwnHosts(signals, pack, claim.claimed_party.domain, parcel);
+  if (foreign.length) {
+    return neutral(
+      OTHER_SITE_HEADLINE,
+      parcel
+        ? `It links to ${foreign.slice(0, 3).join(", ")}, which is not this carrier's own site.`
+        : `It links to ${foreign.slice(0, 3).join(", ")}, which is not the store's own site.`,
+    );
+  }
   if (matchKind === "order" && !isVettedStore(pack, claim.claimed_party.domain)) {
     return neutral(STORE_UNVERIFIED_HEADLINE, STORE_UNVERIFIED_REASON);
   }

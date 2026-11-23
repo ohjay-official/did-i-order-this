@@ -15,7 +15,7 @@ import {
  * send email text only when told the panel is open; when the last panel
  * closes, every stored email is dropped.
  */
-type Entry = { email: ExtractedEmail | null; reason?: string; at: number };
+type Entry = { email: ExtractedEmail | null; reason?: string; at: number; tabId: number };
 const entries = new Map<number, Entry>();
 const contentTabs = new Set<number>();
 const panels = new Set<chrome.runtime.Port>();
@@ -102,6 +102,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
       email,
       reason: typeof incoming.reason === "string" ? incoming.reason.slice(0, 300) : undefined,
       at: ++clock,
+      tabId,
     });
     tellPanels(tabId);
     sendResponse({ ok: true });
@@ -111,13 +112,30 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   if (type === MESSAGE.GET_EMAIL) {
     if (sender.id !== chrome.runtime.id) return;
     const request = message as GetEmailMessage;
-    let entry: Entry | undefined;
-    if (typeof request.tabId === "number") entry = entries.get(request.tabId);
-    if (!entry && request.latest) entry = [...entries.values()].sort((a, b) => b.at - a.at)[0];
+    const pick = (): Entry | undefined => {
+      let entry: Entry | undefined;
+      if (typeof request.tabId === "number") entry = entries.get(request.tabId);
+      if (!entry && request.latest) entry = [...entries.values()].sort((a, b) => b.at - a.at)[0];
+      return entry;
+    };
+    const answer = (entry: Entry | undefined) =>
+      sendResponse({ type: MESSAGE.EMAIL_TEXT, email: entry?.email ?? null, reason: entry?.reason } satisfies EmailTextMessage);
+    const tabId = typeof request.tabId === "number" ? request.tabId : pick()?.tabId;
+    if (request.fresh && typeof tabId === "number" && panelOpen()) {
+      // The user clicked Check: have the page read the thread again right now,
+      // so a Gmail flag or banner that appeared since the last read counts.
+      const reread = chrome.tabs.sendMessage(tabId, { type: MESSAGE.PANEL_STATE, open: true, reread: true });
+      const timeout = new Promise((resolve) => setTimeout(resolve, 1500));
+      void Promise.race([reread, timeout])
+        .catch(() => {})
+        .then(() => answer(entries.get(tabId) ?? pick()));
+      return true;
+    }
+    const entry = pick();
     if (!entry && typeof request.tabId === "number" && panelOpen()) {
       // Ask that tab's content script to send its thread now.
       chrome.tabs.sendMessage(request.tabId, { type: MESSAGE.PANEL_STATE, open: true }).catch(() => {});
     }
-    sendResponse({ type: MESSAGE.EMAIL_TEXT, email: entry?.email ?? null, reason: entry?.reason } satisfies EmailTextMessage);
+    answer(entry);
   }
 });

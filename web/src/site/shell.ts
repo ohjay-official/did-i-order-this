@@ -145,7 +145,7 @@ export function mountShell(doc: Document, options: ShellOptions): void {
                 </div>
               </div>
             </div>
-            <figcaption class="fx-seq" style="--d:700ms">The side panel as it renders in the unpacked build. A Chrome Web Store listing is planned, not live.</figcaption>
+            <figcaption class="fx-seq" style="--d:700ms">A simplified illustration of the side panel. A Chrome Web Store listing is planned, not live.</figcaption>
           </figure>
         </div>
       </section>
