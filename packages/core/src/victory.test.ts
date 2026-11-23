@@ -67,13 +67,14 @@ describe("F7 lookalike domain with a stored tracking number", () => {
     expect(v.reasons).toContain("The claimed domain alerts.ups.com is listed as official for UPS.");
   });
 
-  it("keeps a plain match from a store's own domain safe when nothing is asked", () => {
+  it("a tracking match from a domain that is not the carrier's warns even when nothing is asked (23 Nov rerun)", () => {
     const v = decideVerdict(
       claim({ claimed_party: { name: "UPS", role: "carrier", domain: "shop.northwind-outfitters.example" } }),
       expectingUps,
       officialPack,
     );
-    expect(v.outcome).toBe("safe");
+    expect(v.outcome).toBe("warning");
+    expect(v.headline).toBe(LOOKALIKE_MATCH_HEADLINE);
   });
 });
 

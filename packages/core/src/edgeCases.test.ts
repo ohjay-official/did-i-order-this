@@ -110,21 +110,25 @@ describe("decideVerdict edge cases", () => {
   it("an unclassified email that cites an expected parcel is safe; a stored but not expected one warns; otherwise neutral", () => {
     const shipment = { id: "s", trackingNumber: "1Z999AA10123456784", expected: true, source: "import" as const, confirmedAt: "x" };
     const other = claim({ email_kind: "other", cited_numbers: [{ kind: "other", value: "1Z999AA10123456784" }] });
-    expect(decideVerdict(other, { ...empty, shipments: [shipment] }, pack).outcome).toBe("safe");
+    // Safe only from the carrier's official domain; with no readable domain it is a leaked-number warning.
+    expect(decideVerdict(other, { ...empty, shipments: [shipment] }, pack).outcome).toBe("warning");
+    const fromUps = claim({ email_kind: "other", claimed_party: { name: "", role: "unknown", domain: "ups.com" }, cited_numbers: [{ kind: "other", value: "1Z999AA10123456784" }] });
+    expect(decideVerdict(fromUps, { ...empty, shipments: [shipment] }, pack).outcome).toBe("safe");
     const delivered = decideVerdict(other, { ...empty, shipments: [{ ...shipment, expected: false }] }, pack);
     expect(delivered.outcome).toBe("warning");
     expect(delivered.headline).toBe(STORED_NOT_EXPECTED_HEADLINE);
     expect(decideVerdict(other, empty, pack).outcome).toBe("neutral");
   });
 
-  it("matches known senders by domain, order merchant or display name", () => {
+  it("matches known senders by the real sender domain only, never the display name", () => {
     const ledger = {
       orders: [{ id: "o", merchant: "Northwind", senderDomain: "nw.example", orderId: "1", source: "import" as const, confirmedAt: "x" }],
       senders: [{ domain: "www.shop.example", displayName: "Shop", role: "merchant" as const, firstSeenAt: "x", confirmedAt: "x" }],
     };
     expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: "", role: "merchant", domain: "shop.example" } }), ledger)).toBe(true);
-    expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: " northwind ", role: "merchant" } }), ledger)).toBe(true);
-    expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: "shop", role: "merchant" } }), ledger)).toBe(true);
+    expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: "", role: "merchant", domain: "mail.nw.example" } }), ledger)).toBe(true);
+    expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: " northwind ", role: "merchant" } }), ledger)).toBe(false);
+    expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: "Shop", role: "merchant", domain: "evil.example" } }), ledger)).toBe(false);
     expect(isKnownSender(claim({ email_kind: "receipt", claimed_party: { name: "  ", role: "merchant" } }), ledger)).toBe(false);
   });
 });

@@ -52,17 +52,51 @@ function headerFromLine(emailText: string): string {
   return "";
 }
 
+/** Removes RFC 5322 comments, "(...)", including nested ones. Returns null if parentheses do not balance. */
+function stripComments(value: string): string | null {
+  let out = "";
+  let depth = 0;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (ch === "\\" && depth > 0) {
+      i++;
+      continue;
+    }
+    if (ch === "(") {
+      depth++;
+      continue;
+    }
+    if (ch === ")") {
+      if (depth === 0) return null;
+      depth--;
+      if (depth === 0) out += " ";
+      continue;
+    }
+    if (depth === 0) out += ch;
+  }
+  return depth === 0 ? out : null;
+}
+
 /**
- * The domain of the address the email was really sent from, or "" when there is
- * none. The display name is attacker-chosen text, so quoted names are removed
- * and the last <address> on the line wins: in
- * `From: "UPS <alerts@ups.com>" <billing@ups-release.example>` the sender is
- * ups-release.example.
+ * The domain of the address the email was really sent from, or "" when that
+ * cannot be told for sure. The display name and comments are attacker-chosen
+ * text, so quoted strings ("...") and comments in parentheses (nested and
+ * repeated) are removed first. Exactly one address must be left:
+ * `From: "UPS <alerts@ups.com>" <billing@ups-release.example>` gives
+ * ups-release.example, while `From: UPS <alerts@ups.com> <billing@ups-release.example>`
+ * holds two addresses and gives "" (which the verdict treats as unofficial).
+ * The web paste paths, the limited check and readClaim all use this parser.
  */
 export function senderDomainFromHeader(emailText: string): string {
-  const line = headerFromLine(emailText).replace(/^From:/i, "").replace(/"(?:[^"\\]|\\.)*"/g, " ");
-  const angled = [...line.matchAll(/<\s*[^<>@\s]+@([^<>\s]+)\s*>/g)];
-  const bare = [...line.matchAll(/[^\s<>@"]+@([^\s<>@"]+)/g)];
-  const last = angled.at(-1) ?? bare.at(-1);
-  return last?.[1] ? normalizeDomain(last[1]) : "";
+  const raw = headerFromLine(emailText).replace(/^From:/i, "");
+  const unquoted = raw.replace(/"(?:[^"\\]|\\.)*"/g, " ");
+  const line = stripComments(unquoted);
+  if (line === null || line.includes('"')) return "";
+  const angled = [...line.matchAll(/<\s*([^<>@\s]+)@([^<>\s]+?)\s*>/g)];
+  const rest = line.replace(/<[^<>]*>/g, " ");
+  if (/[<>]/.test(rest)) return "";
+  const bare = [...rest.matchAll(/[^\s<>@,;]+@([^\s<>@,;]+)/g)];
+  const domains = [...angled.map((m) => m[2]), ...bare.map((m) => m[1])];
+  if (domains.length !== 1) return "";
+  return normalizeDomain(domains[0]);
 }

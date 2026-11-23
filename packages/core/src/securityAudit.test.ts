@@ -71,8 +71,8 @@ describe("H1: a leaked order number from another domain never gives Safe", () =>
 });
 
 describe("H2: the sender domain comes from the real address, not the display name", () => {
-  it("the last <address> wins over one inside the display name", () => {
-    expect(senderDomainFromHeader("From: UPS <alerts@ups.com> <billing@ups-release.example>\nSubject: x\n\nbody")).toBe("ups-release.example");
+  it("two addresses on the From line give no sender domain (treated as unofficial)", () => {
+    expect(senderDomainFromHeader("From: UPS <alerts@ups.com> <billing@ups-release.example>\nSubject: x\n\nbody")).toBe("");
   });
   it("a quoted display name holding an address is ignored", () => {
     expect(senderDomainFromHeader('From: "UPS <alerts@ups.com>" <billing@ups-release.example>\nSubject: held\n\nPay 2.99')).toBe("ups-release.example");
@@ -81,7 +81,8 @@ describe("H2: the sender domain comes from the real address, not the display nam
     const text = "From: UPS <alerts@ups.com> <billing@ups-release.example>\nSubject: Fee due\n\nParcel 1Z999AA10123456784 held, pay now.";
     const model = c({ claimed_party: { name: "UPS", role: "carrier", domain: "ups.com" }, asked_action: "pay", email_kind: "carrier_update", cited_numbers: [{ kind: "tracking", value: "1Z999AA10123456784" }] });
     const claim = reconcileClaim(model, text, senderDomainFromHeader(text));
-    expect(claim.claimed_party.domain).toBe("ups-release.example");
+    // Two addresses: no sender domain at all, never the model's ups.com.
+    expect(claim.claimed_party.domain).toBeUndefined();
     expect(decideVerdict(claim, ledger, pack, "on_device", { emailText: text }).headline).toBe(LOOKALIKE_MATCH_HEADLINE);
   });
   it("a plain address and a bare address still parse", () => {

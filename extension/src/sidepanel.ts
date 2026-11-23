@@ -13,6 +13,7 @@ import {
   type Verdict,
 } from "@did-i-order-this/core";
 import { readClaim } from "../../web/src/ai/readClaim.ts";
+import { checkOnDeviceReady } from "./onDeviceCheck.ts";
 import { describeAiError } from "../../web/src/ai/aiError.ts";
 import { isFirebaseConfigured } from "../../web/src/firebase/app.ts";
 import { getOfficialPack } from "../../web/src/packs/official.ts";
@@ -152,6 +153,8 @@ async function runCheck(): Promise<void> {
     return;
   }
   try {
+    // Fail fast (about 2 seconds) when this browser has no on-device model.
+    await checkOnDeviceReady();
     // The sender domain is Gmail's own record of the address, not text parsed from the display name.
     const result = await readClaim(checking.text, "only_on_device", { senderDomain: checking.fromDomain });
     // Gmail moved to another email while this one was read: drop the stale result.
@@ -163,7 +166,7 @@ async function runCheck(): Promise<void> {
       status: "done",
       verdict,
       claim: result.claim,
-      canSave: canSaveShipmentFromClaim(result.claim, ledger),
+      canSave: canSaveShipmentFromClaim(result.claim, ledger, getOfficialPack(), { emailText: checking.text }),
       saved: false,
     };
   } catch (error) {

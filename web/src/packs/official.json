@@ -1,10 +1,15 @@
 {
-  "version": "2026-11-12",
+  "version": "2026-11-23",
   "officialDomains": [
     { "domain": "dhl.com", "name": "DHL", "role": "carrier" },
     { "domain": "ups.com", "name": "UPS", "role": "carrier" },
     { "domain": "usps.com", "name": "USPS", "role": "carrier" },
     { "domain": "fedex.com", "name": "FedEx", "role": "carrier" },
+    { "domain": "dhl.de", "name": "DHL", "role": "carrier" },
+    { "domain": "royalmail.com", "name": "Royal Mail", "role": "carrier" },
+    { "domain": "evri.com", "name": "Evri", "role": "carrier" },
+    { "domain": "dpd.co.uk", "name": "DPD", "role": "carrier" },
+    { "domain": "dpd.com", "name": "DPD", "role": "carrier" },
     { "domain": "paypal.com", "name": "PayPal", "role": "bank" }
   ],
   "lureTemplates": [

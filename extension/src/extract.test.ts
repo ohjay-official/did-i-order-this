@@ -35,6 +35,8 @@ describe("display-name spoofing (security audit H2, 23 Nov 2026)", () => {
     const email = extractOpenGmailThread(dom.window.document)!;
     expect(email.fromDomain).toBe("ups-release.example");
     expect(email.text.split("\n")[0]).toBe("From: UPS alerts@ups.com <billing@ups-release.example>");
-    expect(senderDomainFromHeader(email.text)).toBe("ups-release.example");
+    // The text's From line now holds two addresses, so a parser of the text alone
+    // gives no domain (unofficial). The side panel uses Gmail's email attribute.
+    expect(senderDomainFromHeader(email.text)).toBe("");
   });
 });

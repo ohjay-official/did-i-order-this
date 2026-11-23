@@ -232,7 +232,8 @@ describe("App Check and the sender domain (security audit L4, cold judge fix 5, 
   it("uses the caller's sender domain over the From line, and the From line otherwise", async () => {
     state.responses.push({ text: GOOD, inferenceSource: "on_device" });
     const spoof = "From: UPS <alerts@ups.com> <billing@ups-release.example>\nSubject: x\n\nbody";
-    expect((await readClaim(spoof, "only_on_device")).claim.claimed_party.domain).toBe("ups-release.example");
+    // Two addresses on the From line: no sender domain (unofficial), never the display name's ups.com.
+    expect((await readClaim(spoof, "only_on_device")).claim.claimed_party.domain).toBeUndefined();
     state.responses.push({ text: GOOD, inferenceSource: "on_device" });
     const given = await readClaim(spoof, "only_on_device", { senderDomain: "dhl-parcel-desk.example" });
     expect(given.claim.claimed_party.domain).toBe("dhl-parcel-desk.example");
