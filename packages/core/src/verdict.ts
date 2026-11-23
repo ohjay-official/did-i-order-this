@@ -64,6 +64,31 @@ function asksForRiskyAction(claim: EmailClaim, signals: TextSignals = NO_TEXT): 
   );
 }
 
+/**
+ * The stricter test used before an order match may give Safe: any risky ask
+ * from the model or the text, a "confirm" label, or parcel-fee wording.
+ */
+function storeAsksRisky(claim: EmailClaim, signals: TextSignals): boolean {
+  return asksForRiskyAction(claim, signals) || claim.asked_action === "confirm" || signals.parcelFeeLure;
+}
+
+/** Safe on a tracking match needs the carrier's own official domain (or a subdomain of it). */
+function fromOfficialCarrier(claim: EmailClaim, pack: OfficialPack): boolean {
+  const domain = claim.claimed_party.domain;
+  return Boolean(domain) && findOfficial(pack, domain as string)?.role === "carrier";
+}
+
+export const LEAKED_NUMBER_REASON =
+  "It cites your real tracking number from an unofficial sender, so the number has likely leaked. Use the carrier's own app or site instead of this email.";
+export const RISKY_ORDER_MATCH_HEADLINE =
+  "This order number matches your order, but this email asks you to pay, log in or download.";
+export const ORDER_FROM_OTHER_SENDER_HEADLINE =
+  "This order number is in your stored orders, but this email is not from that store's domain.";
+export const ORDER_FROM_OTHER_SENDER_REASON =
+  "It cites your real order number from a different sender, so the number has likely leaked. Use the store's own site or app instead of this email.";
+export const RISKY_ORDER_REASON =
+  "It asks you to pay, log in, download or confirm details. A real order number can leak, so use the store's own site or app instead of this email.";
+
 const NO_TEXT: TextSignals = readTextSignals(undefined, { version: "", officialDomains: [], lureTemplates: [] });
 
 /** True when the sender domain is the order's own domain or a subdomain of it. */
@@ -92,7 +117,7 @@ function isBillingClaim(claim: EmailClaim): boolean {
 }
 
 function isInformativeShipmentNotice(claim: EmailClaim, signals: TextSignals): boolean {
-  return claim.email_kind === "shipment_notice" && !asksForRiskyAction(claim, signals) && !signals.parcelFeeLure;
+  return claim.email_kind === "shipment_notice" && !storeAsksRisky(claim, signals);
 }
 
 function isOutOfScopeLogin(claim: EmailClaim): boolean {
@@ -149,13 +174,14 @@ function findMatchingShipment(
 function findMatchingOrder(
   claim: EmailClaim,
   orders: LedgerOrder[],
-): { cited: string[]; match?: LedgerOrder } {
+): { cited: string[]; match?: LedgerOrder; elsewhere?: LedgerOrder } {
   const cited = citedOrderValues(claim);
   const domain = claim.claimed_party.domain;
-  const match = orders.find(
-    (order) => cited.includes(normalizeOrderId(order.orderId)) && sameSender(domain, order.senderDomain),
-  );
-  return { cited, match };
+  const hits = orders.filter((order) => cited.includes(normalizeOrderId(order.orderId)));
+  const match = hits.find((order) => sameSender(domain, order.senderDomain));
+  // A stored order number in an email from another domain: the number has leaked.
+  const elsewhere = match ? undefined : hits[0];
+  return { cited, match, elsewhere };
 }
 
 /**
@@ -164,8 +190,15 @@ function findMatchingOrder(
  * proof of anything, and saving it would let its sender plant a number that a
  * later fee demand could match.
  */
-export function canSaveShipmentFromClaim(claim: EmailClaim, ledger: Pick<LedgerSnapshot, "orders">): boolean {
+export function canSaveShipmentFromClaim(
+  claim: EmailClaim,
+  ledger: Pick<LedgerSnapshot, "orders">,
+  pack?: OfficialPack,
+  options: VerdictOptions = {},
+): boolean {
   if (claim.email_kind !== "shipment_notice") return false;
+  // A notice that asks to pay, log in, download or confirm is not saved, even from the store's domain.
+  if (storeAsksRisky(claim, pack ? readTextSignals(options.emailText, pack) : NO_TEXT)) return false;
   if (!claim.cited_numbers.some((item) => item.kind === "tracking" && item.value)) return false;
   return Boolean(findMatchingOrder(claim, ledger.orders).match);
 }
@@ -174,26 +207,25 @@ export function isKnownSender(
   claim: EmailClaim,
   ledger: { orders: LedgerOrder[]; senders: LedgerSender[] },
 ): boolean {
+  // Only the real sender domain counts. The display name is attacker-chosen
+  // and the model copies it, so a forged "Northwind" name earns no history.
   const domain = claim.claimed_party.domain;
-  if (domain && ledger.senders.some((sender) => normalizeDomain(sender.domain) === normalizeDomain(domain))) {
-    return true;
-  }
-  const name = claim.claimed_party.name.trim().toLowerCase();
-  if (!name) return false;
-  if (ledger.orders.some((order) => order.merchant.trim().toLowerCase() === name)) return true;
-  if (ledger.senders.some((sender) => sender.displayName.trim().toLowerCase() === name)) return true;
-  return false;
+  if (!domain) return false;
+  if (ledger.senders.some((sender) => sameSender(domain, sender.domain))) return true;
+  return ledger.orders.some((order) => sameSender(domain, order.senderDomain));
 }
 
+/** Lure notes come first, then the domain line, so the most important reason is not the one a small screen cuts. */
 function packReasons(claim: EmailClaim, pack: OfficialPack, signals: TextSignals = NO_TEXT): string[] {
   const reasons: string[] = [];
+  const domainReasons: string[] = [];
   const domain = claim.claimed_party.domain;
   if (domain) {
     const official = findOfficial(pack, domain);
     if (official) {
-      reasons.push(`The claimed domain ${domain} is listed as official for ${official.name}.`);
+      domainReasons.push(`The claimed domain ${domain} is listed as official for ${official.name}.`);
     } else {
-      reasons.push(`The claimed domain ${domain} is not in the official-domain pack.`);
+      domainReasons.push(`The claimed domain ${domain} is not in the official-domain pack.`);
     }
   }
   const blob = JSON.stringify(claim);
@@ -212,7 +244,7 @@ function packReasons(claim: EmailClaim, pack: OfficialPack, signals: TextSignals
     }
     if (matched) reasons.push(lure.note);
   }
-  return reasons;
+  return [...reasons, ...domainReasons];
 }
 
 export interface VerdictOptions {
@@ -263,18 +295,18 @@ export function decideVerdict(
       reasons.push(`Cited tracking number: ${cited.join(", ")}.`);
     }
     if (match) {
+      if (!fromOfficialCarrier(claim, pack)) {
+        // A tracking number is not proof of the sender: it can leak from a
+        // store, a marketplace or an earlier email. Only the carrier's own
+        // official domain gives Safe, whatever the email asks and however the
+        // model labelled it. A missing or unreadable domain counts as unofficial.
+        const leaked = [LEAKED_NUMBER_REASON, ...reasons, "This tracking number matches a shipment stored on this device."];
+        if (!claim.claimed_party.domain) leaked.push("The sender's domain could not be read, so it cannot be the carrier's official domain.");
+        leaked.push(...reasonsFor());
+        return { outcome: "warning", headline: LOOKALIKE_MATCH_HEADLINE, reasons: leaked, inferenceSourceLabel };
+      }
       reasons.push("This tracking number matches a shipment stored on this device.");
       reasons.push(...reasonsFor());
-      const domain = claim.claimed_party.domain;
-      const official = domain ? findOfficial(pack, domain) : undefined;
-      if (official?.role !== "carrier" && risky) {
-        // A leaked tracking number is not proof of the sender. Do not stamp a
-        // fee, login or download demand as safe unless it comes from the
-        // carrier's official domain. A missing domain counts as unofficial.
-        if (!domain) reasons.push("The sender's domain could not be read, so it cannot be the carrier's official domain.");
-        reasons.push("A matching tracking number can leak. Use the carrier's own app or site instead of this email.");
-        return { outcome: "warning", headline: LOOKALIKE_MATCH_HEADLINE, reasons, inferenceSourceLabel };
-      }
       return {
         outcome: "safe",
         headline: "This tracking number matches a shipment you are expecting.",
@@ -327,10 +359,26 @@ export function decideVerdict(
   }
 
   if (isBillingClaim(claim) || isStoreClaim(claim)) {
-    const { cited, match } = findMatchingOrder(claim, ledger.orders);
+    const { cited, match, elsewhere } = findMatchingOrder(claim, ledger.orders);
     const known = isKnownSender(claim, ledger);
     const reasons: string[] = [];
     if (cited.length) reasons.push(`Cited number: ${cited.join(", ")}.`);
+    if (elsewhere) {
+      return {
+        outcome: "warning",
+        headline: ORDER_FROM_OTHER_SENDER_HEADLINE,
+        reasons: [ORDER_FROM_OTHER_SENDER_REASON, ...reasons, ...reasonsFor()],
+        inferenceSourceLabel,
+      };
+    }
+    if (match && storeAsksRisky(claim, signals)) {
+      return {
+        outcome: "warning",
+        headline: RISKY_ORDER_MATCH_HEADLINE,
+        reasons: [RISKY_ORDER_REASON, ...reasons, "This number matches an order stored on this device, from the same sender.", ...reasonsFor()],
+        inferenceSourceLabel,
+      };
+    }
     if (match) {
       reasons.push("This number matches an order stored on this device, from the same sender.");
       reasons.push(...reasonsFor());
@@ -361,7 +409,23 @@ export function decideVerdict(
     };
   }
 
-  const orderMatch = findMatchingOrder(claim, ledger.orders).match;
+  const { match: orderMatch, elsewhere: orderElsewhere } = findMatchingOrder(claim, ledger.orders);
+  if (orderElsewhere) {
+    return {
+      outcome: "warning",
+      headline: ORDER_FROM_OTHER_SENDER_HEADLINE,
+      reasons: [ORDER_FROM_OTHER_SENDER_REASON, ...reasonsFor()],
+      inferenceSourceLabel,
+    };
+  }
+  if (orderMatch && storeAsksRisky(claim, signals)) {
+    return {
+      outcome: "warning",
+      headline: RISKY_ORDER_MATCH_HEADLINE,
+      reasons: [RISKY_ORDER_REASON, "A cited number matched an order stored on this device, from the same sender.", ...reasonsFor()],
+      inferenceSourceLabel,
+    };
+  }
   if (orderMatch) {
     return {
       outcome: "safe",
@@ -372,16 +436,11 @@ export function decideVerdict(
   }
   const shipment = findMatchingShipment(claim, ledger.shipments);
   if (shipment.match) {
-    const domain = claim.claimed_party.domain;
-    if (risky && findOfficial(pack, domain ?? "")?.role !== "carrier") {
+    if (!fromOfficialCarrier(claim, pack)) {
       return {
         outcome: "warning",
         headline: LOOKALIKE_MATCH_HEADLINE,
-        reasons: [
-          "A cited number matched a shipment stored on this device, but the email asks you to pay, log in or download, and it is not from the carrier's official domain.",
-          "A matching tracking number can leak. Use the carrier's own app or site instead of this email.",
-          ...reasonsFor(),
-        ],
+        reasons: [LEAKED_NUMBER_REASON, "A cited number matched a shipment stored on this device.", ...reasonsFor()],
         inferenceSourceLabel,
       };
     }

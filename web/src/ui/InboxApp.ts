@@ -477,7 +477,7 @@ export class InboxApp {
       usedSampleClaim: true,
       fallbackDetail,
       cloudConsentRemembered: false,
-      canSaveShipment: canSaveShipmentFromClaim(claim, ledger),
+      canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), { emailText: formatEmailText(thread) }),
       saved: false,
       emailKey,
     };
@@ -501,7 +501,7 @@ export class InboxApp {
       usedSampleClaim: false,
       fallbackDetail: "",
       cloudConsentRemembered,
-      canSaveShipment: canSaveShipmentFromClaim(claim, ledger),
+      canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), { emailText: email.text }),
       saved: false,
       emailKey,
     };

@@ -55,6 +55,12 @@ Grok changed logic and copy only, with no CSS or layout changes. These need a vi
 21. **Home hero caption** now ends with "Fictional samples; not affiliated with DHL or UPS." and runs to 3 lines at 1376 px (was 2), which lifts the hero about 20 px. It is hidden on phones as before. The `/app/` Sample data bar carries the same sentence and wraps to 5 lines at 390 px.
 22. **Extension page step 03** now names the `did-i-order-this-extension` folder with two `<code>` spans; check the line breaks at 390 px.
 
+## New UI items for Claude (from the cold judge rerun, 23 Nov 2026, Africa/Lagos)
+
+Grok changed logic and copy only, with no CSS or layout changes.
+
+23. **Phone hero hides reasons after the second.** `web/src/styles.css` line 1547, `.hero-verdict .reasons li:nth-child(n+3) { display: none; }` inside `@media (max-width: 900px)`, so at 390 px only the first two reasons show. Grok now orders reasons so the lure note, the risky-ask note and the leaked-number note come first (in the limited check and in the verdict), which keeps the warning reasons visible on phones. Decide whether phones should show all reasons or a "show more" control instead of a hard cut.
+
 ## Do not break (film and e2e)
 
 `[data-action=check]`, `[data-thread="thread-1-carrier-lure"]`, `[data-action=consent-yes]`, `.source-label`, `.outcome`, `.headline`, `.result h2`, the text "prepared for this sample thread", extension fixture `h2.hP` plus `GM123456789012345`. Also used: `[data-action=consent-no]`, `[data-action=limited]`, `[data-action=save]`, `[data-action=reset]`, `[data-action=check-paste]`, `[data-action=load-shipment-demo]`, `[data-action=forget-cloud-consent]`, `.app-ledger`, `[data-paste]`, `[data-try]`, `form[data-prompt]`.

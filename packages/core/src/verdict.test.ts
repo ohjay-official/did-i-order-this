@@ -304,7 +304,7 @@ describe("decideVerdict: unknown sender / unclassifiable", () => {
     expect(verdict.outcome).toBe("neutral");
   });
 
-  it("is Safe if a cited order number matches an order from the same sender, and not otherwise", () => {
+  it("is Safe if a cited order number matches an order from the same sender, and a warning otherwise", () => {
     const claim: EmailClaim = {
       claimed_party: { name: "Unknown desk", role: "unknown", domain: deliveredOrder.senderDomain },
       asked_action: "none",
@@ -313,6 +313,7 @@ describe("decideVerdict: unknown sender / unclassifiable", () => {
     };
     expect(decideVerdict(claim, emptyLedger, pack).outcome).toBe("safe");
     const noDomain: EmailClaim = { ...claim, claimed_party: { name: "Unknown desk", role: "unknown" } };
-    expect(decideVerdict(noDomain, emptyLedger, pack).outcome).toBe("neutral");
+    // A stored order number with no readable sender domain is a leaked-number warning (23 Nov rerun).
+    expect(decideVerdict(noDomain, emptyLedger, pack).outcome).toBe("warning");
   });
 });

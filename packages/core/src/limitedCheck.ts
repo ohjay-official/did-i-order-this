@@ -1,4 +1,5 @@
 import { findOfficialDomain, looksLikeTracking, normalizeDomain, normalizeTracking } from "./normalize.ts";
+import { readTextSignals } from "./signals.ts";
 import type { InferenceSourceLabel, LedgerSnapshot, OfficialPack } from "./types.ts";
 
 export interface LimitedCheckResult {
@@ -18,28 +19,36 @@ export function extractCandidateNumbers(emailText: string): string[] {
   return [...found];
 }
 
+/**
+ * The no-AI check. Findings are ordered by importance, because small screens
+ * show only the first few: a fee or risky ask first, then a real tracking
+ * number from an unofficial sender, then the domain line, then the numbers.
+ */
 export function runLimitedCheck(
   emailText: string,
   emailMeta: { fromDomain: string },
   ledger: LedgerSnapshot,
   pack: OfficialPack,
 ): LimitedCheckResult {
-  const findings: string[] = [];
+  const lure: string[] = [];
+  const leaked: string[] = [];
+  const domainLines: string[] = [];
+  const numberLines: string[] = [];
   const domain = normalizeDomain(emailMeta.fromDomain || "");
+  const official = domain ? findOfficialDomain(pack, domain) : undefined;
   if (domain) {
-    const official = findOfficialDomain(pack, domain);
     if (official) {
-      findings.push(`The From domain ${domain} is listed as official for ${official.name}.`);
+      domainLines.push(`The From domain ${domain} is listed as official for ${official.name}.`);
     } else {
-      findings.push(`The From domain ${domain} is not in the official-domain pack.`);
+      domainLines.push(`The From domain ${domain} is not in the official-domain pack.`);
     }
   } else {
-    findings.push("No sender domain was available to check against the official-domain pack.");
+    domainLines.push("No sender domain was available to check against the official-domain pack.");
   }
 
   const numbers = extractCandidateNumbers(emailText);
   if (numbers.length === 0) {
-    findings.push("No tracking-like numbers were found in the email text.");
+    numberLines.push("No tracking-like numbers were found in the email text.");
   } else {
     const expected = ledger.shipments
       .filter((item) => item.expected)
@@ -47,36 +56,41 @@ export function runLimitedCheck(
     const all = ledger.shipments.map((item) => normalizeTracking(item.trackingNumber));
     for (const value of numbers) {
       if (expected.includes(value)) {
-        findings.push(`The number ${value} matches a shipment you are expecting.`);
+        numberLines.push(`The number ${value} matches a shipment you are expecting.`);
+        if (official?.role !== "carrier") {
+          leaked.push(`The email cites your real tracking number ${value} from a sender that is not the carrier's official domain, so the number has likely leaked.`);
+        }
       } else if (all.includes(value)) {
-        findings.push(`The number ${value} is stored on this device, but not as an expected parcel.`);
+        numberLines.push(`The number ${value} is stored on this device, but not as an expected parcel.`);
       } else if (all.length === 0) {
-        findings.push(`The number ${value} was found in the email. There are no saved tracking numbers on this device to compare.`);
+        numberLines.push(`The number ${value} was found in the email. There are no saved tracking numbers on this device to compare.`);
       } else {
-        findings.push(`The number ${value} does not match a tracking number stored on this device.`);
+        numberLines.push(`The number ${value} does not match a tracking number stored on this device.`);
       }
     }
   }
 
-  const blob = emailText.toLowerCase();
-  for (const lure of pack.lureTemplates) {
+  // Read from the normalised text in code, the same floors the verdict uses.
+  const signals = readTextSignals(emailText, pack);
+  for (const template of pack.lureTemplates) {
     let matched = false;
     try {
-      matched = new RegExp(lure.pattern, "i").test(emailText);
+      matched = new RegExp(template.pattern, "i").test(emailText);
     } catch {
-      matched = blob.includes(lure.pattern.toLowerCase());
+      matched = emailText.toLowerCase().includes(template.pattern.toLowerCase());
     }
     // The official pack patterns may be written against a structured claim.
-    // Also look for plain fee-to-release wording in the raw email.
-    if (!matched && /\bpay\b|release fee|\bcustoms\b|\bduty\b|\bduties\b/.test(blob) && lure.id === "fee-to-release") {
-      matched = true;
-    }
-    if (matched) findings.push(lure.note);
+    // Also count fee or payment demands found in the raw email.
+    if (!matched && template.id === "fee-to-release" && (signals.parcelFeeLure || signals.asksToPay)) matched = true;
+    if (matched) lure.push(template.note);
+  }
+  if (signals.asksToLogIn || signals.asksToDownload) {
+    lure.push("The wording asks you to log in, sign in or download, which a real delivery or billing notice rarely needs.");
   }
 
   return {
     headline: "Limited check only. This is not a full verdict.",
-    findings,
+    findings: [...lure, ...leaked, ...domainLines, ...numberLines],
     inferenceSourceLabel: "Limited check (no AI)",
   };
 }
