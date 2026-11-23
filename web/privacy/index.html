@@ -42,7 +42,7 @@
               <li>/ Cloud only after you agree</li>
               <li>/ No account, no mailbox scan</li>
             </ul>
-            <p class="priv-intro">Your orders and tracking numbers stay in this browser. Nothing is sent anywhere unless you say yes.</p>
+            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes, and Google reCAPTCHA loads only for a cloud check you agreed to.</p>
           </div>
           <div class="priv-bottom">
             <div>
@@ -161,11 +161,12 @@
     </ol>
 
     <h3>Firebase and Google processing</h3>
-    <p>Cloud reads go through Google's Firebase AI Logic to the Gemini Developer API. Requests are protected by Firebase App Check with reCAPTCHA, which Google loads when you run a check on the hosted site, to tell real visitors from scripts. reCAPTCHA may set its own security cookie. Google processes these requests under its own terms and the <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</p>
+    <p>Cloud reads go through Google's Firebase AI Logic to the Gemini Developer API. Requests are protected by Firebase App Check with reCAPTCHA, which Google loads only after you choose Check in the cloud on the hosted site, to tell real visitors from scripts. An on-device check or Do not send loads nothing from Google. reCAPTCHA may set its own security cookie and stores a <code>_grecaptcha</code> value in local storage. Google processes these requests under its own terms and the <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</p>
     <p>The project uses the free quota of the Gemini API. Under Google's <a href="https://ai.google.dev/gemini-api/terms" rel="noopener">Gemini API Additional Terms</a>, Google may use content sent to the unpaid quota, and the responses, to improve its products, and human reviewers may read it after it is disconnected from the project. In the EEA, Switzerland and the UK, Google applies its paid-service terms instead. Do not send an email that holds information you would not share with Google.</p>
 
     <h3>Analytics</h3>
-    <p>The website uses Vercel Web Analytics and Vercel Speed Insights. Both are cookie-free: they set no cookies and do not track you across sites. They record the page path (we strip query strings), referrer, browser, operating system, device type, country and page speed numbers. Vercel identifies a visit with a hash that resets daily and does not store your IP address. Because nothing here sets a tracking cookie, there is no cookie banner. The only cookie you may see is reCAPTCHA's security cookie, and only after you run a check.</p>
+    <p>The website uses Vercel Web Analytics and Vercel Speed Insights. Both are cookie-free: they set no cookies and do not track you across sites. They record the page path (we strip query strings), referrer, browser, operating system, device type, country and page speed numbers. Vercel identifies a visit with a hash that resets daily and does not store your IP address. Because nothing here sets a tracking cookie, there is no cookie banner. The only cookie you may see is reCAPTCHA's security cookie, and only after you agree to a cloud check.</p>
+    <p>The site also keeps three small values in session storage for the open tab, cleared when it closes: the cloud budget count (<code>dio.cloudCalls.v1</code>), whether you said yes to the cloud for sample threads (<code>dio.cloudConsent.v1</code>), and whether App Check failed in this tab, so the email is not sent again (<code>dio.appCheckBlocked.v1</code>). None of them holds email text.</p>
 
     <h3>Retention</h3>
     <ul>

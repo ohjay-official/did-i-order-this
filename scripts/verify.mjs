@@ -107,12 +107,13 @@ function audit() {
   // - GHSA-m9gg-hp2v-232j: @grpc/grpc-js, a Node-only transport pulled in by the
   //   Firestore part of the firebase package. This app never imports Firestore,
   //   and the browser bundles contain no grpc code (checked below).
-  // - GHSA-fc5q-39xc-vjpf: picomatch ReDoS (published 19 Oct 2026, no patched
-  //   release). It reaches only build and test tools (vite, vitest,
-  //   typescript-eslint), which parse globs from this repo's own config. It must
-  //   stay out of the production dependency tree (checked below).
-  const ACCEPTED = new Set(["GHSA-m9gg-hp2v-232j", "GHSA-fc5q-39xc-vjpf"]);
-  const DEV_ONLY = new Set(["GHSA-fc5q-39xc-vjpf"]);
+  // The same package also carries a low advisory, GHSA-f596-whhp-79r4, which
+  // this check does not count (it fails on high and critical only).
+  // The picomatch advisory GHSA-fc5q-39xc-vjpf was accepted here until 23 Nov
+  // 2026; npm audit no longer reports it (picomatch 4.0.7), so it was removed.
+  const ACCEPTED = new Set(["GHSA-m9gg-hp2v-232j"]);
+  // Advisories accepted only because they reach build and test tools. None now.
+  const DEV_ONLY = new Set();
   const rootAdvisories = (report) => {
     const ids = new Set();
     for (const v of Object.values(report.vulnerabilities || {})) {

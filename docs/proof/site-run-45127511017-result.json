@@ -1,0 +1,44 @@
+{
+  "startedAt": "2026-11-23T06:57:44.478Z",
+  "siteUrl": "https://did-i-order-this.vercel.app/app/",
+  "chromeBin": "/usr/bin/google-chrome",
+  "skipHosted": false,
+  "version": {
+    "Browser": "Chrome/157.0.8103.78",
+    "File-Path-Style": "posix",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "V8-Version": "15.7.112.43",
+    "WebKit-Version": "537.36 (@4b3d0dabb8250b6f152d2d85d79e7706e309d087)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/browser/b5d81992-fa2b-4145-955b-8ef3b97f3d0b"
+  },
+  "warmup": {
+    "result": "on-device-ok",
+    "availabilityBefore": "downloadable",
+    "availabilityTextOnly": "downloadable",
+    "availabilityWithImage": "downloadable",
+    "availabilityAfter": "available",
+    "createMs": 72592,
+    "promptMs": 901,
+    "answer": "ok\n",
+    "error": null
+  },
+  "hostedAvailability": {
+    "present": true,
+    "textOnly": "available",
+    "withImage": "available"
+  },
+  "hostedConsole": [
+    "info: This page uses Chrome's Built-In AI features (LanguageModel)! We're always improving our models; please submit your feedback here: https://issues.chromium.org/issues/new?component=1583624"
+  ],
+  "hosted": {
+    "label": "Checked on this device",
+    "inferenceSource": "on_device",
+    "outcome": "warning",
+    "headline": "You're not expecting any parcel right now.",
+    "consentShown": false,
+    "usedSample": false,
+    "bodySnippet": "Skip to content\nDid I Order This?\nMenu\nSample inbox\n\nSAMPLE DATA\nThe five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail.\n\nSample inbox\n\nCheck an email against what you ordered\n\nCompare a delivery or billing email with the orders and tracking numbers stored on this device.\n\n1 order and 0 expected parcels are stored on this device.\n\nImport order history\nReset demo data\nDHL Express Desk\nYour parcel is held. Pay the release fee.\n12 Nov 2026\nNorthwind Outfitters\nYour order has shipped\n11 Nov 2026\nUPS\nUPS delivery update for 1Z999AA10123456784\n12 Nov 2026\nStreamhut Billing\nYour Streamhut invoice is due\n10 Nov 2026\nDHL Express Desk\nDuty payment required for your shipment\n12 Nov 2026\nPaste an email\nPaste the email you want to check\n Check pasted email\n\nFrom DHL Express Desk <alerts@dhl-parcel-desk.example>\n\nSubject Your parcel is held. Pay the release fee.\n\nDate 12 Nov 2026\n\nDear customer,\n\nYour parcel could not be delivered and is being held at a DHL facility.\nTracking number: GM123456789012345\n\nA customs release fee of $2.99 is due. Pay the fee today or the parcel will be returned.\n\nDHL Express Desk\nCheck this email\n\nWarning\n\nYou're not expecting any parcel right now.\n\nChecked on this device\n\nCited tracking number: GM123456789012345.\nThere are no expected parcels stored on this device right now.\nThe claimed domain dhl-parcel-desk.example is not in the official-domain pack.\nThe wording asks for a payment, which is common in parcel-hold lure"
+  },
+  "finishedAt": "2026-11-23T06:59:48.179Z"
+}

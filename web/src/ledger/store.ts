@@ -121,7 +121,7 @@ export async function resetToDemoSeed(): Promise<LedgerSnapshot> {
 /**
  * Seeds the demo ledger if this device has never been seeded. Every write calls
  * this first: otherwise a write on a brand-new device (for example the homepage
- * Real UPS chip saving its demo shipment) would be wiped by the first
+ * UPS chip saving its demo shipment) would be wiped by the first
  * loadLedger(), which seeds by clearing every store.
  */
 export async function ensureSeeded(): Promise<void> {
