@@ -125,7 +125,7 @@ export class InboxApp {
     const orderLabel = this.ledger.orders.length === 1 ? "1 order" : `${this.ledger.orders.length} orders`;
 
     this.root.innerHTML = `
-      <p class="demo-bar" role="note"><span class="demo-bar-tag">Sample data</span><span class="demo-bar-text">The five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail.</span></p>
+      <p class="demo-bar" role="note"><span class="demo-bar-tag">Sample data</span><span class="demo-bar-text">The five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail. Fictional samples; not affiliated with DHL or UPS.</span></p>
       <header class="app-header">
         <div>
           <p class="eyebrow">Sample inbox</p>

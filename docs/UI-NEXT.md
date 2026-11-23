@@ -51,6 +51,9 @@ Grok changed logic and copy only, with no CSS or layout changes. These need a vi
 17. **"Not sent" state on `/app/`.** After **Do not send** on a pasted email the card reads **Not sent** / **Not checked with AI** with the limited-check button. It still uses `.result.result-error` (red). Give it a calm, neutral style (`[data-not-sent]` is on the card).
 18. **Disabled Check buttons.** `[data-action=check]` and `[data-action=check-paste]` now carry `disabled` while a check or the dialog is open. Check the disabled look.
 19. **"Why" tag** (cold judge fix 9). `styles-v7.css` line ~2500 paints `content: "Why"` before `.fallback-detail`, so "The email was not sent to the cloud." reads as a reason. Change the tag to "Cloud" (or drop it for that line).
+20. **UPS chip label** (cold judge fix 6, copy only, 23 Nov). The home chip now reads **Genuine-looking UPS update** on wide screens and only **UPS** on phones (the words "Genuine-looking" and "update" sit in `.chip-more`, which phones hide). The full name was tried first and pushed the Streamhut chip off a 390 px screen, so phones keep the short word. Check whether you want a different phone label.
+21. **Home hero caption** now ends with "Fictional samples; not affiliated with DHL or UPS." and runs to 3 lines at 1376 px (was 2), which lifts the hero about 20 px. It is hidden on phones as before. The `/app/` Sample data bar carries the same sentence and wraps to 5 lines at 390 px.
+22. **Extension page step 03** now names the `did-i-order-this-extension` folder with two `<code>` spans; check the line breaks at 390 px.
 
 ## Do not break (film and e2e)
 

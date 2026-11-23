@@ -23,7 +23,7 @@ describe("ledger store on a brand-new device", () => {
     expect(ledger.shipments.filter((s) => s.expected)).toHaveLength(0);
   });
 
-  it("the Real UPS chip as the very first action keeps its demo shipment and gives the match", async () => {
+  it("the UPS chip as the very first action keeps its demo shipment and gives the match", async () => {
     const note = await prepareTryChip(SHIPMENT_NEXT_THREAD_ID, { shipment: saveShipment, sender: saveSender });
     expect(note).toBe(CHIP_DEMO_NOTE);
     const ledger = await loadLedger();

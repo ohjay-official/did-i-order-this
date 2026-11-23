@@ -83,7 +83,7 @@ describe("Load the matching shipment demo", () => {
   });
 });
 
-describe("homepage Real UPS chip", () => {
+describe("homepage UPS chip", () => {
   it("stores the matching shipment first, so the chip comes back safe", async () => {
     const store = fakeStore(demoSeed());
     const note = await prepareTryChip("thread-3-safe-carrier", store.save);

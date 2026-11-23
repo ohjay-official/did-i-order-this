@@ -55,7 +55,7 @@ export const CHIP_DEMO_NOTE =
   "Demo data: before this check, the chip saved UPS parcel 1Z999AA10123456784 from the Northwind sample as an expected parcel on this device. Reset demo data in the sample inbox removes it.";
 
 /**
- * Homepage "Real UPS" chip: store the matching expected shipment before the
+ * Homepage "UPS" chip: store the matching expected shipment before the
  * check, so the chip shows the safe match instead of a warning on an empty
  * ledger. Returns the note to show with the result, or "" for other chips.
  */
