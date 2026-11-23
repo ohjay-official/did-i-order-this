@@ -1,0 +1,80 @@
+{
+  "startedAt": "2026-11-23T11:12:18.080Z",
+  "siteUrl": "https://did-i-order-this.vercel.app/app/",
+  "chromeBin": "/usr/bin/google-chrome",
+  "skipHosted": false,
+  "siteBuild": {
+    "sha": "a166eacecb0d7b089067a8933ac7ec1ba6d58026",
+    "source": "vercel"
+  },
+  "version": {
+    "Browser": "Chrome/157.0.8103.78",
+    "File-Path-Style": "posix",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "V8-Version": "15.7.112.43",
+    "WebKit-Version": "537.36 (@4b3d0dabb8250b6f152d2d85d79e7706e309d087)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/browser/10a5f1ab-5d1a-4ff3-8cfb-f040fb7cf572"
+  },
+  "warmup": {
+    "result": "on-device-ok",
+    "availabilityBefore": "downloadable",
+    "availabilityTextOnly": "downloadable",
+    "availabilityWithImage": "downloadable",
+    "availabilityAfter": "available",
+    "createMs": 32702,
+    "promptMs": 2487,
+    "answer": "ok\n",
+    "error": null
+  },
+  "hostedAvailability": {
+    "present": true,
+    "textOnly": "available",
+    "withImage": "available"
+  },
+  "hostedConsole": [
+    "info: This page uses Chrome's Built-In AI features (LanguageModel)! We're always improving our models; please submit your feedback here: https://issues.chromium.org/issues/new?component=1583624"
+  ],
+  "hosted": {
+    "label": "Checked on this device",
+    "inferenceSource": "on_device",
+    "outcome": "warning",
+    "headline": "You're not expecting any parcel right now.",
+    "consentShown": false,
+    "usedSample": false,
+    "bodySnippet": "Skip to content\nDid I Order This?\nMenu\nSample inbox\n\nSAMPLE DATA\nThe five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail. Fictional samples; not affiliated with DHL or UPS.\n\nSample inbox\n\nCheck an email against what you ordered\n\nCompare a delivery or billing email with the orders and tracking numbers stored on this device.\n\n1 order and 0 expected parcels are stored on this device.\n\nImport order history\nReset demo data\nDHL Express Desk\nYour parcel is held. Pay the release fee.\n12 Nov 2026\nNorthwind Outfitters\nYour order has shipped\n11 Nov 2026\nUPS\nUPS delivery update for 1Z999AA10123456784\n12 Nov 2026\nStreamhut Billing\nYour Streamhut invoice is due\n10 Nov 2026\nDHL Express Desk\nDuty payment required for your shipment\n12 Nov 2026\nPaste an email\nPaste the email you want to check\n Check pasted email\n\nFrom DHL Express Desk <alerts@dhl-parcel-desk.example>\n\nSubject Your parcel is held. Pay the release fee.\n\nDate 12 Nov 2026\n\nDear customer,\n\nYour parcel could not be delivered and is being held at a DHL facility.\nTracking number: GM123456789012345\n\nA customs release fee of $2.99 is due. Pay the fee today or the parcel will be returned.\n\nDHL Express Desk\nCheck this email\n\nWarning\n\nYou're not expecting any parcel right now.\n\nChecked on this device\n\nCited tracking number: GM123456789012345.\nThere are no expected parcels stored on this device right now.\nThe wording asks for a payment, which is common in parcel-hold lures.\nThe claimed domain dhl-pa"
+  },
+  "shipmentDemoLoaded": true,
+  "upsSafe": {
+    "label": "Checked on this device",
+    "inferenceSource": "on_device",
+    "outcome": "safe",
+    "headline": "This tracking number matches a shipment you are expecting.",
+    "consentShown": false,
+    "usedSample": false,
+    "bodySnippet": "Skip to content\nDid I Order This?\nMenu\nSample inbox\n\nSAMPLE DATA\nThe five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail. Fictional samples; not affiliated with DHL or UPS.\n\nSample inbox\n\nCheck an email against what you ordered\n\nCompare a delivery or billing email with the orders and tracking numbers stored on this device.\n\n1 order and 1 expected parcel are stored on this device.\n\nImport order history\nReset demo data\nDHL Express Desk\nYour parcel is held. Pay the release fee.\n12 Nov 2026\nNorthwind Outfitters\nYour order has shipped\n11 Nov 2026\nUPS\nUPS delivery update for 1Z999AA10123456784\n12 Nov 2026\nStreamhut Billing\nYour Streamhut invoice is due\n10 Nov 2026\nDHL Express Desk\nDuty payment required for your shipment\n12 Nov 2026\nPaste an email\nPaste the email you want to check\n Check pasted email\n\nFrom UPS <mcinfo@ups.com>\n\nSubject UPS delivery update for 1Z999AA10123456784\n\nDate 12 Nov 2026\n\nA UPS package is on the way.\nTracking number: 1Z999AA10123456784\nScheduled delivery is tomorrow.\nNo action is required.\nCheck this email\n\nSafe\n\nThis tracking number matches a shipment you are expecting.\n\nChecked on this device\n\nCited tracking number: 1Z999AA10123456784.\nThis tracking number matches a shipment stored on this device.\nThe claimed domain ups.com is listed as official for UPS.\nClaim that was checked\n\nClaims to be: UPS (carrier)\n\nClaimed domain: ups.com\n\nAsks you to: none\n\nCited numbers: tracking 1Z999AA10123456784\n\nEmail kind: carrier_up"
+  },
+  "importNote": "Imported 1 order and 0 shipments on this device. 1 already stored item was updated, not added twice. The file was not uploaded. Import only files you exported yourself: a CSV decides which store each order belongs to.",
+  "ledgerLine": "2 orders and 1 expected parcel are stored on this device.",
+  "leakedFee": {
+    "label": "Checked on this device",
+    "inferenceSource": "on_device",
+    "outcome": "warning",
+    "headline": "This tracking number matches your shipment, but this email is not from the carrier's official domain.",
+    "consentShown": false,
+    "usedSample": false,
+    "bodySnippet": "Skip to content\nDid I Order This?\nMenu\nSample inbox\n\nSAMPLE DATA\nThe five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail. Fictional samples; not affiliated with DHL or UPS.\n\nSample inbox\n\nCheck an email against what you ordered\n\nCompare a delivery or billing email with the orders and tracking numbers stored on this device.\n\n2 orders and 1 expected parcel are stored on this device.\n\nImport order history\nReset demo data\n\nImported 1 order and 0 shipments on this device. 1 already stored item was updated, not added twice. The file was not uploaded. Import only files you exported yourself: a CSV decides which store each order belongs to.\n\nDHL Express Desk\nYour parcel is held. Pay the release fee.\n12 Nov 2026\nNorthwind Outfitters\nYour order has shipped\n11 Nov 2026\nUPS\nUPS delivery update for 1Z999AA10123456784\n12 Nov 2026\nStreamhut Billing\nYour Streamhut invoice is due\n10 Nov 2026\nDHL Express Desk\nDuty payment required for your shipment\n12 Nov 2026\nPaste an email\nPaste the email you want to check\n Check pasted email\n\nPasted email\n\nFrom: UPS <billing@ups-release.example>\nSubject: UPS: a fee is due for 1Z999AA10123456784\n\nYour UPS parcel 1Z999AA10123456784 is held at our depot.\nA customs fee of 2.99 must be paid before delivery.\nPay the fee here: https://ups-release.example/pay\n\nWarning\n\nThis tracking number matches your shipment, but this email is not from the carrier's official domain.\n\nChecked on this device\n\nIt cites your real tracking nu"
+  },
+  "leakedFeeEmail": "From: UPS <billing@ups-release.example>\nSubject: UPS: a fee is due for 1Z999AA10123456784\n\nYour UPS parcel 1Z999AA10123456784 is held at our depot.\nA customs fee of 2.99 must be paid before delivery.\nPay the fee here: https://ups-release.example/pay",
+  "pastedUps": {
+    "label": "Checked on this device",
+    "inferenceSource": "on_device",
+    "outcome": "neutral",
+    "headline": "This number matches your parcel, but a pasted email can't prove who sent it. Open your parcel in the carrier's app.",
+    "consentShown": false,
+    "usedSample": false,
+    "bodySnippet": "Skip to content\nDid I Order This?\nMenu\nSample inbox\n\nSAMPLE DATA\nThe five emails, the demo order and any demo parcel are fictional. Nothing here is your real mail. Fictional samples; not affiliated with DHL or UPS.\n\nSample inbox\n\nCheck an email against what you ordered\n\nCompare a delivery or billing email with the orders and tracking numbers stored on this device.\n\n2 orders and 1 expected parcel are stored on this device.\n\nImport order history\nReset demo data\n\nImported 1 order and 0 shipments on this device. 1 already stored item was updated, not added twice. The file was not uploaded. Import only files you exported yourself: a CSV decides which store each order belongs to.\n\nDHL Express Desk\nYour parcel is held. Pay the release fee.\n12 Nov 2026\nNorthwind Outfitters\nYour order has shipped\n11 Nov 2026\nUPS\nUPS delivery update for 1Z999AA10123456784\n12 Nov 2026\nStreamhut Billing\nYour Streamhut invoice is due\n10 Nov 2026\nDHL Express Desk\nDuty payment required for your shipment\n12 Nov 2026\nPaste an email\nPaste the email you want to check\n Check pasted email\n\nPasted email\n\nFrom: UPS <mcinfo@ups.com>\nSubject: UPS Update: your package 1Z999AA10123456784 is on the way\n\nYour UPS parcel 1Z999AA10123456784 is on its way and is scheduled to arrive tomorrow.\nYou can follow it in the UPS app.\n\nNeutral\n\nThis number matches your parcel, but a pasted email can't prove who sent it. Open your parcel in the carrier's app.\n\nChecked on this device\n\nThe sender in pasted text is whatever the text says"
+  },
+  "pastedUpsEmail": "From: UPS <mcinfo@ups.com>\nSubject: UPS Update: your package 1Z999AA10123456784 is on the way\n\nYour UPS parcel 1Z999AA10123456784 is on its way and is scheduled to arrive tomorrow.\nYou can follow it in the UPS app.",
+  "finishedAt": "2026-11-23T11:14:55.817Z"
+}
