@@ -208,16 +208,26 @@ describe("L1: only a notice that matches a stored order from the same domain can
   });
 });
 
+/** A small zip whose headers claim the entry inflates to `size` bytes, like a crafted zip bomb. */
+function zipClaimingSize(name: string, body: string, size: number): Uint8Array {
+  const zip = zipSync({ [name]: new TextEncoder().encode(body) });
+  const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+  for (let i = 0; i + 4 <= zip.length; i += 1) {
+    const sig = view.getUint32(i, true);
+    if (sig === 0x04034b50) view.setUint32(i + 22, size, true);
+    if (sig === 0x02014b50) view.setUint32(i + 24, size, true);
+  }
+  return zip;
+}
+
 describe("L3: zip import has size caps", () => {
-  it("skips oversized and non-CSV entries without inflating them", () => {
-    const big = new Uint8Array(64 * 1024 * 1024);
-    const zip = zipSync({ "junk.bin": big, "orders.csv": new TextEncoder().encode("order id,merchant\n1,A\n") }, { level: 9 });
+  it("inflates only CSV entries: other entries are skipped unread", () => {
+    const zip = zipSync({ "junk.bin": new Uint8Array(1024 * 1024), "orders.csv": new TextEncoder().encode("order id,merchant\n1,A\n") });
     expect(parseOrderHistoryFile({ name: "x.zip", bytes: zip }).orders).toHaveLength(1);
   });
-  it("refuses an oversized CSV entry and an oversized file", () => {
-    const big = new Uint8Array(51 * 1024 * 1024).fill(65);
-    const zip = zipSync({ "orders.csv": big }, { level: 9 });
-    expect(() => parseOrderHistoryFile({ name: "x.zip", bytes: zip })).toThrow(/does not contain a recognised/);
+  it("refuses a CSV entry that claims to inflate past the cap, and an oversized file", () => {
+    const bomb = zipClaimingSize("orders.csv", "order id,merchant\n1,A\n", 60 * 1024 * 1024);
+    expect(() => parseOrderHistoryFile({ name: "x.zip", bytes: bomb })).toThrow(/does not contain a recognised/);
     expect(() => parseOrderHistoryFile({ name: "x.csv", bytes: new Uint8Array(MAX_IMPORT_BYTES + 1) })).toThrow(/larger than 25 MB/);
   });
 });
