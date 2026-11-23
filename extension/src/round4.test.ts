@@ -9,6 +9,7 @@ import { JSDOM } from "jsdom";
 import {
   FIXTURE_HEADLINE,
   FLAGGED_HEADLINE,
+  HIDDEN_ANY_HEADLINE,
   IMAGE_HOST_HEADLINE,
   TOO_LONG_HEADLINE,
   decideVerdict,
@@ -48,7 +49,7 @@ const ups: EmailClaim = { claimed_party: { name: "UPS", role: "carrier" }, asked
 
 function gmailDoc(from: string, subject: string, bodyHtml: string, extra = "", url = "https://mail.google.com/mail/u/0/#inbox/abc") {
   return new JSDOM(
-    `<!doctype html><div role="main">${extra}<h2 class="hP">${subject}</h2><table><tr><td><h3 class="iw"><span class="gD" email="${from}">Sender</span></h3></td></tr></table><span class="g3" title="23 Nov">x</span><div class="a3s aiL">${bodyHtml}</div></div>`,
+    `<!doctype html><html lang="en"><div role="main">${extra}<h2 class="hP">${subject}</h2><table><tr><td><h3 class="iw"><span class="gD" email="${from}">Sender</span></h3></td></tr></table><span class="g3" title="23 Nov">x</span><div class="a3s aiL">${bodyHtml}</div></div>`,
     { url },
   ).window.document;
 }
@@ -123,10 +124,18 @@ describe("hidden text is skipped and a mismatch is risky (A4, A5, A6)", () => {
     expect(isHiddenElement(doc.querySelector("div")!)).toBe(true);
     expect(isHiddenElement(doc.querySelector("p")!)).toBe(false);
   });
-  it("a short hidden preheader before the visible text is not a trick, and a clean ups.com email stays Safe", () => {
+  it("a short hidden preheader before the visible text is not a trick, but since round 5 any hidden text stops Safe", () => {
     const doc = gmailDoc("mcinfo@ups.com", `UPS Update: ${T}`, `<div style="display:none">Your parcel is on its way</div><p>Your parcel ${T} arrives tomorrow. No action is required.</p>`);
     const { email, v } = viaExtension(doc, ups);
     expect(email.hiddenText).toBeUndefined();
+    expect(email.hiddenAny).toBe(true);
+    expect(v.outcome).toBe("neutral");
+    expect(v.headline).toBe(HIDDEN_ANY_HEADLINE);
+  });
+  it("a clean ups.com email with nothing hidden stays Safe", () => {
+    const doc = gmailDoc("mcinfo@ups.com", `UPS Update: ${T}`, `<p>Your parcel ${T} arrives tomorrow. No action is required.</p>`);
+    const { email, v } = viaExtension(doc, ups);
+    expect(email.hiddenAny).toBeUndefined();
     expect(v.outcome).toBe("safe");
   });
 });

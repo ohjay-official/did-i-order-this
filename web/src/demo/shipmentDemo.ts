@@ -1,4 +1,5 @@
 import {
+  isExpectedShipment,
   ingestSenderFromClaim,
   ingestShipmentFromClaim,
   type LedgerSender,
@@ -37,7 +38,7 @@ export function matchingShipmentDemo(): { shipment: LedgerShipment; sender: Ledg
 
 export function hasMatchingShipmentDemo(ledger: Pick<LedgerSnapshot, "shipments">): boolean {
   const { shipment } = matchingShipmentDemo();
-  return ledger.shipments.some((item) => item.expected && item.trackingNumber === shipment.trackingNumber);
+  return ledger.shipments.some((item) => isExpectedShipment(item) && item.trackingNumber === shipment.trackingNumber);
 }
 
 /** Stores the demo shipment (and its sender) through the given savers. Saving twice keeps one copy. */

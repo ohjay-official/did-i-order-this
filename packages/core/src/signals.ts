@@ -30,6 +30,17 @@ export interface TextSignals {
   amountDue: boolean;
   /** Hosts the text links to or names: URLs, www. names, email addresses and bare domain names. */
   linkHosts: string[];
+  /**
+   * Ways to reach or pay someone outside the official site, named in the
+   * text even without a demand verb: a phone-shaped number (also spaced or
+   * spelled out), an @handle or $cashtag, a messaging app, a payment app or
+   * money transfer service, a voucher or gift card, a disguised link
+   * ("site[.]com", "site dot com"), card or bank details, a reply with
+   * details, or a QR code. Any of them stops Safe.
+   */
+  offPlatform: string[];
+  /** Most of the text, or a whole sentence of it, is not English. The text checks read English only, so it can't be Safe. */
+  mostlyNonEnglish: boolean;
   /** Set by the caller (not read from text): hidden text that differs from what is shown. */
   hiddenText?: boolean;
   /** A carrier from the official pack is named in the text. */
@@ -46,6 +57,8 @@ export const NO_SIGNALS: TextSignals = {
   parcelFeeLure: false,
   amountDue: false,
   linkHosts: [],
+  offPlatform: [],
+  mostlyNonEnglish: false,
   carrierNamed: false,
   carrierTracking: false,
 };
@@ -168,6 +181,8 @@ export function hostOfTarget(target: string): string {
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "unreadable-target.invalid";
   const host = parsed.hostname.toLowerCase().replace(/^www\./, "").replace(/\.+$/, "");
+  // A pay-me page anyone can open on paypal.com counts as paypal.me, which is on no list.
+  if (host === "paypal.com" && /^\/paypalme(?:\/|$)/i.test(parsed.pathname)) return "paypal.me";
   return host.includes(".") ? host : "unreadable-target.invalid";
 }
 
@@ -193,6 +208,92 @@ export function readLinkHosts(text: string): string[] {
   return [...hosts];
 }
 
+/** A money amount in any common form: $5, 5 USD, 4,99 EUR, five dollars. */
+const MONEY_ANY = String.raw`(?:[$\u20ac\u00a3]\s?\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?\s?(?:usd|eur|gbp|ngn|cad|aud|dollars?|euros?|pounds?|bucks|quid)\b|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|twenty|fifty|hundred)\s+(?:dollars?|euros?|pounds?|bucks|quid)\b)`;
+/** Payment apps, transfer services and pay-me links. */
+const PAY_RAIL = String.raw`\b(?:zelle|venmo|cash\s?app|bizum|revolut|western\s+union|money\s?gram|remit(?:ly|tance|ted|ting|s)?|paypal\s*\.\s*me|paypal\.com\/paypalme|world\s?remit|skrill|payoneer)\b|(?<![\w$])\$[a-z][a-z0-9_-]{1,19}\b|\b(?:via|through|by|with|using|on|to)\s+wise\b|\bwise\s+(?:transfer|account|app|payment|tag)\b`;
+/** Card or bank details, also said the long way round. */
+const CARD_OR_BANK = String.raw`\b(?:long\s+)?(?:number|numbers|digits|code)\s+on\s+the\s+(?:front|back|reverse)\b|\b(?:three|3|four|4)\s+(?:digits|numbers)\s+on\s+the\s+back\b|\bcard\s+(?:number|details|info|information|expiry|expiration)\b|\bexpir(?:y|ation)\s+date\b|\bcvv2?\b|\bcvc\b|\bbank(?:ing)?\s+(?:info|information|details|account|login|credentials|number)\b|\brouting\s+number\b|\biban\b|\bsort\s+code\b`;
+/** A request to answer by email with personal details, rather than on the official site. */
+const REPLY_WITH_DETAILS = String.raw`\bby\s+replying\b|\b(?:reply|respond|write\s+back)\b(?:\s+\S+){0,8}?\s+(?:with|containing|including|and\s+(?:send|share|confirm|attach))\s+(?:your\s+|a\s+|the\s+)?(?:details|information|info|address|full\s+name|name|phone|number|photo|id|copy|passport|licen[cs]e|ssn|social\s+security|bank)`;
+
+/** Phone-shaped numbers: international, (area) code, 0-led national and 3-3-4 forms. Digits glued to a longer number do not count. */
+const PHONE_SHAPES = [
+  String.raw`(?<![\w+])\+\d{1,3}[\s.-]?\(?\d{1,4}\)?(?:[\s.-]?\d{2,4}){2,4}(?![\d])`,
+  String.raw`(?<![\d][\s.-]?)\(\d{2,5}\)\s?\d{3,4}[\s.-]?\d{3,4}(?![\s.-]?\d)`,
+  String.raw`(?<![\d][\s.-]?)(?<![\w])0\d{2,4}[\s.-]\d{3,4}[\s.-]?\d{3,4}(?![\s.-]?\d)`,
+  String.raw`(?<![\d][\s.-]?)(?<![\w])1?[\s.-]?\d{3}[\s.-]\d{3}[\s.-]\d{4}(?![\s.-]?\d)`,
+  String.raw`\b(?:tel|telephone|phone|mobile|cell|whatsapp|call|ring|text|sms|buzz|number\s+is)\b[^.!?\n]{0,20}?\d{7,15}\b`,
+];
+const PHONE_SHAPE_RE = new RegExp(PHONE_SHAPES.join("|"), "i");
+const DIGIT_WORD = String.raw`(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|double\s+(?:zero|oh|one|two|three|four|five|six|seven|eight|nine))`;
+/** Seven or more digits spelled out or spaced one by one: "four four seven seven zero ...". */
+const SPELLED_PHONE = new RegExp(String.raw`(?:\b(?:${DIGIT_WORD}|\d)\b[\s,.-]*){7,}`, "i");
+const HANDLE = /(?<![\w.@+-])@[a-z0-9_][a-z0-9_.-]{1,30}[a-z0-9_]/i;
+const MESSAGING_APP =
+  /\b(?:whats\s?app|telegram|wechat|weixin|viber|skype|kakao(?:talk)?|imessage|snapchat)\b|\bsignal\s+(?:app|me|us|messenger|chat)\b|\b(?:on|via|through|over|using|in|add\s+(?:me|us)\s+on)\s+signal\b|\bline\s+(?:app|id|me)\b|\b(?:on|via|through|over|using|add\s+(?:me|us)\s+on)\s+line\b(?!\s+(?:item|items|\d))/i;
+const QR_CODE = /\bqr\b/i;
+const OBFUSCATED_LINK =
+  /\[\s*\.\s*\]|\(\s*\.\s*\)|\{\s*\.\s*\}|[[({]\s*dot\s*[\])}]|\bhxxps?\b|\b[a-z0-9-]{2,}\s+dot\s+(?:com|net|org|info|biz|io|co|uk|me|ly|xyz|top|shop|online|site|app|store|support|help|link|click|live|de|fr|es|ru|cn|in)\b/i;
+const VOUCHER = /\bvouchers?\b|\bgift\s*-?cards?\b|\bprepaid\s+cards?\b/i;
+const CARD_OR_BANK_RE = new RegExp(CARD_OR_BANK, "i");
+const PAY_RAIL_RE = new RegExp(PAY_RAIL, "i");
+const WIRE_WORD = /\b(?:wire|bank|money)\s+transfers?\b|\bwire\b/i;
+
+/** Names of what was found, for the reason line. The order is the reading order of the list in the docs. */
+export function readOffPlatform(text: string, joined: string, demandFound: (pattern: RegExp) => boolean): string[] {
+  const found: string[] = [];
+  const either = (re: RegExp) => re.test(text) || re.test(joined);
+  if (either(PHONE_SHAPE_RE) || either(SPELLED_PHONE)) found.push("a phone number");
+  if (either(HANDLE)) found.push("an @handle");
+  if (either(MESSAGING_APP)) found.push("a messaging app");
+  if (either(PAY_RAIL_RE) || either(WIRE_WORD)) found.push("a payment app or money transfer");
+  if (either(VOUCHER)) found.push("a voucher or gift card");
+  if (either(OBFUSCATED_LINK)) found.push("a disguised link");
+  if (either(CARD_OR_BANK_RE)) found.push("card or bank details");
+  if (demandFound(new RegExp(REPLY_WITH_DETAILS, "gi"))) found.push("a reply with your details");
+  if (either(QR_CODE)) found.push("a QR code");
+  return found;
+}
+
+const ENGLISH_WORDS = new Set(
+  "the and to of a an your you is are for on in this that we our it be with has have will at by from or as not can please if was were been here there order parcel package delivery shipped shipment tracking number thank thanks hello dear today tomorrow its it's my me us they their what when how more about all any no yes".split(" "),
+);
+const FOREIGN_WORDS = new Set(
+  "le la les des du et vous votre vos nous pour par est une avec sur dans pas cette veuillez merci colis commande frais je il elle sont aux au ou los las por para usted del que es una su sus pedido envío envio gracias paquete debe mediante señor estimado der das und sie ihr ist mit für nicht bitte ihre ein eine sendung paket zahlen het een van voor niet uw u gli della che sono di il pacco você seu sua não obrigado encomenda pagamento".split(" "),
+);
+
+/**
+ * True when the text is mostly not English, or holds a sentence that is:
+ * more foreign function words than English ones, or mostly letters outside
+ * the Latin script. The wording checks read English, so such text can't
+ * earn Safe.
+ */
+export function isMostlyNonEnglish(raw: string): boolean {
+  const text = raw.replace(/\b(?:https?|hxxps?):\/\/\S+/gi, " ").replace(/\S+@\S+/g, " ");
+  const letters = text.match(/\p{L}/gu) ?? [];
+  if (letters.length >= 20) {
+    const latin = text.match(/\p{Script=Latin}/gu) ?? [];
+    if (latin.length / letters.length < 0.7) return true;
+  }
+  const count = (part: string) => {
+    let en = 0;
+    let other = 0;
+    for (const word of part.toLowerCase().match(/\p{L}+(?:'\p{L}+)?/gu) ?? []) {
+      if (ENGLISH_WORDS.has(word)) en++;
+      else if (FOREIGN_WORDS.has(word)) other++;
+    }
+    return { en, other };
+  };
+  const whole = count(text);
+  if (whole.other >= 3 && whole.other > whole.en) return true;
+  for (const sentence of text.split(/[.!?\n]+/)) {
+    const part = count(sentence);
+    if (part.other >= 3 && part.other > part.en) return true;
+  }
+  return false;
+}
+
 const PAY = new RegExp(
   [
     String.raw`\bpay(?:\s+(?:the|a|an|your|this|our|now|today|online|here|immediately|within|by|\$|€|£|usd|eur|gbp)\b|\s*[$€£]|\s+\d)`,
@@ -212,6 +313,12 @@ const PAY = new RegExp(
     String.raw`\b(?:itunes|google\s+play|steam|amazon)\s+(?:card|voucher|code)s?\b`,
     String.raw`\b(?:bitcoin|btc|crypto|usdt)\b`,
     String.raw`\bto\s+(?:keep|save|secure|release|protect)\s+(?:your|the|this)\s+(?:order|parcel|package|delivery|shipment|item)\b`,
+    // Payment apps and money transfer services, and a pay-me link.
+    PAY_RAIL,
+    // A money amount with a send, transfer or pay verb either side: "send 49.99 USD", "$3 ... venmo".
+    String.raw`\b(?:send|transfer|remit|wire|deposit|top\s?-?up|lodge|forward)\b[^.!?\n]{0,40}?${MONEY_ANY}`,
+    String.raw`${MONEY_ANY}[^.!?\n]{0,30}?\b(?:by|via|through|using|with|to)\s+(?:zelle|venmo|cash\s?app|bizum|revolut|wise|paypal|western\s+union|moneygram|bank|wire|transfer)\b`,
+    String.raw`\b(?:buy|purchase|get)\s+(?:a|an|the|some)?\s*(?:[$\u20ac\u00a3]?\d+\s*)?(?:\w+\s+){0,2}(?:voucher|gift\s*-?card|prepaid\s+card|coupon)s?\b`,
   ].join("|"),
   "gi",
 );
@@ -224,12 +331,14 @@ const LOG_IN = new RegExp(
     String.raw`\bconfirm\s+your\s+(?:account|identity|password|payment|card|details|billing)\b`,
     String.raw`\benter\s+your\s+(?:password|card|pin)\b`,
     String.raw`\bupdate\s+your\s+(?:card|payment|billing|bank|account)\s+(?:details|information|info|method)\b`,
+    CARD_OR_BANK,
+    REPLY_WITH_DETAILS,
     String.raw`\b(?:reply|respond|send|text|tell\s+us|share|provide|give\s+us|enter|type)\b[^.!?\n]{0,50}?\b(?:card\s+(?:number|digits|details)|digits|pin|cvv|cvc|security\s+code|verification\s+code|one-?time\s+(?:code|password|passcode)|otp|passcode|password|date\s+of\s+birth|dob|sort\s+code|account\s+number)\b`,
   ].join("|"),
   "gi",
 );
 const DOWNLOAD = new RegExp(
-  [String.raw`\bdownload\b`, String.raw`\bopen\s+(?:the\s+|this\s+|your\s+)?(?:attached|attachment|file|invoice|label|form|document|receipt)\b`].join("|"),
+  [String.raw`\bdownload\b`, String.raw`\bscan\b[^.!?\n]{0,30}?\b(?:qr|code|barcode)\b`, String.raw`\bopen\s+(?:the\s+|this\s+|your\s+)?(?:attached|attachment|file|invoice|label|form|document|receipt)\b`].join("|"),
   "gi",
 );
 /** A request to call, ring, text or message back, usually to a number in the email. */
@@ -240,6 +349,11 @@ const CALL = new RegExp(
     String.raw`\b(?:call|ring|phone|dial)\s+(?:us|our|the|this|that|a)\b[^.!?\n]{0,40}?\b(?:desk|line|team|department|centre|center|hotline|number|helpline|support|agent)\b`,
     String.raw`\b(?:text|reply|sms|send|respond)\s+(?:with\s+)?["'\u201c\u2018]?(?:yes|y|ok|confirm|1)["'\u201d\u2019]?(?=[\s.,!?]|$)`,
     String.raw`\bcharged\b[^.!?\n]{0,80}?\b(?:call|ring|phone|dial|contact|reply|text)\b`,
+    // Off-platform contact: a messaging app or an @handle after a contact verb.
+    String.raw`\b(?:message|contact|text|chat|reach|add|dm|ping|write\s+to|talk\s+to|speak\s+to|find)\b[^.!?\n]{0,40}?(?:\b(?:whats\s?app|telegram|wechat|viber|signal|line|skype|kakao(?:talk)?)\b|(?<![\w.@+-])@[a-z0-9_])`,
+    // A spelled-out number after a call verb: "ring me on four four seven ...".
+    String.raw`\b(?:call|ring|phone|dial|text|whatsapp|buzz|reach)\b[^.!?\n]{0,20}?(?:\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)\b[\s,-]+){6,}`,
+    String.raw`\bgive\s+(?:me|us)\s+a\s+(?:buzz|ring|call|bell|shout)\b`,
   ].join("|"),
   "gi",
 );
@@ -297,7 +411,10 @@ export function readTextSignals(emailText: string | undefined, pack: OfficialPac
     asksToCall: demand(CALL),
     parcelFeeLure: PARCEL_FEE.test(text) || PARCEL_FEE.test(joined),
     amountDue: hasAmountDue(text),
-    linkHosts: readLinkHosts(text),
+    // A disguised link ("site[.]com", "site dot com") counts as a link to a site off every list.
+    linkHosts: OBFUSCATED_LINK.test(text) || OBFUSCATED_LINK.test(joined) ? [...readLinkHosts(text), "disguised-link.invalid"] : readLinkHosts(text),
+    offPlatform: readOffPlatform(text, joined, demand),
+    mostlyNonEnglish: isMostlyNonEnglish(emailText.normalize("NFKC")),
     carrierNamed: namesCarrier(text, pack),
     carrierTracking: extractCandidateNumbers(text).some(looksLikeCarrierTracking),
   };

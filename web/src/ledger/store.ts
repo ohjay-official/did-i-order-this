@@ -1,4 +1,4 @@
-import type { LedgerOrder, LedgerSender, LedgerShipment, LedgerSnapshot } from "@did-i-order-this/core";
+import { makeExpectedShipment, type LedgerOrder, type LedgerSender, type LedgerShipment, type LedgerSnapshot, type ManualTrackingInput } from "@did-i-order-this/core";
 import { demoSeed } from "../demo/seed.ts";
 import { findSameOrder, findSameShipment } from "./dedupe.ts";
 
@@ -178,6 +178,18 @@ export async function saveShipment(shipment: LedgerShipment): Promise<boolean> {
   } finally {
     db.close();
   }
+}
+
+/**
+ * Adds one tracking number the person typed in because they are waiting for
+ * it, as an expected parcel for the next 30 days. Throws ManualTrackingError
+ * with a message to show when the text is not a tracking number. The UI field
+ * for it is listed in docs/UI-NEXT.md.
+ */
+export async function addExpectedTracking(input: ManualTrackingInput): Promise<LedgerShipment> {
+  const shipment = makeExpectedShipment(input);
+  await saveShipment(shipment);
+  return shipment;
 }
 
 export async function saveSender(sender: LedgerSender): Promise<void> {

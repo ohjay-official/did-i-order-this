@@ -22,8 +22,9 @@ export const HOSTED_APP_URL = "https://did-i-order-this.vercel.app";
 export const MAX_EMAIL_CHARS = 200_000;
 
 /** What Gmail itself shows about the message: in Spam, a warning banner, or a "via" sender. */
-export type GmailFlag = "spam" | "warning" | "via";
-const GMAIL_FLAGS: readonly GmailFlag[] = ["spam", "warning", "via"];
+/** "foreign_ui": Gmail is shown in a language the flag checks can't read. */
+export type GmailFlag = "spam" | "warning" | "via" | "foreign_ui";
+const GMAIL_FLAGS: readonly GmailFlag[] = ["spam", "warning", "via", "foreign_ui"];
 
 export type ExtractedEmail = {
   text: string;
@@ -39,6 +40,8 @@ export type ExtractedEmail = {
   imageHosts?: string[];
   /** Hidden text that differs from what is shown. */
   hiddenText?: boolean;
+  /** Any hidden words at all in the bodies (Gmail's own folding aside). Stops Safe. */
+  hiddenAny?: boolean;
   /** The text was longer than MAX_EMAIL_CHARS and was cut. */
   truncated?: boolean;
   /** Gmail's own flags on the open message. */
@@ -57,7 +60,7 @@ export type EmailTextMessage = {
 };
 
 /** From the side panel: the email for one tab, or (panel opened as a tab, as in tests) the latest one. */
-export type GetEmailMessage = { type: typeof MESSAGE.GET_EMAIL; tabId?: number; latest?: boolean };
+export type GetEmailMessage = { type: typeof MESSAGE.GET_EMAIL; tabId?: number; latest?: boolean; fresh?: boolean };
 
 /** Gmail itself is the only page whose sender the extension trusts. */
 export const GMAIL_PREFIX = "https://mail.google.com/";
@@ -87,6 +90,7 @@ export function sanitizeEmail(value: unknown): ExtractedEmail | null {
   const images = hosts(v.imageHosts);
   if (images.length) email.imageHosts = images;
   if (v.hiddenText === true) email.hiddenText = true;
+  if (v.hiddenAny === true) email.hiddenAny = true;
   const flags = Array.isArray(v.gmailFlags) ? GMAIL_FLAGS.filter((flag) => (v.gmailFlags as unknown[]).includes(flag)) : [];
   if (flags.length) email.gmailFlags = flags;
   // A page can only mark itself as a fixture (a downgrade); the background sets the real value.

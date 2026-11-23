@@ -1,3 +1,5 @@
+Historical build note (dated). Where it differs from README.md or docs/TESTING.md, those are current.
+
 # Victory test run, 16 Nov 2026
 
 Severe pre-submit test plan, run from the build machine on the evening of 16 Nov 2026 and finished by 21:25 Africa/Lagos (UTC+1), against production `9098021` unless a row says otherwise. The machine has desktop Chrome 156 with no Gemini Nano; reCAPTCHA Enterprise rejects its automated Chrome, so App Check fails there by design. On-device rows ran on public GitHub runners with Nano.

@@ -27,7 +27,73 @@ export class NoOnDeviceModelError extends Error {
  * would be sent to the cloud instead. Callers must stop before that happens.
  */
 export function hasOnDeviceApi(scope: object = globalThis): boolean {
-  return "LanguageModel" in scope;
+  // The SDK builds its on-device adapter only when this global is truthy. A key
+  // that exists but holds undefined (a shim or a "disable AI" script) must count
+  // as missing, or an "only on device" read would quietly go to the cloud.
+  return typeof (scope as { LanguageModel?: unknown }).LanguageModel === "function";
+}
+
+/**
+ * Second lock for every "only on device" call. Firebase AI Logic sends a
+ * request to the cloud when a model has no on-device adapter, whatever the
+ * mode says, so refuse to call generateContent unless the adapter exists and
+ * is set to on-device only.
+ */
+export function assertOnDeviceAdapter(model: object): void {
+  const adapter = (model as { chromeAdapter?: { mode?: unknown } }).chromeAdapter;
+  if (!adapter || adapter.mode !== "only_on_device") throw new NoOnDeviceModelError();
+}
+
+/** Hosts a Firebase AI Logic or App Check call would use. */
+export function isGoogleAiRequest(input: unknown): boolean {
+  let raw: string;
+  if (typeof input === "string") raw = input;
+  else if (input instanceof URL) raw = input.href;
+  else if (input && typeof (input as { url?: unknown }).url === "string") raw = (input as { url: string }).url;
+  else return true;
+  if (raw.startsWith("data:")) return false;
+  try {
+    const host = new URL(raw, "https://invalid.invalid").hostname.toLowerCase();
+    return /(^|\.)(googleapis\.com|google\.com|gstatic\.com|recaptcha\.net)$/.test(host);
+  } catch {
+    return true;
+  }
+}
+
+export class CloudRequestBlockedError extends Error {
+  constructor() {
+    super("A cloud request was blocked during an on-device-only read.");
+    this.name = "CloudRequestBlockedError";
+  }
+}
+
+let blockDepth = 0;
+let realFetch: typeof fetch | undefined;
+
+/**
+ * Runs an on-device-only call with requests to Google's AI and App Check
+ * hosts refused, so even an SDK change cannot send the text to the cloud.
+ */
+export async function withCloudFetchBlocked<T>(run: () => Promise<T>): Promise<T> {
+  const scope = globalThis as { fetch?: typeof fetch };
+  if (blockDepth === 0 && typeof scope.fetch === "function") {
+    realFetch = scope.fetch;
+    const original = realFetch;
+    scope.fetch = ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+      if (isGoogleAiRequest(input)) return Promise.reject(new CloudRequestBlockedError());
+      return original.call(globalThis, input, init);
+    }) as typeof fetch;
+  }
+  blockDepth += 1;
+  try {
+    return await run();
+  } finally {
+    blockDepth -= 1;
+    if (blockDepth === 0 && realFetch) {
+      scope.fetch = realFetch;
+      realFetch = undefined;
+    }
+  }
 }
 
 export function isNotReadyYet(error: unknown): boolean {

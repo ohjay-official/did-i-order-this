@@ -1,4 +1,7 @@
 import {
+  FILE_TOO_LARGE_MESSAGE,
+  isExpectedShipment,
+  MAX_IMPORT_BYTES,
   OrderHistoryParseError,
   canSaveShipmentFromClaim,
   decideVerdict,
@@ -86,7 +89,7 @@ export class InboxApp {
   }
 
   private expectedCount(): number {
-    return this.ledger.shipments.filter((item) => item.expected).length;
+    return this.ledger.shipments.filter((item) => isExpectedShipment(item)).length;
   }
 
   private currentEmail(): { text: string; fromDomain: string; subject: string; sample?: SampleThread } | null {
@@ -424,6 +427,8 @@ export class InboxApp {
 
   private async importFile(file: File): Promise<void> {
     try {
+      // Refuse a file over the cap before reading any of it into memory.
+      if (file.size > MAX_IMPORT_BYTES) throw new OrderHistoryParseError(FILE_TOO_LARGE_MESSAGE);
       const bytes = new Uint8Array(await file.arrayBuffer());
       const parsed = parseOrderHistoryFile({ name: file.name, bytes });
       let newOrders = 0;

@@ -39,6 +39,7 @@ const pack = pack0 as OfficialPack;
 const now = "2026-11-23T00:00:00Z";
 const AMZ = "112-4455667-8899001";
 const EBAY = "12-34567-89012";
+const TGT = "TGT40021187";
 const T = "1Z999AA10123456784";
 const FDX = "612345678901";
 const ledger: LedgerSnapshot = {
@@ -46,6 +47,7 @@ const ledger: LedgerSnapshot = {
     { id: "o1", merchant: "Amazon", senderDomain: "amazon.com", orderId: AMZ, source: "import", confirmedAt: now },
     { id: "o2", merchant: "Northwind", senderDomain: "northwindshop.com", orderId: "NW-99812", source: "import", confirmedAt: now },
     { id: "o3", merchant: "eBay", senderDomain: "ebay.com", orderId: EBAY, source: "import", confirmedAt: now },
+    { id: "o4", merchant: "Target", senderDomain: "target.com", orderId: TGT, source: "import", confirmedAt: now },
   ],
   shipments: [
     { id: "s1", trackingNumber: T, carrier: "UPS", expected: true, source: "import", confirmedAt: now },
@@ -88,9 +90,11 @@ describe("decision 1: store Safe needs the exact domain and a vetted DMARC p=rej
     expect(v.headline).toBe(STORE_UNVERIFIED_HEADLINE);
     expect(isVettedStore(pack, "amazon.com")).toBe(false);
   });
-  it("ebay.com (DMARC p=reject) on an exact match is Safe; members.ebay.com is a relay", () => {
-    expect(isVettedStore(pack, "ebay.com")).toBe(true);
-    expect(gmail("ebay.com", `Thanks for your order ${EBAY}.`, store(EBAY, "none", "receipt", "eBay")).outcome).toBe("safe");
+  it("target.com (DMARC p=reject) on an exact match is Safe; since round 5 ebay.com is off the list (a marketplace); members.ebay.com is a relay", () => {
+    expect(isVettedStore(pack, "target.com")).toBe(true);
+    expect(gmail("target.com", `Thanks for your order ${TGT}.`, store(TGT, "none", "receipt", "Target")).outcome).toBe("safe");
+    expect(isVettedStore(pack, "ebay.com")).toBe(false);
+    expect(gmail("ebay.com", `Thanks for your order ${EBAY}.`, store(EBAY, "none", "receipt", "eBay")).headline).toBe(STORE_UNVERIFIED_HEADLINE);
     expect(gmail("members.ebay.com", `About order ${EBAY}.`, store(EBAY, "none", "receipt", "eBay")).headline).toBe(RELAY_ORDER_HEADLINE);
   });
   it("every vetted store entry is marked reject, and no p=quarantine domain is on the list", () => {
@@ -242,7 +246,7 @@ describe("decision 9: copy on risky results", () => {
     expect(v.reasons.join(" ")).not.toMatch(/listed as official|not an alarm/);
   });
   it("a Safe result never says the domain is not in the pack", () => {
-    const v = gmail("ebay.com", `Thanks for your order ${EBAY}.`, store(EBAY, "none", "receipt", "eBay"));
+    const v = gmail("target.com", `Thanks for your order ${TGT}.`, store(TGT, "none", "receipt", "Target"));
     expect(v.outcome).toBe("safe");
     expect(v.reasons.join(" ")).not.toMatch(/not in the official-domain pack/);
   });

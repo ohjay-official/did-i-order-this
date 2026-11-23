@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   responses: [] as Array<{ text: string; inferenceSource: unknown }>,
   apps: [] as string[],
   tokenCalls: 0,
+  noAdapter: false,
 }));
 
 vi.mock("firebase/ai", () => ({
@@ -24,6 +25,7 @@ vi.mock("firebase/ai", () => ({
   getGenerativeModel: (_ai: unknown, params: Record<string, unknown>) => {
     state.params.push(params);
     return {
+      chromeAdapter: state.noAdapter ? undefined : { mode: params.mode },
       generateContent: async (prompt: string) => {
         state.prompts.push(prompt);
         const next = state.responses.shift();
@@ -56,6 +58,7 @@ beforeEach(() => {
   state.responses = [];
   state.apps = [];
   state.tokenCalls = 0;
+  state.noAdapter = false;
 });
 
 const payload = () =>
@@ -72,6 +75,15 @@ const payload = () =>
   });
 
 describe("generateNextStepChoice", () => {
+  it("on the device: refuses to call the model when the SDK built no on-device adapter", async () => {
+    state.noAdapter = true;
+    state.responses.push({ text: JSON.stringify({ template: "warn_pay_report" }), inferenceSource: "in_cloud" });
+    const p = payload();
+    const templates = templatesFor(p);
+    await expect(generateNextStepChoice(buildNextStepPrompt(p, templates), templates.map((t) => t.id), [], "device")).rejects.toThrow(/No on-device model/);
+    expect(state.prompts).toHaveLength(0);
+  });
+
   it("in the cloud: the App Check app, ONLY_IN_CLOUD, and only template ids in the prompt", async () => {
     state.responses.push({ text: JSON.stringify({ template: "warn_pay_report" }), inferenceSource: "in_cloud" });
     const p = payload();

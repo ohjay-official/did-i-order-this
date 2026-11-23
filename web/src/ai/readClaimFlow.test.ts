@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   tokenCalls: 0,
   tokenError: null as Error | null,
   generateError: null as Error | null,
+  noAdapter: false,
 }));
 
 vi.mock("firebase/ai", () => ({
@@ -28,6 +29,7 @@ vi.mock("firebase/ai", () => ({
   getGenerativeModel: (_ai: unknown, params: Record<string, unknown>) => {
     state.params.push(params);
     return {
+      chromeAdapter: state.noAdapter ? undefined : { mode: params.mode },
       initializeDeviceModel: async () => {
         state.initCalls += 1;
         const error = state.initErrors.shift();
@@ -86,11 +88,20 @@ beforeEach(() => {
   state.tokenCalls = 0;
   state.tokenError = null;
   state.generateError = null;
+  state.noAdapter = false;
   appCheckGate.clear();
   take.mockReset();
 });
 
 describe("readClaim through Firebase AI Logic", () => {
+  it("on-device only: refuses when the SDK built no on-device adapter, and sends nothing", async () => {
+    state.noAdapter = true;
+    state.responses.push({ text: GOOD, inferenceSource: "in_cloud" });
+    await expect(readClaim("email body", "only_on_device")).rejects.toThrow(/No on-device model/);
+    expect(state.prompts).toHaveLength(0);
+    expect(state.initCalls).toBe(0);
+  });
+
   it("on-device only: warms the device model, spends no cloud budget, labels on_device", async () => {
     state.responses.push({ text: GOOD, inferenceSource: "on_device" });
     const result = await readClaim("email body", "only_on_device");

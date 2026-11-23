@@ -1,4 +1,4 @@
-export type LedgerSource = "receipt_email" | "shipment_email" | "import" | "demo_seed";
+export type LedgerSource = "receipt_email" | "shipment_email" | "import" | "demo_seed" | "manual";
 
 export interface LedgerOrder {
   id: string;
@@ -20,6 +20,8 @@ export interface LedgerShipment {
   orderId?: string;
   merchant?: string;
   expected: boolean;
+  /** When set, the parcel stops counting as expected after this time (ISO). */
+  expectedUntil?: string;
   source: LedgerSource;
   confirmedAt: string;
 }

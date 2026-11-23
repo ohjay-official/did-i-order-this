@@ -44,12 +44,12 @@ describe("ledger dedupe", () => {
 
 describe("import note", () => {
   it("keeps the first-import wording", () => {
-    expect(importNoteText(2, 1, 3)).toBe("Imported 2 orders and 1 shipment on this device. The file was not uploaded.");
+    expect(importNoteText(2, 1, 3)).toBe("Imported 2 orders and 1 shipment on this device. The file was not uploaded. Import only files you exported yourself: a CSV decides which store each order belongs to.");
   });
   it("says nothing was added when the same file is imported again", () => {
     expect(importNoteText(0, 0, 3)).toBe("Everything in this file was already stored on this device. Nothing was added. The file was not uploaded.");
   });
   it("counts the already stored items on a partial overlap", () => {
-    expect(importNoteText(1, 0, 3)).toBe("Imported 1 order and 0 shipments on this device. 2 already stored items were updated, not added twice. The file was not uploaded.");
+    expect(importNoteText(1, 0, 3)).toBe("Imported 1 order and 0 shipments on this device. 2 already stored items were updated, not added twice. The file was not uploaded. Import only files you exported yourself: a CSV decides which store each order belongs to.");
   });
 });
