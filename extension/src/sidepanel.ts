@@ -21,13 +21,12 @@ import { clearLedger, loadLedger, saveOrder, saveSender, saveShipment } from "./
 import {
   HOSTED_APP_URL,
   MESSAGE,
-  isTrustedSender,
-  manifestPrefixes,
+  PANEL_PORT,
   sanitizeEmail,
   type EmailTextMessage,
   type ExtractedEmail,
 } from "./messages.ts";
-import { senderCheckForEmail } from "./senderCheck.ts";
+import { senderCheckForEmail, verdictOptionsForEmail } from "./senderCheck.ts";
 
 type ViewState =
   | { status: "idle" }
@@ -41,7 +40,7 @@ if (!appRoot) throw new Error("The side panel root is missing.");
 const root = appRoot;
 
 let email: ExtractedEmail | null = null;
-let emailReason = "Open a Gmail thread. The side panel reads only the message that is open.";
+let emailReason = "Open a Gmail thread. The side panel reads the open thread's expanded messages.";
 let ledger: LedgerSnapshot = { orders: [], shipments: [], senders: [] };
 let view: ViewState = { status: "idle" };
 let importNote = "";
@@ -165,7 +164,7 @@ async function runCheck(): Promise<void> {
     const result = await readClaim(checking.text, "only_on_device", { senderDomain: checking.fromDomain });
     // Gmail moved to another email while this one was read: drop the stale result.
     if (email?.text !== checking.text) return;
-    const options = { emailText: checking.text, senderCheck: senderCheckForEmail(checking) };
+    const options = verdictOptionsForEmail(checking);
     const verdict = decideVerdict(result.claim, ledger, getOfficialPack(), result.inferenceSource, options);
     view = {
       status: "done",
@@ -237,6 +236,53 @@ function applyEmailMessage(message: EmailTextMessage): void {
   render();
 }
 
+/**
+ * The tab whose thread the panel shows: the active tab of the panel's window.
+ * When the panel page is open as a tab of its own (tests and development),
+ * there is no other active tab to ask about, so it shows the latest email.
+ */
+async function emailRequest(): Promise<{ type: typeof MESSAGE.GET_EMAIL; tabId?: number; latest?: boolean }> {
+  const own = await chrome.tabs?.getCurrent?.().catch(() => undefined);
+  if (own) return { type: MESSAGE.GET_EMAIL, latest: true };
+  const [active] = (await chrome.tabs?.query?.({ active: true, currentWindow: true }).catch(() => [])) ?? [];
+  return { type: MESSAGE.GET_EMAIL, tabId: active?.id };
+}
+
+async function refreshEmail(): Promise<void> {
+  const current = (await chrome.runtime.sendMessage(await emailRequest())) as EmailTextMessage | undefined;
+  if (current?.type !== MESSAGE.EMAIL_TEXT) {
+    render();
+    return;
+  }
+  const next = sanitizeEmail(current.email);
+  // Same thread as before (another tab changed): keep the current result on screen.
+  if (next && email && next.text === email.text && next.fixture === email.fixture) return;
+  applyEmailMessage({ ...current, email: next });
+}
+
+/** Tells the background the panel is open, for as long as this page lives. */
+function connectPanel(): void {
+  const port = chrome.runtime.connect({ name: PANEL_PORT });
+  const ping = setInterval(() => {
+    try {
+      port.postMessage({ type: "ping" });
+    } catch {
+      clearInterval(ping);
+    }
+  }, 20_000);
+  port.onMessage.addListener((message: { type?: unknown }) => {
+    if (message?.type === MESSAGE.CHANGED) void refreshEmail();
+  });
+  port.onDisconnect.addListener(() => {
+    clearInterval(ping);
+    // The service worker restarted: connect again so content scripts keep sending.
+    setTimeout(() => {
+      connectPanel();
+      void refreshEmail();
+    }, 500);
+  });
+}
+
 async function start(): Promise<void> {
   try {
     ledger = await loadLedger();
@@ -244,16 +290,9 @@ async function start(): Promise<void> {
     ledger = { orders: [], shipments: [], senders: [] };
   }
   try {
-    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
-      const current = (await chrome.runtime.sendMessage({ type: MESSAGE.GET_EMAIL })) as EmailTextMessage | undefined;
-      if (current?.type === MESSAGE.EMAIL_TEXT) applyEmailMessage({ ...current, email: sanitizeEmail(current.email) });
-      else render();
-      const prefixes = manifestPrefixes();
-      chrome.runtime.onMessage.addListener((message: EmailTextMessage, sender) => {
-        if (message?.type !== MESSAGE.EMAIL_TEXT) return;
-        if (!isTrustedSender(sender, chrome.runtime.id, prefixes)) return;
-        applyEmailMessage({ ...message, email: sanitizeEmail(message.email) });
-      });
+    if (typeof chrome !== "undefined" && chrome.runtime?.id) {
+      connectPanel();
+      await refreshEmail();
       return;
     }
   } catch {

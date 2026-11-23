@@ -70,6 +70,22 @@ describe("on-device fail fast", () => {
     expect(clock.sleeps).toEqual([WARMUP_RETRY_MS, WARMUP_RETRY_MS]);
   });
 
+  it("F13: after one page waited out the window with no model, later pages in the tab do not wait again", async () => {
+    let missing = false;
+    const memory = { isMissing: () => missing, setMissing: (value: boolean) => void (missing = value) };
+    const first = fakeClock(0);
+    await expect(warmUpOnDevice(model(Array.from({ length: 50 }, notReady)), { ...first, memory })).rejects.toThrow("not available");
+    expect(missing).toBe(true);
+    const second = fakeClock(0);
+    const m = model([notReady()]);
+    await expect(warmUpOnDevice(m, { ...second, memory })).rejects.toThrow("not available");
+    expect(m.calls).toBe(1);
+    expect(second.sleeps).toEqual([]);
+    // A model that turns up later clears the memory.
+    await warmUpOnDevice(model([]), { ...fakeClock(0), memory });
+    expect(missing).toBe(false);
+  });
+
   it("stops retrying when the warm-up window runs out", async () => {
     const clock = fakeClock(0);
     const m = model(Array.from({ length: 50 }, notReady));

@@ -360,6 +360,8 @@ function parseCsvText(text: string): { orders: LedgerOrder[]; shipments: LedgerS
 /** Order-history files are small. These caps keep a crafted file from filling the tab's memory. */
 export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
 export const MAX_ZIP_ENTRY_BYTES = 50 * 1024 * 1024;
+/** The cap on all CSV entries of one ZIP together, so many entries just under the per-entry cap cannot add up. */
+export const MAX_ZIP_TOTAL_BYTES = 50 * 1024 * 1024;
 
 class ZipEntryTooBig extends Error {}
 
@@ -370,6 +372,7 @@ class ZipEntryTooBig extends Error {}
  */
 function inflateCsvEntries(bytes: Uint8Array): Record<string, Uint8Array> {
   const files: Record<string, Uint8Array> = {};
+  let allEntries = 0;
   const unzip = new Unzip();
   unzip.register(UnzipInflate);
   unzip.onfile = (file: UnzipFile) => {
@@ -380,7 +383,8 @@ function inflateCsvEntries(bytes: Uint8Array): Record<string, Uint8Array> {
     file.ondata = (err, chunk, final) => {
       if (err) throw err;
       total += chunk.length;
-      if (total > MAX_ZIP_ENTRY_BYTES) throw new ZipEntryTooBig();
+      allEntries += chunk.length;
+      if (total > MAX_ZIP_ENTRY_BYTES || allEntries > MAX_ZIP_TOTAL_BYTES) throw new ZipEntryTooBig();
       chunks.push(chunk);
       if (final) {
         const out = new Uint8Array(total);
@@ -410,7 +414,7 @@ function csvFromZip(bytes: Uint8Array): string {
     files = inflateCsvEntries(bytes);
   } catch (error) {
     if (error instanceof ZipEntryTooBig) {
-      throw new OrderHistoryParseError("A CSV in this ZIP inflates to more than 50 MB, which is too big for an order history. It was not imported.");
+      throw new OrderHistoryParseError("A CSV in this ZIP, or all of them together, inflates to more than 50 MB, which is too big for an order history. It was not imported.");
     }
     throw new OrderHistoryParseError("This ZIP file could not be read. It may be damaged or not a ZIP.");
   }

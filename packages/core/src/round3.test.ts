@@ -200,9 +200,12 @@ describe("F9: store wording floors", () => {
   ])("%s is not Safe from the store's own domain", (_name, text, c) => {
     expect(verified(text, c, "shop.northwind-outfitters.example").outcome).toBe("warning");
   });
-  it("a plain receipt from the store's own domain, linking only to the store, is still Safe", () => {
+  it("a plain receipt from the store's own domain, linking only to the store, is Safe only for a vetted store", () => {
     const text = `${from}Thanks for your order NW-10001. Total $42.00. View it at https://shop.northwind-outfitters.example/orders`;
-    expect(verified(text, store(), "shop.northwind-outfitters.example").outcome).toBe("safe");
+    expect(verified(text, store(), "shop.northwind-outfitters.example").outcome).toBe("neutral");
+    const vetted: OfficialPack = { ...pack, storeDomains: [{ domain: "shop.northwind-outfitters.example", name: "Northwind", dmarc: "reject", checked: "test" }] };
+    const c = reconcileClaim(store(), text, "shop.northwind-outfitters.example");
+    expect(decideVerdict(c, ledger, vetted, "on_device", { emailText: text, senderCheck: "verified" }).outcome).toBe("safe");
   });
 });
 

@@ -39,6 +39,11 @@ export interface OfficialPack {
     name: string;
     role: "carrier" | "merchant" | "bank" | "other";
   }[];
+  /**
+   * Store domains that may give Safe on an exact order match. Each was checked
+   * to publish DMARC p=reject (dns.google, date in "checked").
+   */
+  storeDomains?: { domain: string; name: string; dmarc: "reject"; checked: string }[];
   lureTemplates: {
     id: string;
     pattern: string;

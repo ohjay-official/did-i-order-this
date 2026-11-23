@@ -1,13 +1,32 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 
+/** The commit this build came from: Vercel's build variable, else local git, else "unknown". */
+function buildSha(): { sha: string; source: string } {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return { sha: process.env.VERCEL_GIT_COMMIT_SHA, source: "vercel" };
+  try {
+    return { sha: execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(), source: "git" };
+  } catch {
+    return { sha: "unknown", source: "unknown" };
+  }
+}
+
 export default defineConfig({
   appType: "mpa",
   plugins: [
+    {
+      // /build-info.json names the commit that was deployed, so a proof run can record it.
+      name: "build-info",
+      apply: "build",
+      generateBundle() {
+        this.emitFile({ type: "asset", fileName: "build-info.json", source: `${JSON.stringify(buildSha())}\n` });
+      },
+    },
     {
       name: "preview-404",
       configurePreviewServer(server) {

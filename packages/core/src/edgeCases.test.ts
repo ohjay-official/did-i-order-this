@@ -6,7 +6,7 @@ import {
   normalizeOrderId,
   normalizeTracking,
 } from "./normalize.ts";
-import { STORED_NOT_EXPECTED_HEADLINE, decideVerdict, isCarrierClaim, isKnownSender } from "./verdict.ts";
+import { NO_HISTORY_RISKY_HEADLINE, STORED_NOT_EXPECTED_HEADLINE, decideVerdict, isCarrierClaim, isKnownSender } from "./verdict.ts";
 import { ingestOrderFromClaim, ingestSenderFromClaim, ingestShipmentFromClaim } from "./ingest.ts";
 import { extractCandidateNumbers, runLimitedCheck } from "./limitedCheck.ts";
 import type { EmailClaim, LedgerSnapshot, OfficialPack } from "./types.ts";
@@ -104,7 +104,8 @@ describe("decideVerdict edge cases", () => {
       cited_numbers: [{ kind: "invoice", value: "INV-1" }],
     });
     expect(decideVerdict(renewal, ledger, pack).outcome).toBe("warning");
-    expect(decideVerdict(renewal, empty, pack).headline).toBe("You have no history with this sender.");
+    expect(decideVerdict(renewal, empty, pack).outcome).toBe("neutral");
+    expect(decideVerdict(renewal, empty, pack).headline).toBe(NO_HISTORY_RISKY_HEADLINE);
   });
 
   it("an unclassified email that cites an expected parcel is safe; a stored but not expected one warns; otherwise neutral", () => {

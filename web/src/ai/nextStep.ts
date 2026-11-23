@@ -45,7 +45,7 @@ export interface NextStepInput {
   claim: EmailClaim;
   verdict: Pick<Verdict, "outcome" | "headline" | "reasons">;
   pack: OfficialPack;
-  /** The real sender domain from the From header, when known. */
+  /** A sender domain the app verified itself (a built-in sample). Never a pasted From line. */
   senderDomain?: string;
   /** The email text: the action is read from it in code. */
   emailText?: string;
@@ -197,7 +197,7 @@ function mapInferenceSource(value: unknown): InferenceSourceValue {
 }
 
 /**
- * The cloud path uses the App Check app and PREFER_IN_CLOUD; the device path
+ * The cloud path uses the App Check app and ONLY_IN_CLOUD; the device path
  * uses the app with no App Check and ONLY_ON_DEVICE, so it loads nothing
  * from Google.
  */

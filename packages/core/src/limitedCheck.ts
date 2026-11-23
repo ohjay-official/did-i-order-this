@@ -67,9 +67,15 @@ export function runLimitedCheck(
         numberLines.push(`The number ${value} matches a shipment you are expecting.`);
         const row = expectedRows.find((item) => normalizeTracking(item.trackingNumber) === value);
         const carrier = (row?.carrier ?? inferCarrierFromTracking(value) ?? "").toLowerCase();
-        const sameCarrier = official?.role === "carrier" && carrier !== "" && carrier.includes(official.name.toLowerCase());
+        const name = official?.name.toLowerCase() ?? "";
+        // Whole words only: "usps" does not name "ups".
+        const namesCarrier = name !== "" && new RegExp(`(^|[^a-z0-9])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`).test(carrier);
+        const sameCarrier = official?.role === "carrier" && carrier !== "" && namesCarrier;
         if (!sameCarrier) {
           leaked.push(`The email cites your real tracking number ${value} from a sender that is not the carrier's official domain, so the number has likely leaked.`);
+        } else if (!emailMeta.senderVerified) {
+          // A From line in pasted text is whatever the text says, so it cannot clear the number.
+          leaked.push(`The email cites your real tracking number ${value}, but its sender cannot be verified here, so treat the number as likely leaked and use the carrier's own app or site.`);
         }
       } else if (all.includes(value)) {
         numberLines.push(`The number ${value} is stored on this device, but not as an expected parcel.`);

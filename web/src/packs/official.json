@@ -1,22 +1,212 @@
 {
   "version": "2026-11-23",
   "officialDomains": [
-    { "domain": "dhl.com", "name": "DHL", "role": "carrier" },
-    { "domain": "ups.com", "name": "UPS", "role": "carrier" },
-    { "domain": "usps.com", "name": "USPS", "role": "carrier" },
-    { "domain": "fedex.com", "name": "FedEx", "role": "carrier" },
-    { "domain": "dhl.de", "name": "DHL", "role": "carrier" },
-    { "domain": "royalmail.com", "name": "Royal Mail", "role": "carrier" },
-    { "domain": "evri.com", "name": "Evri", "role": "carrier" },
-    { "domain": "dpd.co.uk", "name": "DPD", "role": "carrier" },
-    { "domain": "paypal.com", "name": "PayPal", "role": "bank" }
+    {
+      "domain": "dhl.com",
+      "name": "DHL",
+      "role": "carrier"
+    },
+    {
+      "domain": "ups.com",
+      "name": "UPS",
+      "role": "carrier"
+    },
+    {
+      "domain": "usps.com",
+      "name": "USPS",
+      "role": "carrier"
+    },
+    {
+      "domain": "fedex.com",
+      "name": "FedEx",
+      "role": "carrier"
+    },
+    {
+      "domain": "dhl.de",
+      "name": "DHL",
+      "role": "carrier"
+    },
+    {
+      "domain": "royalmail.com",
+      "name": "Royal Mail",
+      "role": "carrier"
+    },
+    {
+      "domain": "evri.com",
+      "name": "Evri",
+      "role": "carrier"
+    },
+    {
+      "domain": "dpd.co.uk",
+      "name": "DPD",
+      "role": "carrier"
+    },
+    {
+      "domain": "paypal.com",
+      "name": "PayPal",
+      "role": "bank"
+    }
+  ],
+  "storeDomains": [
+    {
+      "domain": "ebay.com",
+      "name": "eBay",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "ebay.co.uk",
+      "name": "eBay",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "etsy.com",
+      "name": "Etsy",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "walmart.com",
+      "name": "Walmart",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "target.com",
+      "name": "Target",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "bestbuy.com",
+      "name": "Best Buy",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "ikea.com",
+      "name": "IKEA",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "zara.com",
+      "name": "Zara",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "asos.com",
+      "name": "ASOS",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "argos.co.uk",
+      "name": "Argos",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "temu.com",
+      "name": "Temu",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "aliexpress.com",
+      "name": "AliExpress",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "nike.com",
+      "name": "Nike",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "adidas.com",
+      "name": "adidas",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "costco.com",
+      "name": "Costco",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "homedepot.com",
+      "name": "The Home Depot",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "chewy.com",
+      "name": "Chewy",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "newegg.com",
+      "name": "Newegg",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "tesco.com",
+      "name": "Tesco",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "marksandspencer.com",
+      "name": "Marks & Spencer",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "uniqlo.com",
+      "name": "Uniqlo",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "hm.com",
+      "name": "H&M",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "zalando.com",
+      "name": "Zalando",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    },
+    {
+      "domain": "jumia.com.ng",
+      "name": "Jumia",
+      "dmarc": "reject",
+      "checked": "2026-11-23"
+    }
   ],
   "lureTemplates": [
     {
       "id": "fee-to-release",
       "pattern": "\"asked_action\":\"pay\"",
       "note": "The wording asks for a payment, which is common in parcel-hold lures.",
-      "appliesTo": { "roles": ["carrier"], "kinds": ["carrier_update", "delivery_problem"] }
+      "appliesTo": {
+        "roles": [
+          "carrier"
+        ],
+        "kinds": [
+          "carrier_update",
+          "delivery_problem"
+        ]
+      }
     }
   ]
 }

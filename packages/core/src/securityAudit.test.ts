@@ -8,6 +8,8 @@ import pack0 from "../../../web/src/packs/official.json" with { type: "json" };
 import {
   findOfficialDomain,
   LOOKALIKE_MATCH_HEADLINE,
+  RELAY_ORDER_HEADLINE,
+  STORE_UNVERIFIED_HEADLINE,
   MAX_IMPORT_BYTES,
   NOTHING_EXPECTED_HEADLINE,
   STORED_NOT_EXPECTED_HEADLINE,
@@ -28,6 +30,8 @@ import {
 } from "./index.ts";
 
 const pack = pack0 as OfficialPack;
+/** The official pack with amazon.com added to the vetted store list, to exercise the Safe path. */
+const vettedPack: OfficialPack = { ...pack, storeDomains: [{ domain: "amazon.com", name: "Amazon", dmarc: "reject", checked: "test" }] };
 const now = "2026-11-20T00:00:00Z";
 const ledger: LedgerSnapshot = {
   orders: [{ id: "o1", merchant: "Amazon", senderDomain: "amazon.com", orderId: "112-1234567-7654321", source: "import", confirmedAt: now }],
@@ -61,9 +65,15 @@ describe("H1: a leaked order number from another domain never gives Safe", () =>
     const claim = c({ claimed_party: { name: "Amazon", role: "merchant", domain: "amazon-label.example" }, asked_action: "download", email_kind: "shipment_notice", cited_numbers: [{ kind: "order", value: "112-1234567-7654321" }] });
     expect(decideVerdict(claim, ledger, pack, "on_device").outcome).not.toBe("safe");
   });
-  it("the same order number from the merchant's own domain (or a subdomain) still matches", () => {
+  it("the same order number from a subdomain is a relay (Neutral), and from the exact domain needs a vetted store for Safe", () => {
     const claim = c({ claimed_party: { name: "Amazon", role: "merchant", domain: "orders.amazon.com" }, email_kind: "receipt", cited_numbers: [{ kind: "order", value: "112-1234567-7654321" }] });
-    expect(decideVerdict(claim, ledger, pack, "on_device", { senderCheck: "verified" }).outcome).toBe("safe");
+    const relay = decideVerdict(claim, ledger, pack, "on_device", { senderCheck: "verified" });
+    expect(relay.outcome).toBe("neutral");
+    expect(relay.headline).toBe(RELAY_ORDER_HEADLINE);
+    const exact = { ...claim, claimed_party: { ...claim.claimed_party, domain: "amazon.com" } };
+    // amazon.com publishes DMARC p=quarantine, so it is not on the vetted list.
+    expect(decideVerdict(exact, ledger, pack, "on_device", { senderCheck: "verified" }).headline).toBe(STORE_UNVERIFIED_HEADLINE);
+    expect(decideVerdict(exact, ledger, vettedPack, "on_device", { senderCheck: "verified" }).outcome).toBe("safe");
   });
   it("a download demand with a matching tracking number from a non-carrier domain warns", () => {
     const claim = c({ claimed_party: { name: "UPS", role: "carrier", domain: "ups-label.example" }, asked_action: "download", email_kind: "carrier_update", cited_numbers: [{ kind: "tracking", value: "1Z999AA10123456784" }] });
@@ -204,7 +214,10 @@ describe("L1: only a notice that matches a stored order from the same domain can
   });
   it("a notice that cites a stored order from the same sender can be saved", () => {
     const claim = c({ claimed_party: { name: "Amazon", role: "merchant", domain: "amazon.com" }, email_kind: "shipment_notice", cited_numbers: [{ kind: "order", value: "112-1234567-7654321" }, { kind: "tracking", value: "1Z000AA10000000001" }] });
-    expect(canSaveShipmentFromClaim(claim, ledger, undefined, { senderCheck: "verified" })).toBe(true);
+    expect(canSaveShipmentFromClaim(claim, ledger, vettedPack, { senderCheck: "verified" })).toBe(true);
+    // Not on the vetted list, or no pack to check it against: not saved.
+    expect(canSaveShipmentFromClaim(claim, ledger, pack, { senderCheck: "verified" })).toBe(false);
+    expect(canSaveShipmentFromClaim(claim, ledger, undefined, { senderCheck: "verified" })).toBe(false);
     expect(canSaveShipmentFromClaim(claim, ledger)).toBe(false);
     expect(canSaveShipmentFromClaim({ ...claim, claimed_party: { ...claim.claimed_party, domain: "amazon-ship.example" } }, ledger)).toBe(false);
     expect(canSaveShipmentFromClaim({ ...claim, cited_numbers: claim.cited_numbers.slice(0, 1) }, ledger)).toBe(false);
