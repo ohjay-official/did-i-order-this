@@ -2518,7 +2518,7 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
 }
 
 .demo-next::before {
-  content: "Next step";
+  content: "Next, see a match";
   display: block;
   margin-bottom: 6px;
   color: #8b2a16;
@@ -2754,4 +2754,24 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
     width: 100%;
     margin-top: 4px;
   }
+}
+
+/* Static stamped mockups are illustrations, not live results (UI-NEXT 29) */
+.illus-note {
+  margin: 0;
+  padding: 14px 22px 0;
+  color: var(--secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.illus-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.is-ink .illus-note,
+.bento-tile .tile-visual.is-ink + .illus-note {
+  color: var(--secondary);
 }
