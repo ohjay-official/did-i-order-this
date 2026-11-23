@@ -19,7 +19,9 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
     main.querySelector("span[email]") ||
     main.querySelector("span.gD");
   const fromEmail = (fromEl?.getAttribute("email") ?? "").trim() || extractEmail(textContent(main.querySelector("span.go")));
-  const fromName = textContent(fromEl) || fromEmail;
+  // The display name is chosen by the sender. Strip angle brackets and quotes so
+  // a name like "UPS <alerts@ups.com>" cannot pose as the address on the From line.
+  const fromName = (textContent(fromEl).replace(/[<>"]/g, " ").replace(/\s+/g, " ").trim()) || fromEmail;
   const dateEl = main.querySelector("span.g3");
   const date = dateEl?.getAttribute("title") || textContent(dateEl);
   const bodies = [...main.querySelectorAll("div.a3s.aiL, div.a3s")];

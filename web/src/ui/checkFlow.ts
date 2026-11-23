@@ -1,6 +1,6 @@
 import type { EmailClaim, InferenceSourceValue } from "@did-i-order-this/core";
 import type { ReadClaimMode } from "../ai/readClaim.ts";
-import { describeAiError } from "../ai/aiError.ts";
+import { APP_CHECK_MESSAGE, describeAiError } from "../ai/aiError.ts";
 import type { SampleThread } from "../demo/seed.ts";
 import { chooseInferenceMode } from "../consent.ts";
 
@@ -14,6 +14,8 @@ import { chooseInferenceMode } from "../consent.ts";
 export const SAMPLE_NOTE =
   "On-device AI did not run in this browser. This check used the structured claim prepared for this sample thread.";
 export const NOT_SENT_NOTE = "The email was not sent to the cloud.";
+export const NOT_CHECKED_HEADLINE = "Not checked with AI";
+export const DECLINED_MESSAGE = "You chose not to send this email to the cloud. Run a limited check (no AI) instead.";
 
 /**
  * A cloud read that never answers must not leave the judge on a spinner. This
@@ -43,12 +45,15 @@ export type CheckFlowResult =
   | { kind: "ai"; claim: EmailClaim; inferenceSource: InferenceSourceValue; usedRememberedConsent: boolean }
   | { kind: "sample"; claim: EmailClaim; reason: SampleFallbackReason; detail: string }
   | { kind: "limited" }
+  | { kind: "not_sent"; message: string; canLimited: true }
   | { kind: "error"; message: string; canLimited: true };
 
 export interface CheckFlowDeps {
   readClaim: (text: string, mode: ReadClaimMode) => Promise<{ claim: EmailClaim; inferenceSource: InferenceSourceValue }>;
   firebaseConfigured: () => boolean;
   cloudAvailable: () => boolean;
+  /** True once App Check has failed in this tab: no dialog is shown and nothing is sent. */
+  cloudBlocked?: () => boolean;
   askForCloudConsent: () => Promise<boolean>;
   consentMemory: { has(): boolean; remember(): void };
   /** Called once the judge has agreed (or a remembered yes applies) and the cloud read starts. */
@@ -82,6 +87,12 @@ export async function runCheckFlow(
     return thread ? sample(thread, "no_cloud") : { kind: "limited" };
   }
 
+  if (deps.cloudBlocked?.()) {
+    const reason = `The cloud check could not run. ${APP_CHECK_MESSAGE}`;
+    if (thread) return sample(thread, "cloud_failed", reason);
+    return { kind: "error", message: reason, canLimited: true };
+  }
+
   // A remembered yes covers sample threads only. A pasted email is the
   // person's own mail, so it is always asked about before it leaves the device.
   const remembered = Boolean(thread) && deps.consentMemory.has();
@@ -89,7 +100,7 @@ export async function runCheckFlow(
     const mode = await chooseInferenceMode(false, deps.askForCloudConsent);
     if (mode === "cancelled") {
       if (thread) return sample(thread, "declined", NOT_SENT_NOTE);
-      return { kind: "error", message: `The AI read could not run. ${NOT_SENT_NOTE}`, canLimited: true };
+      return { kind: "not_sent", message: DECLINED_MESSAGE, canLimited: true };
     }
     deps.consentMemory.remember();
   }

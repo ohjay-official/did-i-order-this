@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { JSDOM } from "jsdom";
 import { extractOpenGmailThread } from "./extract.ts";
+import { senderDomainFromHeader } from "@did-i-order-this/core";
 
 describe("extractOpenGmailThread", () => {
   it("passes the open thread text only, including From and Subject", () => {
@@ -22,5 +23,18 @@ describe("extractOpenGmailThread", () => {
   it("returns null when no thread is open", () => {
     const dom = new JSDOM(`<!doctype html><div role="main"><div>Inbox</div></div>`);
     expect(extractOpenGmailThread(dom.window.document)).toBeNull();
+  });
+});
+
+describe("display-name spoofing (security audit H2, 23 Nov 2026)", () => {
+  it("a display name holding an address cannot pose as the sender", () => {
+    const dom = new JSDOM(`<!doctype html><div role="main">
+      <h2 class="hP">Parcel held</h2>
+      <span class="gD" email="billing@ups-release.example">UPS &lt;alerts@ups.com&gt;</span>
+      <div class="a3s aiL">Parcel 1Z999AA10123456784 held. Pay 2.99.</div></div>`);
+    const email = extractOpenGmailThread(dom.window.document)!;
+    expect(email.fromDomain).toBe("ups-release.example");
+    expect(email.text.split("\n")[0]).toBe("From: UPS alerts@ups.com <billing@ups-release.example>");
+    expect(senderDomainFromHeader(email.text)).toBe("ups-release.example");
   });
 });

@@ -6,7 +6,7 @@ import {
   normalizeOrderId,
   normalizeTracking,
 } from "./normalize.ts";
-import { decideVerdict, isCarrierClaim, isKnownSender } from "./verdict.ts";
+import { STORED_NOT_EXPECTED_HEADLINE, decideVerdict, isCarrierClaim, isKnownSender } from "./verdict.ts";
 import { ingestOrderFromClaim, ingestSenderFromClaim, ingestShipmentFromClaim } from "./ingest.ts";
 import { extractCandidateNumbers, runLimitedCheck } from "./limitedCheck.ts";
 import type { EmailClaim, LedgerSnapshot, OfficialPack } from "./types.ts";
@@ -82,14 +82,14 @@ describe("decideVerdict edge cases", () => {
     expect(verdict.reasons.join(" ")).toContain("Plain-text fallback matched.");
   });
 
-  it("an unmatched shipment notice asks to confirm instead of warning", () => {
+  it("an unmatched shipment notice is neutral, not a warning, and is not offered for saving", () => {
     const verdict = decideVerdict(
       claim({ email_kind: "shipment_notice", cited_numbers: [{ kind: "order", value: "X-1" }] }),
       empty,
       pack,
     );
     expect(verdict.outcome).toBe("neutral");
-    expect(verdict.headline).toBe("This looks like a shipment notice. Confirm to save it on this device.");
+    expect(verdict.headline).toBe("This looks like a shipment notice, but it does not match an order stored on this device.");
   });
 
   it("billing from a known sender with an unknown number warns; with no history it stays neutral", () => {
@@ -107,13 +107,13 @@ describe("decideVerdict edge cases", () => {
     expect(decideVerdict(renewal, empty, pack).headline).toBe("You have no history with this sender.");
   });
 
-  it("an unclassified email that cites a stored number is safe, otherwise neutral", () => {
-    const ledger: LedgerSnapshot = {
-      ...empty,
-      shipments: [{ id: "s", trackingNumber: "1Z999AA10123456784", expected: false, source: "import", confirmedAt: "x" }],
-    };
+  it("an unclassified email that cites an expected parcel is safe; a stored but not expected one warns; otherwise neutral", () => {
+    const shipment = { id: "s", trackingNumber: "1Z999AA10123456784", expected: true, source: "import" as const, confirmedAt: "x" };
     const other = claim({ email_kind: "other", cited_numbers: [{ kind: "other", value: "1Z999AA10123456784" }] });
-    expect(decideVerdict(other, ledger, pack).outcome).toBe("safe");
+    expect(decideVerdict(other, { ...empty, shipments: [shipment] }, pack).outcome).toBe("safe");
+    const delivered = decideVerdict(other, { ...empty, shipments: [{ ...shipment, expected: false }] }, pack);
+    expect(delivered.outcome).toBe("warning");
+    expect(delivered.headline).toBe(STORED_NOT_EXPECTED_HEADLINE);
     expect(decideVerdict(other, empty, pack).outcome).toBe("neutral");
   });
 

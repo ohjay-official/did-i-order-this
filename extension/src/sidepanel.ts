@@ -1,5 +1,6 @@
 import {
   OrderHistoryParseError,
+  canSaveShipmentFromClaim,
   decideVerdict,
   ingestSenderFromClaim,
   ingestShipmentFromClaim,
@@ -138,7 +139,8 @@ function runLimited(): void {
 }
 
 async function runCheck(): Promise<void> {
-  if (!email) return;
+  if (!email || view.status === "checking") return;
+  const checking = email;
   view = { status: "checking" };
   render();
   if (!isFirebaseConfigured()) {
@@ -150,20 +152,22 @@ async function runCheck(): Promise<void> {
     return;
   }
   try {
-    const result = await readClaim(email.text, "only_on_device");
-    const verdict = decideVerdict(result.claim, ledger, getOfficialPack(), result.inferenceSource);
-    const shipment = ingestShipmentFromClaim(result.claim, {
-      fromDomain: email.fromDomain,
-      subject: email.subject,
+    // The sender domain is Gmail's own record of the address, not text parsed from the display name.
+    const result = await readClaim(checking.text, "only_on_device", { senderDomain: checking.fromDomain });
+    // Gmail moved to another email while this one was read: drop the stale result.
+    if (email?.text !== checking.text) return;
+    const verdict = decideVerdict(result.claim, ledger, getOfficialPack(), result.inferenceSource, {
+      emailText: checking.text,
     });
     view = {
       status: "done",
       verdict,
       claim: result.claim,
-      canSave: shipment !== null,
+      canSave: canSaveShipmentFromClaim(result.claim, ledger),
       saved: false,
     };
   } catch (error) {
+    if (email?.text !== checking.text) return;
     const detail = `The AI read could not run. ${describeAiError(error)}`;
     view = {
       status: "error",
@@ -174,7 +178,7 @@ async function runCheck(): Promise<void> {
 }
 
 async function saveCurrentShipment(): Promise<void> {
-  if (view.status !== "done" || !email) return;
+  if (view.status !== "done" || !view.canSave || !email) return;
   const shipment = ingestShipmentFromClaim(view.claim, {
     fromDomain: email.fromDomain,
     subject: email.subject,

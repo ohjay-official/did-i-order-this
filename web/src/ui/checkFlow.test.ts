@@ -73,7 +73,7 @@ describe("sample inbox check flow", () => {
     expect(result).toMatchObject({
       kind: "sample",
       reason: "cloud_failed",
-      detail: "The cloud check could not run. This page could not prove it is the real site (App Check). Reload the page and try again.",
+      detail: "The cloud check could not run. This browser could not pass Google's App Check, so the cloud check is unavailable here. Try another browser, or use Chrome with on-device AI.",
     });
   });
 
@@ -132,8 +132,8 @@ describe("sample inbox check flow", () => {
   it("pasted email with no prepared claim keeps Run a limited check after a decline or a cloud failure", async () => {
     const declined = deps({ askForCloudConsent: async () => false });
     expect(await runCheckFlow(pasted, declined.deps)).toEqual({
-      kind: "error",
-      message: "The AI read could not run. The email was not sent to the cloud.",
+      kind: "not_sent",
+      message: "You chose not to send this email to the cloud. Run a limited check (no AI) instead.",
       canLimited: true,
     });
     const failed = deps({ cloud: async () => Promise.reject(new Error("App Check attestation failed")) });
@@ -174,6 +174,17 @@ describe("sample inbox check flow", () => {
     expect((await runCheckFlow(thread, t.deps)).kind).toBe("sample");
     expect((await runCheckFlow(thread, t.deps)).kind).toBe("ai");
     expect(ask).toHaveBeenCalledTimes(2);
+  });
+
+  it("after an App Check failure in this tab: no dialog and no cloud call, with the reason shown", async () => {
+    const blocked = deps({ cloudBlocked: () => true });
+    const sampleResult = await runCheckFlow(thread, blocked.deps);
+    expect(sampleResult).toMatchObject({ kind: "sample", reason: "cloud_failed" });
+    expect(sampleResult.kind === "sample" && sampleResult.detail).toMatch(/could not pass Google's App Check/);
+    const pastedResult = await runCheckFlow(pasted, blocked.deps);
+    expect(pastedResult).toMatchObject({ kind: "error", canLimited: true });
+    expect(blocked.consent).not.toHaveBeenCalled();
+    expect(blocked.calls).toEqual(["only_on_device", "only_on_device"]);
   });
 
   it("keeps the exact prepared-sample note the film looks for", () => {
