@@ -59,21 +59,60 @@ export async function loadLedger(): Promise<LedgerSnapshot> {
   }
 }
 
+/** Demo rows: the seed order and sender, and the demo parcel the sample inbox and the home page chip store. */
+export function isDemoRow(row: { source?: string; confirmedAt?: string }): boolean {
+  return row.source === "demo_seed" || row.confirmedAt === "demo_seed";
+}
+
+/**
+ * The ledger a check should use. The fictional sample emails are checked
+ * against everything, demo rows included. Someone's own pasted mail is checked
+ * against their own rows only, so the public demo order and demo parcel never
+ * match a real email.
+ */
+export function ledgerForCheck(ledger: LedgerSnapshot, isSample: boolean): LedgerSnapshot {
+  if (isSample) return ledger;
+  return {
+    orders: ledger.orders.filter((row) => !isDemoRow(row)),
+    shipments: ledger.shipments.filter((row) => !isDemoRow(row)),
+    senders: ledger.senders.filter((row) => !isDemoRow(row)),
+  };
+}
+
+/**
+ * Puts the demo data back as it started. Only demo rows are removed; orders,
+ * parcels and senders the person imported or saved are kept.
+ */
 export async function resetToDemoSeed(): Promise<LedgerSnapshot> {
   const seed = demoSeed();
   const db = await openDb();
   try {
-    await runTransaction(db, ["orders", "shipments", "senders", "meta"], "readwrite", (tx) => {
-      tx.objectStore("orders").clear();
-      tx.objectStore("shipments").clear();
-      tx.objectStore("senders").clear();
-      for (const order of seed.orders) tx.objectStore("orders").put(order);
-      for (const shipment of seed.shipments) tx.objectStore("shipments").put(shipment);
-      for (const sender of seed.senders) tx.objectStore("senders").put(sender);
+    return await runTransaction(db, ["orders", "shipments", "senders", "meta"], "readwrite", (tx) => {
+      const kept: LedgerSnapshot = { orders: [], shipments: [], senders: [] };
+      const names = ["orders", "shipments", "senders"] as const;
+      for (const name of names) {
+        const store = tx.objectStore(name);
+        const all = store.getAll();
+        all.onsuccess = () => {
+          for (const row of (all.result ?? []) as Array<{ id?: string; domain?: string; source?: string; confirmedAt?: string }>) {
+            if (isDemoRow(row)) {
+              store.delete((name === "senders" ? row.domain : row.id) as IDBValidKey);
+            } else {
+              (kept[name] as unknown[]).push(row);
+            }
+          }
+          const fresh = seed[name] as Array<{ id?: string; domain?: string }>;
+          for (const row of fresh) {
+            // A real sender with the same domain as the demo sender is kept as it is.
+            if (name === "senders" && kept.senders.some((item) => item.domain === row.domain)) continue;
+            store.put(row);
+            (kept[name] as unknown[]).push(row);
+          }
+        };
+      }
       tx.objectStore("meta").put(true, "seeded");
-      return () => seed;
+      return () => kept;
     });
-    return seed;
   } finally {
     db.close();
   }

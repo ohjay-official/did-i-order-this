@@ -1,10 +1,12 @@
 import {
   OrderHistoryParseError,
+  canSaveShipmentFromClaim,
   decideVerdict,
   ingestSenderFromClaim,
   ingestShipmentFromClaim,
   parseOrderHistoryFile,
   runLimitedCheck,
+  senderDomainFromHeader,
   type EmailClaim,
   type InferenceSourceValue,
   type LedgerSender,
@@ -21,13 +23,14 @@ import {
   loadMatchingShipmentDemo,
   matchingShipmentDemo,
 } from "../demo/shipmentDemo.ts";
-import { SAMPLE_NOTE, runCheckFlow } from "./checkFlow.ts";
+import { NOT_CHECKED_HEADLINE, SAMPLE_NOTE, runCheckFlow } from "./checkFlow.ts";
+import { appCheckGate } from "../ai/appCheckGate.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
-import { loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
+import { ledgerForCheck, loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { importNoteText } from "../ledger/importNote.ts";
 import { getOfficialPack } from "../packs/official.ts";
-import { extractFromDomain } from "../site/emailText.ts";
 import { wireModalKeys } from "./dialogKeys.ts";
+import { CONSENT_DIALOG_HTML } from "./consentDialog.ts";
 
 type CheckState =
   | { status: "idle" }
@@ -42,8 +45,11 @@ type CheckState =
       cloudConsentRemembered: boolean;
       canSaveShipment: boolean;
       saved: boolean;
+      /** Which email this verdict belongs to, so it is never shown or saved under another. */
+      emailKey: string;
     }
   | { status: "limited"; result: LimitedCheckResult }
+  | { status: "not_sent"; message: string }
   | { status: "error"; message: string; canLimited: boolean };
 
 export class InboxApp {
@@ -62,6 +68,8 @@ export class InboxApp {
   private check: CheckState = { status: "idle" };
   private note = "";
   private importNote = "";
+  /** Bumped on every check and every switch of email; a result from an older check is dropped. */
+  private checkSeq = 0;
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -87,7 +95,7 @@ export class InboxApp {
       const sample = sampleThreads.find((thread) => formatEmailText(thread).trim() === text);
       return {
         text,
-        fromDomain: sample?.fromDomain ?? extractFromDomain(text),
+        fromDomain: sample?.fromDomain ?? senderDomainFromHeader(text),
         subject: sample?.subject ?? (text.match(/^Subject:\s*(.+)$/im)?.[1] ?? "Pasted email"),
         sample,
       };
@@ -100,6 +108,14 @@ export class InboxApp {
       subject: thread.subject,
       sample: thread,
     };
+  }
+
+  private emailKey(email: { text: string } | null): string {
+    return email ? `${this.mode}:${this.mode === "thread" ? this.selectedId : ""}:${email.text}` : "";
+  }
+
+  private isBusy(): boolean {
+    return this.check.status === "checking" || this.check.status === "consent";
   }
 
   private render(): void {
@@ -144,7 +160,7 @@ export class InboxApp {
             <h2>Paste an email</h2>
             <label class="visually-hidden" for="app-paste">Paste the email you want to check</label>
             <textarea id="app-paste" data-paste rows="5" placeholder="Paste the email">${escapeHtml(this.pasteText)}</textarea>
-            <button type="submit" class="btn" data-action="check-paste">Check pasted email</button>
+            <button type="submit" class="btn" data-action="check-paste"${this.isBusy() ? " disabled" : ""}>Check pasted email</button>
           </form>
         </aside>
         <section class="thread-pane">
@@ -167,6 +183,7 @@ export class InboxApp {
       button.addEventListener("click", () => {
         this.selectedId = button.dataset.thread ?? "";
         this.mode = "thread";
+        this.checkSeq += 1;
         this.check = { status: "idle" };
         this.note = "";
         this.render();
@@ -205,8 +222,10 @@ export class InboxApp {
     });
     pasteForm?.addEventListener("submit", (event) => {
       event.preventDefault();
+      if (this.isBusy()) return;
       this.pasteText = pasteInput?.value ?? this.pasteText;
       this.mode = "paste";
+      this.checkSeq += 1;
       void this.runCheck();
     });
   }
@@ -237,7 +256,7 @@ export class InboxApp {
         </header>
         <pre class="email-body" tabindex="0">${escapeHtml(thread.body)}</pre>
         <div class="actions">
-          <button type="button" class="btn btn-primary" data-action="check">Check this email</button>
+          <button type="button" class="btn btn-primary" data-action="check"${this.isBusy() ? " disabled" : ""}>Check this email</button>
         </div>
       </article>
       ${this.renderResult()}
@@ -258,6 +277,14 @@ export class InboxApp {
     }
     if (this.check.status === "consent") {
       return "";
+    }
+    if (this.check.status === "not_sent") {
+      return `<div class="result result-error" data-not-sent>
+        <p class="outcome">Not sent</p>
+        <h2 class="headline">${escapeHtml(NOT_CHECKED_HEADLINE)}</h2>
+        <p class="note">${escapeHtml(this.check.message)}</p>
+        <div class="actions"><button type="button" class="btn btn-secondary" data-action="limited">Run a limited check (no AI)</button></div>
+      </div>`;
     }
     if (this.check.status === "error") {
       return `<div class="result result-error">
@@ -365,19 +392,7 @@ export class InboxApp {
   }
 
   private renderConsent(): string {
-    return `
-      <div class="consent-overlay" role="dialog" aria-modal="true" aria-labelledby="consent-title">
-        <div class="consent-card">
-          <h2 id="consent-title">Check this email in the cloud?</h2>
-          <p>No on-device AI is available. Checking in the cloud would send this email off the device.</p>
-          <p>The cloud uses Google's free Gemini tier, so Google may keep this text and people at Google may review it.</p>
-          <div class="actions">
-            <button type="button" class="btn btn-primary" data-action="consent-yes">Check in the cloud</button>
-            <button type="button" class="btn btn-secondary" data-action="consent-no">Do not send</button>
-          </div>
-        </div>
-      </div>
-    `;
+    return CONSENT_DIALOG_HTML;
   }
 
   private consentResolver: ((value: boolean) => void) | null = null;
@@ -395,8 +410,13 @@ export class InboxApp {
 
   private async resetLedger(): Promise<void> {
     this.ledger = await resetToDemoSeed();
+    this.checkSeq += 1;
     this.check = { status: "idle" };
-    this.note = "Demo data reset. There are no expected parcels.";
+    const expected = this.expectedCount();
+    this.note =
+      expected === 0
+        ? "Demo data reset. There are no expected parcels."
+        : `Demo data reset. Your imported orders and parcels were kept (${expected === 1 ? "1 expected parcel" : `${expected} expected parcels`}).`;
     this.importNote = "";
     this.render();
   }
@@ -439,20 +459,17 @@ export class InboxApp {
     const result = runLimitedCheck(
       current.text,
       { fromDomain: current.fromDomain },
-      this.ledger,
+      ledgerForCheck(this.ledger, Boolean(current.sample)),
       getOfficialPack(),
     );
     this.check = { status: "limited", result };
     this.render();
   }
 
-  private finishWithSampleClaim(thread: SampleThread, fallbackDetail = ""): void {
+  private finishWithSampleClaim(thread: SampleThread, emailKey: string, fallbackDetail = ""): void {
     const claim = thread.expectedClaim;
-    const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), undefined);
-    const shipment = ingestShipmentFromClaim(claim, {
-      fromDomain: thread.fromDomain,
-      subject: thread.subject,
-    });
+    const ledger = ledgerForCheck(this.ledger, true);
+    const verdict = decideVerdict(claim, ledger, getOfficialPack(), undefined, { emailText: formatEmailText(thread) });
     this.check = {
       status: "done",
       verdict,
@@ -460,23 +477,23 @@ export class InboxApp {
       usedSampleClaim: true,
       fallbackDetail,
       cloudConsentRemembered: false,
-      canSaveShipment: shipment !== null,
+      canSaveShipment: canSaveShipmentFromClaim(claim, ledger),
       saved: false,
+      emailKey,
     };
     this.render();
   }
 
   private finishWithClaim(
-    meta: { fromDomain: string; subject: string },
+    email: { text: string; sample?: SampleThread },
+    emailKey: string,
     claim: EmailClaim,
     inferenceSource?: InferenceSourceValue,
     cloudConsentRemembered = false,
   ): void {
-    const verdict = decideVerdict(claim, this.ledger, getOfficialPack(), inferenceSource);
-    const shipment = ingestShipmentFromClaim(claim, {
-      fromDomain: meta.fromDomain,
-      subject: meta.subject,
-    });
+    // Demo rows count only for the fictional sample emails, never for someone's own mail.
+    const ledger = ledgerForCheck(this.ledger, Boolean(email.sample));
+    const verdict = decideVerdict(claim, ledger, getOfficialPack(), inferenceSource, { emailText: email.text });
     this.check = {
       status: "done",
       verdict,
@@ -484,8 +501,9 @@ export class InboxApp {
       usedSampleClaim: false,
       fallbackDetail: "",
       cloudConsentRemembered,
-      canSaveShipment: shipment !== null,
+      canSaveShipment: canSaveShipmentFromClaim(claim, ledger),
       saved: false,
+      emailKey,
     };
     this.render();
   }
@@ -519,8 +537,13 @@ export class InboxApp {
   }
 
   private async runCheckInner(): Promise<void> {
+    if (this.isBusy()) return;
     const current = this.currentEmail();
     if (!current) return;
+    const seq = (this.checkSeq += 1);
+    const key = this.emailKey(current);
+    // A result is used only if no newer check started and the same email is still on screen.
+    const stillCurrent = () => seq === this.checkSeq && this.emailKey(this.currentEmail()) === key;
     this.check = { status: "checking", where: "device" };
     this.note = "";
     this.render();
@@ -531,9 +554,11 @@ export class InboxApp {
         readClaim,
         firebaseConfigured: isFirebaseConfigured,
         cloudAvailable: isCloudAiAvailable,
+        cloudBlocked: () => appCheckGate.isBlocked(),
         askForCloudConsent: () => this.askForCloudConsent(),
         consentMemory: cloudConsentMemory,
         onCloudStart: () => {
+          if (!stillCurrent()) return;
           this.check = { status: "checking", where: "cloud" };
           this.render();
         },
@@ -541,13 +566,19 @@ export class InboxApp {
       },
     );
 
+    if (!stillCurrent()) return;
     if (outcome.kind === "ai") {
       const remembered = outcome.inferenceSource === "in_cloud" && cloudConsentMemory.has();
-      this.finishWithClaim(current, outcome.claim, outcome.inferenceSource, remembered);
+      this.finishWithClaim(current, key, outcome.claim, outcome.inferenceSource, remembered);
       return;
     }
     if (outcome.kind === "sample" && current.sample) {
-      this.finishWithSampleClaim(current.sample, outcome.detail);
+      this.finishWithSampleClaim(current.sample, key, outcome.detail);
+      return;
+    }
+    if (outcome.kind === "not_sent") {
+      this.check = { status: "not_sent", message: outcome.message };
+      this.render();
       return;
     }
     if (outcome.kind === "error") {
@@ -559,9 +590,9 @@ export class InboxApp {
   }
 
   private async saveShipment(): Promise<void> {
-    if (this.check.status !== "done") return;
+    if (this.check.status !== "done" || !this.check.canSaveShipment) return;
     const current = this.currentEmail();
-    if (!current) return;
+    if (!current || this.emailKey(current) !== this.check.emailKey) return;
     const shipment = ingestShipmentFromClaim(this.check.claim, {
       fromDomain: current.fromDomain,
       subject: current.subject,

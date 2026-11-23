@@ -317,10 +317,18 @@ function parseCsvText(text: string): { orders: LedgerOrder[]; shipments: LedgerS
   return parseGeneric(headers, rows);
 }
 
+/** Order-history files are small. These caps keep a crafted file from filling the tab's memory. */
+export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+export const MAX_ZIP_ENTRY_BYTES = 50 * 1024 * 1024;
+
 function csvFromZip(bytes: Uint8Array): string {
   let files: Record<string, Uint8Array>;
   try {
-    files = unzipSync(bytes);
+    // Inflate only CSV entries of a sane size; every other entry is skipped unread.
+    files = unzipSync(bytes, {
+      filter: (file) =>
+        file.originalSize <= MAX_ZIP_ENTRY_BYTES && /\.csv$/i.test(file.name) && !file.name.includes("__MACOSX"),
+    });
   } catch {
     throw new OrderHistoryParseError("This ZIP file could not be read. It may be damaged or not a ZIP.");
   }
@@ -339,6 +347,9 @@ export function parseOrderHistoryFile(file: OrderHistoryFile): { orders: LedgerO
   const name = file.name.toLowerCase();
   if (file.bytes.length === 0) {
     throw new OrderHistoryParseError("This file is empty.");
+  }
+  if (file.bytes.length > MAX_IMPORT_BYTES) {
+    throw new OrderHistoryParseError("This file is larger than 25 MB, which is too big for an order history. It was not imported.");
   }
   if (name.endsWith(".zip")) {
     return parseCsvText(csvFromZip(file.bytes));

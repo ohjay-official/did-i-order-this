@@ -45,7 +45,7 @@ The verdict and the prepared-sample note are the same as Path C. The second line
 
 | What failed | Second line on screen |
 | --- | --- |
-| App Check (for example a privacy browser, or automated Chrome) | **The cloud check could not run. This page could not prove it is the real site (App Check). Reload the page and try again.** |
+| App Check (for example a privacy browser, or automated Chrome) | **The cloud check could not run. This browser could not pass Google's App Check, so the cloud check is unavailable here. Try another browser, or use Chrome with on-device AI.** The page asks Google for an App Check token before it sends anything, so when App Check fails the email is not sent. After one App Check failure, cloud checks stay off for the rest of the tab: the dialog is not shown again and the same line appears. |
 | Project quota | **The cloud check could not run. The cloud limit for this project was reached. Wait a minute and try again, or run a limited check.** |
 | Offline, or reCAPTCHA blocked so the cloud never answers (gives up after 20 seconds) | **The cloud check could not run. The cloud did not answer in time. Check your connection and try again.** |
 | Network error | **The cloud check could not run. The cloud could not be reached. Check your connection and try again.** |
@@ -69,11 +69,11 @@ After any result in step 1, a card says **Next, see a match. This stores the UPS
 
 Steps 3 to 7 were walked on this box with Path C (Do not send) on every thread. With AI (Paths A and B) the headlines are the same, because the same deterministic code decides them; the label changes to the AI source.
 
-The older route still works: check **Northwind Outfitters**, **Your order has shipped** with AI, then click **Save this shipment**.
+**Save this shipment** appears only for a shipment notice that cites an order stored on this device from the same sender. The Northwind sample cites order NW-10482, which is not stored, so it gives **Neutral**, **This looks like a shipment notice, but it does not match an order stored on this device.** and offers no save. Use the loader above for the demo.
 
 ## 3. Paste your own email
 
-Paste an email that is not one of the samples and click **Check pasted email**. With no on-device AI and **Do not send**, you see **Error**, **The check could not finish**, **The AI read could not run. The email was not sent to the cloud.** and **Run a limited check (no AI)**. That button gives **Limited check only. This is not a full verdict.** with **Limited check (no AI)**.
+Paste an email that is not one of the samples and click **Check pasted email**. With no on-device AI and **Do not send**, you see **Not sent**, **Not checked with AI**, **You chose not to send this email to the cloud. Run a limited check (no AI) instead.** and **Run a limited check (no AI)**. That button gives **Limited check only. This is not a full verdict.** with **Limited check (no AI)**.
 
 **Import order history** accepts an Amazon ZIP or CSV, a PayPal CSV, or a generic CSV. The file is read in the browser and not uploaded.
 
@@ -83,6 +83,7 @@ On https://did-i-order-this.vercel.app, in a browser without on-device AI and wi
 
 - **Fake DHL**: **You're not expecting any parcel right now.** with **On-device AI did not run in this browser. This check used the structured claim prepared for this sample.**
 - **Real UPS**: the chip first stores the matching UPS shipment. This works even as the very first tap on a brand-new device (fixed in `c94c806`). Expect **This tracking number matches a shipment you are expecting.** and **Demo data: before this check, the chip saved UPS parcel 1Z999AA10123456784 from the Northwind sample as an expected parcel on this device. Reset demo data in the sample inbox removes it.**
+- With **Allow cloud** on and no on-device AI, each check opens the same **Check this email in the cloud?** dialog as the sample inbox, every time (the home page does not remember a yes). **Do not send** sends nothing: a sample chip shows its prepared-claim result with **The email was not sent to the cloud.**, and pasted mail gets a limited check with **You chose not to send this email to the cloud, so this is a limited check (no AI).** If the cloud check fails, the result says why, as in Path D.
 - After **Real UPS**, the **Fake DHL** chip says **This tracking number is not one of your shipments.**, because a parcel is now expected. **Reset demo data** in the sample inbox brings back the first headline.
 
 ## 5. Chrome extension (desktop Chrome 138 or later)

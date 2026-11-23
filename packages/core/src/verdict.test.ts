@@ -304,14 +304,15 @@ describe("decideVerdict: unknown sender / unclassifiable", () => {
     expect(verdict.outcome).toBe("neutral");
   });
 
-  it("is Safe if a cited number happens to match a ledger item", () => {
+  it("is Safe if a cited order number matches an order from the same sender, and not otherwise", () => {
     const claim: EmailClaim = {
-      claimed_party: { name: "Unknown desk", role: "unknown" },
+      claimed_party: { name: "Unknown desk", role: "unknown", domain: deliveredOrder.senderDomain },
       asked_action: "none",
       cited_numbers: [{ kind: "order", value: "NW-10001" }],
       email_kind: "other",
     };
-    const verdict = decideVerdict(claim, emptyLedger, pack);
-    expect(verdict.outcome).toBe("safe");
+    expect(decideVerdict(claim, emptyLedger, pack).outcome).toBe("safe");
+    const noDomain: EmailClaim = { ...claim, claimed_party: { name: "Unknown desk", role: "unknown" } };
+    expect(decideVerdict(noDomain, emptyLedger, pack).outcome).toBe("neutral");
   });
 });

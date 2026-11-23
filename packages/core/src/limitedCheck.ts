@@ -1,4 +1,4 @@
-import { looksLikeTracking, normalizeDomain, normalizeTracking } from "./normalize.ts";
+import { findOfficialDomain, looksLikeTracking, normalizeDomain, normalizeTracking } from "./normalize.ts";
 import type { InferenceSourceLabel, LedgerSnapshot, OfficialPack } from "./types.ts";
 
 export interface LimitedCheckResult {
@@ -27,7 +27,7 @@ export function runLimitedCheck(
   const findings: string[] = [];
   const domain = normalizeDomain(emailMeta.fromDomain || "");
   if (domain) {
-    const official = pack.officialDomains.find((entry) => normalizeDomain(entry.domain) === domain);
+    const official = findOfficialDomain(pack, domain);
     if (official) {
       findings.push(`The From domain ${domain} is listed as official for ${official.name}.`);
     } else {
@@ -68,7 +68,7 @@ export function runLimitedCheck(
     }
     // The official pack patterns may be written against a structured claim.
     // Also look for plain fee-to-release wording in the raw email.
-    if (!matched && /pay|release fee|customs|duty/.test(blob) && lure.id === "fee-to-release") {
+    if (!matched && /\bpay\b|release fee|\bcustoms\b|\bduty\b|\bduties\b/.test(blob) && lure.id === "fee-to-release") {
       matched = true;
     }
     if (matched) findings.push(lure.note);

@@ -1,8 +1,9 @@
+import { senderDomainFromHeader } from "@did-i-order-this/core";
+
+/**
+ * The sender's domain, read from the real address on the From line of the
+ * header block (never the display name, and never an address in the body).
+ */
 export function extractFromDomain(emailText: string): string {
-  const angled = emailText.match(/From:\s*[^<\n]*<[^>@]+@([^>\s]+)>/i);
-  if (angled?.[1]) return angled[1].trim().toLowerCase();
-  const bare = emailText.match(/From:\s*([^\s@<>]+@([^\s>]+))/i);
-  if (bare?.[2]) return bare[2].trim().toLowerCase();
-  const any = emailText.match(/[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})/i);
-  return any?.[1] ? any[1].trim().toLowerCase() : "";
+  return senderDomainFromHeader(emailText);
 }

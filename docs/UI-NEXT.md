@@ -42,6 +42,16 @@ Grok did not change any of these. Measured headless at 390 x 844 (Chrome, mobile
 
 14. **DONE** (`352c69e`, checked live by Grok 17 Nov on production `3ad9c8c`, which serves that code). After **Do not send** (the consent path Claude could not test) at 1280 x 800, 1366 x 768 and 390 x 844, the headline and the whole verdict card were on screen for the fake DHL, the real UPS thread (after the shipment demo), Streamhut, and a limited check. At 1280 x 800: DHL y=160 (card 124-557 of 800, was 754), UPS y=310, Streamhut y=286, limited y=194; the same under `prefers-reduced-motion`. At 1366 x 768: DHL y=160, UPS y=278, Streamhut y=254, limited y=162. At 390 x 844: DHL y=153, UPS y=237, Streamhut y=257, limited y=458. At 1920 x 1080 the DHL card already fits so it does not scroll (headline y=414). No sideways scroll at 390, 1280 or 1366 on 11 routes. Do-not-break selectors and the prepared-claim text are intact.
 
+## New UI items for Claude (from the three-judges review, 23 Nov 2026, Africa/Lagos)
+
+Grok changed logic and copy only, with no CSS or layout changes. These need a visual pass.
+
+15. **Home page consent dialog.** With **Allow cloud** on, the home page now opens the same dialog as `/app/` (same markup and classes, `.consent-overlay` and `.consent-card`, inside a `[data-consent-host]` wrapper appended to `<body>`). Check how it looks over the hero at 390 and 1376 px, and the focus ring on **Do not send**.
+16. **Home page reason line.** The hero result can now show a second `p.hero-note[data-fallback-detail]` line: the cloud failure reason, or "The email was not sent to the cloud." Check spacing next to the prepared-sample note.
+17. **"Not sent" state on `/app/`.** After **Do not send** on a pasted email the card reads **Not sent** / **Not checked with AI** with the limited-check button. It still uses `.result.result-error` (red). Give it a calm, neutral style (`[data-not-sent]` is on the card).
+18. **Disabled Check buttons.** `[data-action=check]` and `[data-action=check-paste]` now carry `disabled` while a check or the dialog is open. Check the disabled look.
+19. **"Why" tag** (cold judge fix 9). `styles-v7.css` line ~2500 paints `content: "Why"` before `.fallback-detail`, so "The email was not sent to the cloud." reads as a reason. Change the tag to "Cloud" (or drop it for that line).
+
 ## Do not break (film and e2e)
 
 `[data-action=check]`, `[data-thread="thread-1-carrier-lure"]`, `[data-action=consent-yes]`, `.source-label`, `.outcome`, `.headline`, `.result h2`, the text "prepared for this sample thread", extension fixture `h2.hP` plus `GM123456789012345`. Also used: `[data-action=consent-no]`, `[data-action=limited]`, `[data-action=save]`, `[data-action=reset]`, `[data-action=check-paste]`, `[data-action=load-shipment-demo]`, `[data-action=forget-cloud-consent]`, `.app-ledger`, `[data-paste]`, `[data-try]`, `form[data-prompt]`.

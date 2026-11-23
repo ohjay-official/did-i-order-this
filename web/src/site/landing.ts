@@ -1,14 +1,15 @@
-import { decideVerdict, runLimitedCheck, type Verdict } from "@did-i-order-this/core";
+import { decideVerdict, runLimitedCheck, senderDomainFromHeader, type Verdict } from "@did-i-order-this/core";
 import { readClaim } from "../ai/readClaim.ts";
+import { appCheckGate } from "../ai/appCheckGate.ts";
+import { describeAiError } from "../ai/aiError.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
-import { loadLedger, saveSender, saveShipment } from "../ledger/store.ts";
+import { ledgerForCheck, loadLedger, saveSender, saveShipment } from "../ledger/store.ts";
 import { prepareTryChip } from "../demo/shipmentDemo.ts";
-import { withTimeout } from "../ui/checkFlow.ts";
+import { runCheckFlow } from "../ui/checkFlow.ts";
+import { askCloudConsentOnPage, isConsentDialogOpen } from "../ui/consentDialog.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
 import { mountStage } from "./stage.ts";
-import { extractFromDomain } from "./emailText.ts";
-import { describeAiError } from "../ai/aiError.ts";
 
 type Mode = "device" | "cloud";
 
@@ -20,7 +21,16 @@ interface HeroResult {
   reasons: string[];
   sampleNote?: string;
   demoNote?: string;
+  /** Why AI did not run, for example the cloud failure reason or "not sent". */
+  detail?: string;
 }
+
+/** On the home page every cloud check is asked about; a yes is not remembered. */
+const ASK_EVERY_TIME = { has: () => false, remember: () => undefined };
+
+export const HOME_SAMPLE_NOTE =
+  "On-device AI did not run in this browser. This check used the structured claim prepared for this sample.";
+export const HOME_DECLINED_NOTE = "You chose not to send this email to the cloud, so this is a limited check (no AI).";
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,6 +53,7 @@ function renderResult(result: HeroResult, stamped: boolean): string {
   const tone = result.outcome ?? "neutral";
   const note = result.sampleNote ? `<p class="hero-note">${escapeHtml(result.sampleNote)}</p>` : "";
   const demoNote = result.demoNote ? `<p class="hero-note" data-demo-note>${escapeHtml(result.demoNote)}</p>` : "";
+  const detail = result.detail ? `<p class="hero-note" data-fallback-detail>${escapeHtml(result.detail)}</p>` : "";
   const showStamp = !result.sampleNote;
   const stamp = showStamp
     ? `<p class="source-label${stamped ? " is-stamped" : ""}">${escapeHtml(result.sourceLabel)}</p>`
@@ -57,6 +68,7 @@ function renderResult(result: HeroResult, stamped: boolean): string {
       <h2 class="headline">${escapeHtml(result.headline)}</h2>
       ${stamp}
       ${note}
+      ${detail}
       ${demoNote}
       <ul class="reasons">${reasons}</ul>
     </div>
@@ -69,72 +81,68 @@ function autosize(textarea: HTMLTextAreaElement): void {
   textarea.style.height = `${next}px`;
 }
 
-async function runChecker(emailText: string, mode: Mode): Promise<HeroResult> {
-  const ledger = await loadLedger();
-  const pack = getOfficialPack();
-  const fromDomain = extractFromDomain(emailText);
+export interface CheckerHooks {
+  askForCloudConsent?: () => Promise<boolean>;
+  onCloudStart?: () => void;
+}
+
+/**
+ * One home-page check. It runs through the same flow as the sample inbox:
+ * on-device first; the cloud only when Allow cloud is on, and only after the
+ * same consent dialog; and when the cloud fails, the reason is shown.
+ */
+export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHooks = {}): Promise<HeroResult> {
   const sample = matchSample(emailText);
+  // Demo rows count only for the fictional samples, never for someone's own mail.
+  const ledger = ledgerForCheck(await loadLedger(), Boolean(sample));
+  const pack = getOfficialPack();
+  const fromDomain = senderDomainFromHeader(emailText);
 
-  if (isFirebaseConfigured()) {
-    try {
-      const first = await readClaim(emailText, "only_on_device");
-      const verdict = decideVerdict(first.claim, ledger, pack, first.inferenceSource);
-      return {
-        kind: "verdict",
-        outcome: verdict.outcome,
-        headline: verdict.headline,
-        sourceLabel: verdict.inferenceSourceLabel,
-        reasons: verdict.reasons,
-      };
-    } catch {
-      // Continue to cloud (if allowed) or the sample / limited fallback.
-    }
+  const outcome = await runCheckFlow(
+    { text: emailText, sample },
+    {
+      readClaim,
+      firebaseConfigured: isFirebaseConfigured,
+      cloudAvailable: () => mode === "cloud" && isCloudAiAvailable(),
+      cloudBlocked: () => appCheckGate.isBlocked(),
+      askForCloudConsent: hooks.askForCloudConsent ?? (() => askCloudConsentOnPage()),
+      consentMemory: ASK_EVERY_TIME,
+      onCloudStart: hooks.onCloudStart,
+      warn: (message, error) => console.warn(message, error),
+    },
+  );
 
-    if (mode === "cloud" && isCloudAiAvailable()) {
-      try {
-        const second = await withTimeout(readClaim(emailText, "only_in_cloud"));
-        const verdict = decideVerdict(second.claim, ledger, pack, second.inferenceSource);
-        return {
-          kind: "verdict",
-          outcome: verdict.outcome,
-          headline: verdict.headline,
-          sourceLabel: verdict.inferenceSourceLabel,
-          reasons: verdict.reasons,
-        };
-      } catch (error) {
-        const message = `The cloud check could not run. ${describeAiError(error)}`;
-        if (!sample) {
-          const limited = runLimitedCheck(emailText, { fromDomain }, ledger, pack);
-          return {
-            kind: "limited",
-            headline: limited.headline,
-            sourceLabel: limited.inferenceSourceLabel,
-            reasons: [message, ...limited.findings],
-          };
-        }
-      }
-    }
-  }
-
-  if (sample) {
-    const verdict = decideVerdict(sample.expectedClaim, ledger, pack, undefined);
+  if (outcome.kind === "ai") {
+    const verdict = decideVerdict(outcome.claim, ledger, pack, outcome.inferenceSource, { emailText });
     return {
       kind: "verdict",
       outcome: verdict.outcome,
       headline: verdict.headline,
       sourceLabel: verdict.inferenceSourceLabel,
       reasons: verdict.reasons,
-      sampleNote:
-        "On-device AI did not run in this browser. This check used the structured claim prepared for this sample.",
     };
   }
-
+  if (outcome.kind === "sample") {
+    const verdict = decideVerdict(outcome.claim, ledger, pack, undefined, { emailText });
+    return {
+      kind: "verdict",
+      outcome: verdict.outcome,
+      headline: verdict.headline,
+      sourceLabel: verdict.inferenceSourceLabel,
+      reasons: verdict.reasons,
+      sampleNote: HOME_SAMPLE_NOTE,
+      detail: outcome.detail || undefined,
+    };
+  }
   const limited = runLimitedCheck(emailText, { fromDomain }, ledger, pack);
+  const detail =
+    outcome.kind === "not_sent" ? HOME_DECLINED_NOTE : outcome.kind === "error" ? outcome.message : undefined;
   return {
     kind: "limited",
     headline: limited.headline,
     sourceLabel: limited.inferenceSourceLabel,
     reasons: limited.findings,
+    detail,
   };
 }
 
@@ -191,6 +199,8 @@ export function mountLanding(root: ParentNode = document): void {
       input.focus();
       return;
     }
+    // One check at a time while the consent dialog is open.
+    if (isConsentDialogOpen()) return;
     if (timer) window.clearTimeout(timer);
     const current = (token += 1);
     rawText = trimmed;
@@ -203,11 +213,15 @@ export function mountLanding(root: ParentNode = document): void {
     autosize(input);
     showStatus(
       mode === "cloud"
-        ? "Trying on this device first. Cloud is allowed if that is unavailable."
+        ? "Trying on this device first. If that is unavailable, you will be asked before anything is sent to the cloud."
         : "Checking against the orders stored on this device",
     );
     try {
-      const checked = await runChecker(trimmed, mode);
+      const checked = await runChecker(trimmed, mode, {
+        onCloudStart: () => {
+          if (current === token) showStatus("Checking this email in the cloud");
+        },
+      });
       const result = demoNote ? { ...checked, demoNote } : checked;
       if (current !== token) return;
       if (prefersReducedMotion()) {
