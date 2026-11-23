@@ -46,7 +46,7 @@ describe("home page Allow cloud", () => {
     const ask = vi.fn(async () => true);
     const result = await runChecker(DHL, "cloud", { askForCloudConsent: ask });
     expect(ask).toHaveBeenCalledTimes(1);
-    expect(state.modes).toEqual(["only_on_device", "only_in_cloud"]);
+    expect(state.modes).toEqual(["only_on_device", "prefer_on_device"]);
     expect(result.sourceLabel).toBe("Checked in the cloud");
     expect(result.outcome).toBe("warning");
   });

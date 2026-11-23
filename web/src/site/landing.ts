@@ -1,4 +1,4 @@
-import { decideVerdict, runLimitedCheck, senderDomainFromHeader, type Verdict } from "@did-i-order-this/core";
+import { decideVerdict, runLimitedCheck, senderDomainFromHeader, type EmailClaim, type Verdict } from "@did-i-order-this/core";
 import { readClaim } from "../ai/readClaim.ts";
 import { appCheckGate } from "../ai/appCheckGate.ts";
 import { describeAiError } from "../ai/aiError.ts";
@@ -6,6 +6,7 @@ import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { ledgerForCheck, loadLedger, saveSender, saveShipment } from "../ledger/store.ts";
 import { prepareTryChip } from "../demo/shipmentDemo.ts";
 import { runCheckFlow } from "../ui/checkFlow.ts";
+import { isNextStepReason, suggestNextStep } from "../ai/nextStep.ts";
 import { askCloudConsentOnPage, isConsentDialogOpen } from "../ui/consentDialog.ts";
 import { getOfficialPack } from "../packs/official.ts";
 import { formatEmailText, sampleThreads, type SampleThread } from "../demo/seed.ts";
@@ -19,10 +20,18 @@ interface HeroResult {
   headline: string;
   sourceLabel: string;
   reasons: string[];
+  claim?: EmailClaim;
+  senderDomain?: string;
   sampleNote?: string;
   demoNote?: string;
   /** Why AI did not run, for example the cloud failure reason or "not sent". */
   detail?: string;
+}
+
+function reasonsForDisplay(reasons: string[]): string[] {
+  const tip = reasons.find(isNextStepReason);
+  const rest = reasons.filter((reason) => !isNextStepReason(reason)).slice(0, 4);
+  return tip ? [...rest, tip] : rest;
 }
 
 /** On the home page every cloud check is asked about; a yes is not remembered. */
@@ -58,8 +67,7 @@ function renderResult(result: HeroResult, stamped: boolean): string {
   const stamp = showStamp
     ? `<p class="source-label${stamped ? " is-stamped" : ""}">${escapeHtml(result.sourceLabel)}</p>`
     : "";
-  const reasons = result.reasons
-    .slice(0, 4)
+  const reasons = reasonsForDisplay(result.reasons)
     .map((item) => `<li>${escapeHtml(item)}</li>`)
     .join("");
   return `
@@ -120,6 +128,8 @@ export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHo
       headline: verdict.headline,
       sourceLabel: verdict.inferenceSourceLabel,
       reasons: verdict.reasons,
+      claim: outcome.claim,
+      senderDomain: fromDomain,
     };
   }
   if (outcome.kind === "sample") {
@@ -193,6 +203,21 @@ export function mountLanding(root: ParentNode = document): void {
     window.requestAnimationFrame(() => stamp?.classList.add("is-stamped"));
   };
 
+  const attachNextStep = (result: HeroResult, current: number) => {
+    if (result.kind !== "verdict" || !result.claim || result.sampleNote) return;
+    if (!result.outcome) return;
+    void suggestNextStep({
+      claim: result.claim,
+      verdict: { outcome: result.outcome, headline: result.headline, reasons: result.reasons },
+      pack: getOfficialPack(),
+      senderDomain: result.senderDomain,
+    }).then((line) => {
+      if (!line || current !== token) return;
+      if (result.reasons.some(isNextStepReason)) return;
+      showResult({ ...result, reasons: [...result.reasons, line] });
+    });
+  };
+
   const run = async (emailText: string, displayText?: string, demoNote = "") => {
     const trimmed = emailText.trim();
     if (!trimmed) {
@@ -226,10 +251,13 @@ export function mountLanding(root: ParentNode = document): void {
       if (current !== token) return;
       if (prefersReducedMotion()) {
         showResult(result);
+        attachNextStep(result, current);
         return;
       }
       timer = window.setTimeout(() => {
-        if (current === token) showResult(result);
+        if (current !== token) return;
+        showResult(result);
+        attachNextStep(result, current);
       }, 280);
     } catch (error) {
       if (current !== token) return;

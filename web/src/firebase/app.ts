@@ -73,8 +73,9 @@ export function getOnDeviceFirebaseApp(): FirebaseApp {
 }
 
 /**
- * The app used for cloud reads. App Check (reCAPTCHA) starts here, so it is
- * only set up on the cloud branch, after the person has agreed to the cloud check.
+ * The app used for cloud calls (the email read after consent, and the hosted
+ * site's next-step tip). App Check (reCAPTCHA) starts the first time this
+ * app is created.
  */
 export function getFirebaseApp(): FirebaseApp {
   if (app) return app;

@@ -146,9 +146,16 @@ describe("sample inbox check flow", () => {
     const t = deps({ onCloudStart });
     const result = await runCheckFlow(thread, t.deps);
     expect(result).toEqual({ kind: "ai", claim: CLAIM, inferenceSource: "in_cloud", usedRememberedConsent: false });
-    expect(t.calls).toEqual(["only_on_device", "only_in_cloud"]);
+    expect(t.calls).toEqual(["only_on_device", "prefer_on_device"]);
     expect(onCloudStart).toHaveBeenCalledOnce();
     expect(t.memory.has()).toBe(true);
+  });
+
+  it("the post-consent claim-read uses prefer_on_device, not only_in_cloud", async () => {
+    const t = deps();
+    t.memory.remember();
+    await runCheckFlow(thread, t.deps);
+    expect(t.calls).toEqual(["only_on_device", "prefer_on_device"]);
   });
 
   it("a remembered yes skips the dialog for the next sample thread", async () => {
