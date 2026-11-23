@@ -9,21 +9,46 @@ export function normalizeOrderId(value: string): string {
 }
 
 /**
- * Lower case, no "www.", no trailing dot. A Unicode (IDN) domain is turned into
- * its punycode form where the runtime can do that, so a lookalike written in
- * another script is compared as the ASCII name it really is.
+ * Lower case, no "www.", no trailing dot. Only plain ASCII names are
+ * normalised. A name with any other character (full-width letters, a soft
+ * hyphen, an ideographic full stop, a non-breaking space, Cyrillic or Greek
+ * letters, zero-width or other hidden characters) is returned unchanged, so it
+ * never equals an official domain: a lookalike stays a lookalike instead of
+ * being folded into the real brand. Punycode (xn--) names are ASCII and are
+ * kept as they are, so they never match an official name either.
  */
 export function normalizeDomain(value: string): string {
-  let domain = value.trim().toLowerCase().replace(/^www\./, "").replace(/\.+$/, "");
-  // eslint-disable-next-line no-control-regex
-  if (/[^\x00-\x7f]/.test(domain)) {
-    try {
-      domain = new URL(`http://${domain}`).hostname;
-    } catch {
-      // Leave it as it is: it will fail the domain check and be treated as unofficial.
-    }
-  }
-  return domain;
+  const trimmed = value.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, "");
+  if (!isPlainAscii(trimmed)) return trimmed;
+  return trimmed.toLowerCase().replace(/^www\./, "").replace(/\.+$/, "");
+}
+
+function isPlainAscii(value: string): boolean {
+  return /^[\x21-\x7e]*$/.test(value);
+}
+
+/** True for a normalised name made only of ASCII letters, digits, dots and hyphens. */
+export function isAsciiDomain(value: string): boolean {
+  return /^[a-z0-9.-]+$/.test(value) && !value.startsWith(".") && !value.includes("..");
+}
+
+/**
+ * Free email services anyone can sign up to. Such a domain never proves which
+ * store or seller sent an email, so it is never kept as a store domain on
+ * import and never gives Safe for an order match.
+ */
+const FREE_MAIL = new Set([
+  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "msn.com", "yahoo.com", "ymail.com",
+  "rocketmail.com", "icloud.com", "me.com", "mac.com", "proton.me", "protonmail.com", "protonmail.ch", "pm.me",
+  "aol.com", "gmx.com", "gmx.de", "gmx.net", "web.de", "mail.com", "zoho.com", "zohomail.com", "yandex.com",
+  "yandex.ru", "mail.ru", "tutanota.com", "tuta.io", "fastmail.com", "hey.com", "qq.com", "163.com",
+]);
+
+export function isFreeMailDomain(domain: string): boolean {
+  const d = normalizeDomain(domain);
+  if (FREE_MAIL.has(d)) return true;
+  // Country variants such as yahoo.co.uk, hotmail.fr or outlook.de.
+  return /^(?:yahoo|hotmail|outlook|live|gmx|aol)\.(?:[a-z]{2,3}|co\.[a-z]{2}|com\.[a-z]{2})$/.test(d);
 }
 
 /** Conservative patterns used only as a cross-check on cited numbers. */
@@ -64,7 +89,8 @@ export function looksLikeCarrierTracking(value: string): boolean {
  */
 export function findOfficialDomain(pack: OfficialPack, domain: string): OfficialPack["officialDomains"][number] | undefined {
   const normalized = normalizeDomain(domain);
-  if (!normalized) return undefined;
+  // Any character outside plain ASCII letters, digits, dots and hyphens means never official.
+  if (!normalized || !isAsciiDomain(normalized)) return undefined;
   return pack.officialDomains.find((entry) => {
     const official = normalizeDomain(entry.domain);
     return normalized === official || normalized.endsWith(`.${official}`);

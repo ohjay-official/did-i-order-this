@@ -59,9 +59,11 @@ describe("F7 lookalike domain with a stored tracking number", () => {
 
   it("counts a subdomain of the official carrier domain as official", () => {
     const v = decideVerdict(
-      claim({ claimed_party: { name: "UPS", role: "carrier", domain: "alerts.ups.com" }, asked_action: "pay" }),
+      claim({ claimed_party: { name: "UPS", role: "carrier", domain: "alerts.ups.com" } }),
       expectingUps,
       officialPack,
+      undefined,
+      { senderCheck: "verified" },
     );
     expect(v.outcome).toBe("safe");
     expect(v.reasons).toContain("The claimed domain alerts.ups.com is listed as official for UPS.");
@@ -80,7 +82,7 @@ describe("F7 lookalike domain with a stored tracking number", () => {
 
 describe("F6 legitimate carrier notice", () => {
   it("matches a stored number from the official domain", () => {
-    const v = decideVerdict(claim({}), expectingUps, officialPack, "on_device");
+    const v = decideVerdict(claim({}), expectingUps, officialPack, "on_device", { senderCheck: "verified" });
     expect(v.outcome).toBe("safe");
     expect(v.headline).toBe("This tracking number matches a shipment you are expecting.");
   });

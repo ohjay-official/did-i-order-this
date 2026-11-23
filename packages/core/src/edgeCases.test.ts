@@ -113,7 +113,8 @@ describe("decideVerdict edge cases", () => {
     // Safe only from the carrier's official domain; with no readable domain it is a leaked-number warning.
     expect(decideVerdict(other, { ...empty, shipments: [shipment] }, pack).outcome).toBe("warning");
     const fromUps = claim({ email_kind: "other", claimed_party: { name: "", role: "unknown", domain: "ups.com" }, cited_numbers: [{ kind: "other", value: "1Z999AA10123456784" }] });
-    expect(decideVerdict(fromUps, { ...empty, shipments: [shipment] }, pack).outcome).toBe("safe");
+    expect(decideVerdict(fromUps, { ...empty, shipments: [shipment] }, pack, undefined, { senderCheck: "verified" }).outcome).toBe("safe");
+    expect(decideVerdict(fromUps, { ...empty, shipments: [shipment] }, pack).outcome).toBe("neutral");
     const delivered = decideVerdict(other, { ...empty, shipments: [{ ...shipment, expected: false }] }, pack);
     expect(delivered.outcome).toBe("warning");
     expect(delivered.headline).toBe(STORED_NOT_EXPECTED_HEADLINE);
@@ -180,7 +181,7 @@ describe("limited check edge cases", () => {
         { id: "b", trackingNumber: "123456789012", expected: false, source: "import", confirmedAt: "x" },
       ],
     };
-    const result = runLimitedCheck("1Z999AA10123456784 123456789012 999999999999", { fromDomain: "ups.com" }, ledger, pack);
+    const result = runLimitedCheck("1Z999AA10123456784 123456789012 999999999999", { fromDomain: "ups.com", senderVerified: true }, ledger, pack);
     const text = result.findings.join(" ");
     expect(text).toContain("listed as official for UPS");
     expect(text).toContain("matches a shipment you are expecting");

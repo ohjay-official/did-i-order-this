@@ -53,7 +53,7 @@
             <div class="faq-list">
           <details class="faq-item" open>
             <summary>Does my email leave this device?</summary>
-            <p>Not by default. A check starts on the device. On the hosted site, the email goes to the cloud only if on-device AI is unavailable and you agree. The extension does not send mail to the cloud. A separate next-step tip on the hosted site never sends the email body, but it may load App Check and reCAPTCHA.</p>
+            <p>Not by default. A check starts on the device. On the hosted site, the email goes to the cloud only if on-device AI is unavailable and you agree. The extension does not send mail to the cloud. A separate next-step tip on the hosted site never sends the email body, and it uses the cloud (with App Check and reCAPTCHA) only after you agreed to the cloud for that check.</p>
           </details>
           <details class="faq-item">
             <summary>What does "Checked on this device" mean?</summary>
@@ -64,8 +64,8 @@
             <p>On-device AI was not available, you agreed in the consent dialog, and the hosted site sent the text of that one email for cloud inference. This never happens in the Chrome extension.</p>
           </details>
           <details class="faq-item">
-            <summary>What does "Next step written in the cloud" mean?</summary>
-            <p>After the verdict, the hosted site asked Firebase AI Logic for one sentence of advice. That call used only the verdict category, our headline, a brand name only when the real sender domain is official or the verdict text already names a claimed brand from our official list, and the action type (pay, log in, download, or none). It did not send the email body, tracking or order numbers, or the sender address. This step loads App Check and reCAPTCHA, even if the email itself was read on the device. If the line says "Next step written on this device", the same tip ran on-device instead. If no such line appears, the tip was skipped or failed (including if it contradicted or softened the verdict, such as a leaked-number Warning that treated the unofficial match as Safe), and the verdict is unchanged. The extension never shows this line.</p>
+            <summary>What does "Next step, chosen in the cloud" mean?</summary>
+            <p>After the verdict, the hosted site may add one next-step line. The model does not write it: it only picks one of a fixed set of sentences we wrote for that verdict and action, and code fills in the brand&#39;s official site. In the cloud this happens only after you agreed to the cloud for that check (Check in the cloud, or the home page&#39;s cloud mode), and the call sends only the verdict category, the action type (pay, log in, download, or none) and a brand name when the real sender domain is official. It never sends the email body, numbers or the sender address. Without that agreement the pick runs on this device ("Next step, chosen on this device") when Chrome has an on-device model, or not at all, and nothing is loaded from Google. If no line appears, the tip was skipped or failed, and the verdict is unchanged. The extension never shows this line.</p>
           </details>
           <details class="faq-item">
             <summary>What does "Limited check (no AI)" mean?</summary>
@@ -86,15 +86,15 @@
             <div class="faq-list">
           <details class="faq-item">
             <summary>Why was a UPS email marked Warning?</summary>
-            <p>Carrier mail is judged by the cited tracking number, not by how official the domain looks. If that number is not an expected parcel stored on this device, the check is Warning. If it matches, but the email asks you to pay, log in or download and does not come from the carrier's official domain, it is still Warning. In the default sample, there are no expected parcels.</p>
+            <p>Carrier mail is judged by the cited tracking number, not by how official the email looks. If that number is not an expected parcel stored on this device, the check is Warning. If it matches but the email is not from the official domain of that same carrier, the number has likely leaked, and it is still Warning. A match from the right carrier is still Warning if the email asks you to pay, log in or download, or links to a site off the official list. In the default sample, there are no expected parcels. A pasted email never gets Safe, because pasted text can&#39;t prove who sent it: a match there stops at Neutral. The sample threads and the Chrome extension, which reads the sender from Gmail, can give Safe.</p>
           </details>
           <details class="faq-item">
             <summary>What is the official-domain pack?</summary>
-            <p>A public list of official carrier and store domains. It can add a reason to the verdict. It does not replace the tracking or order-number check.</p>
+            <p>A public list of official carrier and billing domains. A domain is listed only if it publishes DMARC with p=reject, so mail that forges it is refused by receiving servers. A domain with any non-ASCII or hidden character never counts as official. The list can add a reason to the verdict. It does not replace the tracking or order-number check.</p>
           </details>
           <details class="faq-item">
             <summary>What files can I import?</summary>
-            <p>An Amazon, PayPal, or generic order-history CSV or ZIP. Files are parsed in the browser and are not uploaded.</p>
+            <p>An Amazon, PayPal, or generic order-history CSV or ZIP. Files are parsed in the browser and are not uploaded. Free email domains such as gmail.com, and your own address domain, are never kept as a store&#39;s domain, and PayPal Payment Received rows are skipped.</p>
           </details>
             </div>
           </div>
@@ -128,11 +128,11 @@
           </details>
           <details class="faq-item">
             <summary>What happens if I click Do not send?</summary>
-            <p>The email stays on the device, and the hosted site also skips the next-step tip, so nothing is loaded from Google. You can run a limited check with no AI, or try again later if on-device AI becomes available.</p>
+            <p>The email stays on the device, and no cloud tip is requested, so nothing is loaded from Google. You can run a limited check with no AI, or try again later if on-device AI becomes available.</p>
           </details>
           <details class="faq-item">
             <summary>Can I save a shipment after a check?</summary>
-            <p>Yes, when the shipment notice cites an order already stored on this device and comes from that store's own domain. You confirm first. The Save this shipment control is in the sample inbox.</p>
+            <p>Yes, when the shipment notice cites an order already stored on this device, comes from that store&#39;s own domain, and links to no other site. A pasted email cannot save a shipment, because its sender can&#39;t be verified. You confirm first. The Save this shipment control is in the sample inbox.</p>
           </details>
           <details class="faq-item">
             <summary>Does on-device AI work in every browser?</summary>

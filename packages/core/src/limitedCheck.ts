@@ -1,4 +1,4 @@
-import { findOfficialDomain, looksLikeTracking, normalizeDomain, normalizeTracking } from "./normalize.ts";
+import { findOfficialDomain, inferCarrierFromTracking, looksLikeTracking, normalizeDomain, normalizeTracking } from "./normalize.ts";
 import { readTextSignals } from "./signals.ts";
 import type { InferenceSourceLabel, LedgerSnapshot, OfficialPack } from "./types.ts";
 
@@ -26,7 +26,14 @@ export function extractCandidateNumbers(emailText: string): string[] {
  */
 export function runLimitedCheck(
   emailText: string,
-  emailMeta: { fromDomain: string },
+  emailMeta: {
+    fromDomain: string;
+    /**
+     * True only when the app read the sender itself (the extension in Gmail,
+     * or a built-in sample). A From line in pasted text is never vouched for.
+     */
+    senderVerified?: boolean;
+  },
   ledger: LedgerSnapshot,
   pack: OfficialPack,
 ): LimitedCheckResult {
@@ -37,7 +44,9 @@ export function runLimitedCheck(
   const domain = normalizeDomain(emailMeta.fromDomain || "");
   const official = domain ? findOfficialDomain(pack, domain) : undefined;
   if (domain) {
-    if (official) {
+    if (official && !emailMeta.senderVerified) {
+      domainLines.push(`The From line names ${domain}, but a From line in pasted text cannot prove who sent the email.`);
+    } else if (official) {
       domainLines.push(`The From domain ${domain} is listed as official for ${official.name}.`);
     } else {
       domainLines.push(`The From domain ${domain} is not in the official-domain pack.`);
@@ -50,14 +59,16 @@ export function runLimitedCheck(
   if (numbers.length === 0) {
     numberLines.push("No tracking-like numbers were found in the email text.");
   } else {
-    const expected = ledger.shipments
-      .filter((item) => item.expected)
-      .map((item) => normalizeTracking(item.trackingNumber));
+    const expectedRows = ledger.shipments.filter((item) => item.expected);
+    const expected = expectedRows.map((item) => normalizeTracking(item.trackingNumber));
     const all = ledger.shipments.map((item) => normalizeTracking(item.trackingNumber));
     for (const value of numbers) {
       if (expected.includes(value)) {
         numberLines.push(`The number ${value} matches a shipment you are expecting.`);
-        if (official?.role !== "carrier") {
+        const row = expectedRows.find((item) => normalizeTracking(item.trackingNumber) === value);
+        const carrier = (row?.carrier ?? inferCarrierFromTracking(value) ?? "").toLowerCase();
+        const sameCarrier = official?.role === "carrier" && carrier !== "" && carrier.includes(official.name.toLowerCase());
+        if (!sameCarrier) {
           leaked.push(`The email cites your real tracking number ${value} from a sender that is not the carrier's official domain, so the number has likely leaked.`);
         }
       } else if (all.includes(value)) {

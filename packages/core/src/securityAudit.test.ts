@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { zipSync } from "fflate";
 import pack0 from "../../../web/src/packs/official.json" with { type: "json" };
 import {
+  findOfficialDomain,
   LOOKALIKE_MATCH_HEADLINE,
   MAX_IMPORT_BYTES,
   NOTHING_EXPECTED_HEADLINE,
@@ -62,7 +63,7 @@ describe("H1: a leaked order number from another domain never gives Safe", () =>
   });
   it("the same order number from the merchant's own domain (or a subdomain) still matches", () => {
     const claim = c({ claimed_party: { name: "Amazon", role: "merchant", domain: "orders.amazon.com" }, email_kind: "receipt", cited_numbers: [{ kind: "order", value: "112-1234567-7654321" }] });
-    expect(decideVerdict(claim, ledger, pack, "on_device").outcome).toBe("safe");
+    expect(decideVerdict(claim, ledger, pack, "on_device", { senderCheck: "verified" }).outcome).toBe("safe");
   });
   it("a download demand with a matching tracking number from a non-carrier domain warns", () => {
     const claim = c({ claimed_party: { name: "UPS", role: "carrier", domain: "ups-label.example" }, asked_action: "download", email_kind: "carrier_update", cited_numbers: [{ kind: "tracking", value: "1Z999AA10123456784" }] });
@@ -121,8 +122,9 @@ describe("M2: the model's domain is never used for the official-domain check", (
     expect(claim.claimed_party.domain).toBeUndefined();
     expect(decideVerdict(claim, ledger, pack, "on_device").outcome).toBe("warning");
   });
-  it("Unicode domains are compared as punycode", () => {
-    expect(normalizeDomain("ups.cοm")).toMatch(/^ups\.xn--/);
+  it("Unicode domains are never turned into an official domain (round 3: no punycode)", () => {
+    expect(normalizeDomain("ups.cοm")).not.toBe("ups.com");
+    expect(findOfficialDomain(pack, "ups.cοm")).toBeUndefined();
   });
 });
 
@@ -202,7 +204,8 @@ describe("L1: only a notice that matches a stored order from the same domain can
   });
   it("a notice that cites a stored order from the same sender can be saved", () => {
     const claim = c({ claimed_party: { name: "Amazon", role: "merchant", domain: "amazon.com" }, email_kind: "shipment_notice", cited_numbers: [{ kind: "order", value: "112-1234567-7654321" }, { kind: "tracking", value: "1Z000AA10000000001" }] });
-    expect(canSaveShipmentFromClaim(claim, ledger)).toBe(true);
+    expect(canSaveShipmentFromClaim(claim, ledger, undefined, { senderCheck: "verified" })).toBe(true);
+    expect(canSaveShipmentFromClaim(claim, ledger)).toBe(false);
     expect(canSaveShipmentFromClaim({ ...claim, claimed_party: { ...claim.claimed_party, domain: "amazon-ship.example" } }, ledger)).toBe(false);
     expect(canSaveShipmentFromClaim({ ...claim, cited_numbers: claim.cited_numbers.slice(0, 1) }, ledger)).toBe(false);
     expect(canSaveShipmentFromClaim({ ...claim, email_kind: "receipt" }, ledger)).toBe(false);
@@ -228,14 +231,14 @@ describe("L3: zip import has size caps", () => {
   });
   it("refuses a CSV entry that claims to inflate past the cap, and an oversized file", () => {
     const bomb = zipClaimingSize("orders.csv", "order id,merchant\n1,A\n", 60 * 1024 * 1024);
-    expect(() => parseOrderHistoryFile({ name: "x.zip", bytes: bomb })).toThrow(/does not contain a recognised/);
+    expect(() => parseOrderHistoryFile({ name: "x.zip", bytes: bomb })).toThrow(/inflates to more than 50 MB/);
     expect(() => parseOrderHistoryFile({ name: "x.csv", bytes: new Uint8Array(MAX_IMPORT_BYTES + 1) })).toThrow(/larger than 25 MB/);
   });
 });
 
 describe("I2: the limited check agrees with the verdict on subdomains and does not over-match pay", () => {
   it("alerts.ups.com is official in the limited check too", () => {
-    expect(runLimitedCheck("x", { fromDomain: "alerts.ups.com" }, empty, pack).findings[0]).toBe("The From domain alerts.ups.com is listed as official for UPS.");
+    expect(runLimitedCheck("x", { fromDomain: "alerts.ups.com", senderVerified: true }, empty, pack).findings[0]).toBe("The From domain alerts.ups.com is listed as official for UPS.");
   });
   it("PayPal or payment alone is not a fee lure", () => {
     const note = "The wording asks for a payment, which is common in parcel-hold lures.";

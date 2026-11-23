@@ -29,15 +29,18 @@ function defaultStore(): GateStore {
 export class AppCheckGate {
   private readonly store: GateStore;
   private memory = false;
+  private readonly key: string;
 
-  constructor(store: GateStore = defaultStore()) {
+  /** Each gate has its own storage key, so a failing tip never turns off the email read. */
+  constructor(store: GateStore = defaultStore(), key: string = KEY) {
     this.store = store;
+    this.key = key;
   }
 
   isBlocked(): boolean {
     if (this.memory) return true;
     try {
-      return this.store.getItem(KEY) === "yes";
+      return this.store.getItem(this.key) === "yes";
     } catch {
       return false;
     }
@@ -46,7 +49,7 @@ export class AppCheckGate {
   block(): void {
     this.memory = true;
     try {
-      this.store.setItem(KEY, "yes");
+      this.store.setItem(this.key, "yes");
     } catch {
       // The in-memory flag still holds for this page.
     }
@@ -55,7 +58,7 @@ export class AppCheckGate {
   clear(): void {
     this.memory = false;
     try {
-      this.store.removeItem(KEY);
+      this.store.removeItem(this.key);
     } catch {
       // Nothing to clear.
     }

@@ -1,5 +1,5 @@
-import { unzipSync } from "fflate";
-import { inferCarrierFromTracking, looksLikeTracking, normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
+import { Unzip, UnzipInflate, type UnzipFile } from "fflate";
+import { inferCarrierFromTracking, isAsciiDomain, isFreeMailDomain, looksLikeTracking, normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
 import type { LedgerOrder, LedgerShipment } from "./types.ts";
 
 export class OrderHistoryParseError extends Error {
@@ -122,9 +122,29 @@ function parseTrackingField(raw: string): { carrier?: string; trackingNumber?: s
   return {};
 }
 
+/** The domain part of an email address, or "" when the value is not one. */
+function domainOfAddress(value: string): string {
+  const at = value.lastIndexOf("@");
+  return at >= 0 ? normalizeDomain(value.slice(at + 1).replace(/[>\s].*$/, "")) : "";
+}
+
+/**
+ * A domain that can stand for a store: plain ASCII, not a free email domain
+ * (anyone can send from gmail.com), and not the user's own address domain.
+ */
+function usableStoreDomain(domain: string, selfDomains: ReadonlySet<string> = new Set()): string {
+  if (!domain || !isAsciiDomain(domain) || isFreeMailDomain(domain) || selfDomains.has(domain)) return "";
+  return domain;
+}
+
+function placeholderDomain(merchant: string): string {
+  return `${(merchant || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "")}.example`;
+}
+
 function domainFromWebsite(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
+  if (trimmed.includes("@")) return domainOfAddress(trimmed);
   try {
     if (trimmed.includes("://")) return normalizeDomain(new URL(trimmed).hostname);
   } catch {
@@ -221,26 +241,40 @@ function parsePaypal(headers: string[], rows: string[][]): { orders: LedgerOrder
   const dateCol = findColumn(headers, ["date"]);
   const txCol = findColumn(headers, ["transaction id"]);
   const invoiceCol = findColumn(headers, ["invoice number"]);
-  const emailCol = findColumn(headers, ["to email address", "from email address"]);
+  const toCol = findColumn(headers, ["to email address"]);
+  const fromCol = findColumn(headers, ["from email address"]);
   const confirmedAt = nowIso();
   const orders: LedgerOrder[] = [];
+
+  // The user's own address domains: From on payments they sent, To on money
+  // they received. Neither can stand for a store.
+  const selfDomains = new Set<string>();
+  for (const row of rows) {
+    const gross = cell(row, grossCol).replace(/,/g, "");
+    const self = gross.startsWith("-") ? cell(row, fromCol) : cell(row, toCol);
+    const domain = domainOfAddress(self);
+    if (domain) selfDomains.add(domain);
+  }
 
   for (const row of rows) {
     const status = cell(row, statusCol).toLowerCase();
     if (status && status !== "completed") continue;
     const type = cell(row, typeCol).toLowerCase();
     if (type.includes("bank") || type.includes("withdraw") || type.includes("general currency conversion") || type.includes("hold")) continue;
+    // Money the user received is not a purchase.
+    if (type.includes("received")) continue;
     const merchant = cell(row, nameCol);
     const orderId = normalizeOrderId(cell(row, invoiceCol) || cell(row, txCol));
     if (!merchant || !orderId) continue;
-    const email = cell(row, emailCol);
-    const domain = email.includes("@") ? normalizeDomain(email.split("@")[1] ?? "") : "";
     const gross = cell(row, grossCol).replace(/,/g, "");
+    // A payment the user sent goes To the store; otherwise the store is in From.
+    const storeAddress = gross.startsWith("-") || !gross ? cell(row, toCol) : cell(row, fromCol);
+    const domain = usableStoreDomain(domainOfAddress(storeAddress), selfDomains);
     const amount = gross.startsWith("-") ? gross.slice(1) : gross || undefined;
     orders.push({
       id: newId(),
       merchant,
-      senderDomain: domain || `${merchant.toLowerCase().replace(/[^a-z0-9]+/g, "")}.example`,
+      senderDomain: domain || placeholderDomain(merchant),
       orderId,
       amount,
       currency: cell(row, currencyCol) || undefined,
@@ -264,7 +298,13 @@ function parseGeneric(headers: string[], rows: string[][]): { orders: LedgerOrde
   const currencyCol = findColumn(headers, ["currency"]);
   const trackingCol = findColumn(headers, ["tracking", "tracking number", "tracking id"]);
   const domainCol = findColumn(headers, ["domain", "sender", "sender domain", "website"]);
+  const buyerCol = findColumn(headers, ["buyer email", "customer email", "email", "your email"]);
   const confirmedAt = nowIso();
+  const selfDomains = new Set<string>();
+  for (const row of rows) {
+    const domain = domainOfAddress(cell(row, buyerCol));
+    if (domain) selfDomains.add(domain);
+  }
   const ordersById = new Map<string, LedgerOrder>();
   const shipments: LedgerShipment[] = [];
   const seenTracking = new Set<string>();
@@ -278,7 +318,7 @@ function parseGeneric(headers: string[], rows: string[][]): { orders: LedgerOrde
       ordersById.set(orderId, {
         id: newId(),
         merchant: merchant || "Unknown merchant",
-        senderDomain: domainFromWebsite(cell(row, domainCol)) || `${(merchant || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "")}.example`,
+        senderDomain: usableStoreDomain(domainFromWebsite(cell(row, domainCol)), selfDomains) || placeholderDomain(merchant),
         orderId,
         amount: cell(row, amountCol) || undefined,
         currency: cell(row, currencyCol) || undefined,
@@ -321,18 +361,60 @@ function parseCsvText(text: string): { orders: LedgerOrder[]; shipments: LedgerS
 export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
 export const MAX_ZIP_ENTRY_BYTES = 50 * 1024 * 1024;
 
+class ZipEntryTooBig extends Error {}
+
+/**
+ * Inflate the CSV entries of a ZIP, checking the real inflated size as it
+ * streams: the sizes a ZIP declares are written by whoever made the file and
+ * can understate what an entry inflates to.
+ */
+function inflateCsvEntries(bytes: Uint8Array): Record<string, Uint8Array> {
+  const files: Record<string, Uint8Array> = {};
+  const unzip = new Unzip();
+  unzip.register(UnzipInflate);
+  unzip.onfile = (file: UnzipFile) => {
+    if (!/\.csv$/i.test(file.name) || file.name.includes("__MACOSX") || file.name.endsWith("/")) return;
+    if (file.originalSize !== undefined && file.originalSize > MAX_ZIP_ENTRY_BYTES) throw new ZipEntryTooBig();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    file.ondata = (err, chunk, final) => {
+      if (err) throw err;
+      total += chunk.length;
+      if (total > MAX_ZIP_ENTRY_BYTES) throw new ZipEntryTooBig();
+      chunks.push(chunk);
+      if (final) {
+        const out = new Uint8Array(total);
+        let offset = 0;
+        for (const part of chunks) {
+          out.set(part, offset);
+          offset += part.length;
+        }
+        files[file.name] = out;
+      }
+    };
+    file.start();
+  };
+  const step = 16 * 1024;
+  for (let i = 0; i < bytes.length; i += step) {
+    const end = Math.min(i + step, bytes.length);
+    unzip.push(bytes.subarray(i, end), end === bytes.length);
+  }
+  return files;
+}
+
 function csvFromZip(bytes: Uint8Array): string {
   let files: Record<string, Uint8Array>;
   try {
-    // Inflate only CSV entries of a sane size; every other entry is skipped unread.
-    files = unzipSync(bytes, {
-      filter: (file) =>
-        file.originalSize <= MAX_ZIP_ENTRY_BYTES && /\.csv$/i.test(file.name) && !file.name.includes("__MACOSX"),
-    });
-  } catch {
+    // A ZIP starts with a local file header ("PK\x03\x04") or, when empty, an end record ("PK\x05\x06").
+    if (bytes.length < 4 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new Error("not a zip");
+    files = inflateCsvEntries(bytes);
+  } catch (error) {
+    if (error instanceof ZipEntryTooBig) {
+      throw new OrderHistoryParseError("A CSV in this ZIP inflates to more than 50 MB, which is too big for an order history. It was not imported.");
+    }
     throw new OrderHistoryParseError("This ZIP file could not be read. It may be damaged or not a ZIP.");
   }
-  const names = Object.keys(files).filter((name) => !name.endsWith("/") && !name.includes("__MACOSX"));
+  const names = Object.keys(files);
   const preferred =
     names.find((name) => /retail\.orderhistory/i.test(name)) ||
     names.find((name) => /orderhistory/i.test(name)) ||

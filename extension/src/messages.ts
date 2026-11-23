@@ -14,6 +14,8 @@ export type ExtractedEmail = {
   subject: string;
   fromEmail?: string;
   fromName?: string;
+  /** True when the open thread has messages from more than one sender domain. */
+  mixedSenders?: boolean;
 };
 
 export type EmailTextMessage = {
@@ -40,6 +42,7 @@ export function sanitizeEmail(value: unknown): ExtractedEmail | null {
   };
   if (isString(v.fromEmail, 320)) email.fromEmail = v.fromEmail;
   if (isString(v.fromName, 200)) email.fromName = v.fromName;
+  if (v.mixedSenders === true) email.mixedSenders = true;
   return email;
 }
 

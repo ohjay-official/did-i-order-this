@@ -31,7 +31,7 @@ describe("runLimitedCheck", () => {
   it("notes when a found number matches an expected shipment", () => {
     const result = runLimitedCheck(
       "UPS update for 1Z999AA10123456784",
-      { fromDomain: "ups.com" },
+      { fromDomain: "ups.com", senderVerified: true },
       {
         orders: [],
         shipments: [

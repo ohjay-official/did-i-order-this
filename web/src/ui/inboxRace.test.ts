@@ -17,7 +17,7 @@ vi.mock("../firebase/app.ts", () => ({ isFirebaseConfigured: () => true, isCloud
 vi.mock("../ai/nextStep.ts", () => ({
   suggestNextStep: async () => undefined,
   isNextStepReason: (reason: string) =>
-    reason.startsWith("Next step written in the cloud:") || reason.startsWith("Next step written on this device:"),
+    reason.startsWith("Next step, chosen in the cloud:") || reason.startsWith("Next step, chosen on this device:"),
 }));
 
 const tick = () => new Promise((r) => setTimeout(r, 20));

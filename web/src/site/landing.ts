@@ -22,6 +22,8 @@ interface HeroResult {
   reasons: string[];
   claim?: EmailClaim;
   senderDomain?: string;
+  emailText?: string;
+  cloudAgreed?: boolean;
   sampleNote?: string;
   demoNote?: string;
   /** Why AI did not run, for example the cloud failure reason or "not sent". */
@@ -105,6 +107,9 @@ export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHo
   const ledger = ledgerForCheck(await loadLedger(), Boolean(sample));
   const pack = getOfficialPack();
   const fromDomain = senderDomainFromHeader(emailText);
+  // A built-in sample's sender is set by the app; anything typed or pasted is
+  // whatever the text says, so it can never give Safe.
+  const senderCheck = sample ? "verified" : "pasted";
 
   const outcome = await runCheckFlow(
     { text: emailText, sample },
@@ -121,7 +126,7 @@ export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHo
   );
 
   if (outcome.kind === "ai") {
-    const verdict = decideVerdict(outcome.claim, ledger, pack, outcome.inferenceSource, { emailText });
+    const verdict = decideVerdict(outcome.claim, ledger, pack, outcome.inferenceSource, { emailText, senderCheck });
     return {
       kind: "verdict",
       outcome: verdict.outcome,
@@ -130,10 +135,14 @@ export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHo
       reasons: verdict.reasons,
       claim: outcome.claim,
       senderDomain: fromDomain,
+      emailText,
+      // The tip may use the cloud only after cloud agreement for this check:
+      // the home page's cloud mode, or a yes that sent the email to the cloud.
+      cloudAgreed: mode === "cloud" || outcome.inferenceSource === "in_cloud",
     };
   }
   if (outcome.kind === "sample") {
-    const verdict = decideVerdict(outcome.claim, ledger, pack, undefined, { emailText });
+    const verdict = decideVerdict(outcome.claim, ledger, pack, undefined, { emailText, senderCheck });
     return {
       kind: "verdict",
       outcome: verdict.outcome,
@@ -144,7 +153,7 @@ export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHo
       detail: outcome.detail || undefined,
     };
   }
-  const limited = runLimitedCheck(emailText, { fromDomain }, ledger, pack);
+  const limited = runLimitedCheck(emailText, { fromDomain, senderVerified: Boolean(sample) }, ledger, pack);
   const detail =
     outcome.kind === "not_sent" ? HOME_DECLINED_NOTE : outcome.kind === "error" ? outcome.message : undefined;
   return {
@@ -211,6 +220,8 @@ export function mountLanding(root: ParentNode = document): void {
       verdict: { outcome: result.outcome, headline: result.headline, reasons: result.reasons },
       pack: getOfficialPack(),
       senderDomain: result.senderDomain,
+      emailText: result.emailText,
+      cloudAgreed: result.cloudAgreed,
     }).then((line) => {
       if (!line || current !== token) return;
       if (result.reasons.some(isNextStepReason)) return;

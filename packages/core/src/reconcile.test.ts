@@ -67,6 +67,8 @@ describe("reconcileClaim", () => {
         ],
       },
       pack as OfficialPack,
+      undefined,
+      { senderCheck: "verified" },
     );
     expect(v.outcome).toBe("safe");
   });

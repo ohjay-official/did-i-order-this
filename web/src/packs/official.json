@@ -9,7 +9,6 @@
     { "domain": "royalmail.com", "name": "Royal Mail", "role": "carrier" },
     { "domain": "evri.com", "name": "Evri", "role": "carrier" },
     { "domain": "dpd.co.uk", "name": "DPD", "role": "carrier" },
-    { "domain": "dpd.com", "name": "DPD", "role": "carrier" },
     { "domain": "paypal.com", "name": "PayPal", "role": "bank" }
   ],
   "lureTemplates": [

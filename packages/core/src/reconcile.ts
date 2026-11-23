@@ -40,16 +40,22 @@ const HEADER_LINE = /^[A-Za-z][A-Za-z0-9-]*:/;
 /**
  * The From line of the header block only: the lines at the very top of the
  * text, up to the first blank line or the first line that is not a header. A
- * "From:" line further down, inside the body, is ignored.
+ * "From:" line further down, inside the body, is ignored. The block must hold
+ * exactly one From line, written "From: " (as mail clients show it), and the
+ * text must not start with a byte-order mark. Anything else (two From lines,
+ * "from:" with a tab, a BOM) gives "" and so no domain.
  */
 function headerFromLine(emailText: string): string {
-  for (const line of emailText.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+  if (emailText.startsWith("\uFEFF")) return "";
+  const fromLines: string[] = [];
+  for (const line of emailText.split(/\r?\n/)) {
     if (!line.trim()) break;
     if (/^\s/.test(line)) continue; // folded header continuation
     if (!HEADER_LINE.test(line)) break;
-    if (/^From:/i.test(line)) return line;
+    if (/^from\s*:/i.test(line)) fromLines.push(line);
   }
-  return "";
+  if (fromLines.length !== 1) return "";
+  return fromLines[0].startsWith("From: ") ? fromLines[0] : "";
 }
 
 /** Removes RFC 5322 comments, "(...)", including nested ones. Returns null if parentheses do not balance. */
@@ -85,6 +91,9 @@ function stripComments(value: string): string | null {
  * `From: "UPS <alerts@ups.com>" <billing@ups-release.example>` gives
  * ups-release.example, while `From: UPS <alerts@ups.com> <billing@ups-release.example>`
  * holds two addresses and gives "" (which the verdict treats as unofficial).
+ * Group syntax, a second From line or a byte-order mark also give "".
+ * A domain read from pasted text is still only what the text says: the verdict
+ * never gives Safe to pasted text (see VerdictOptions.senderCheck).
  * The web paste paths, the limited check and readClaim all use this parser.
  */
 export function senderDomainFromHeader(emailText: string): string {
@@ -92,6 +101,8 @@ export function senderDomainFromHeader(emailText: string): string {
   const unquoted = raw.replace(/"(?:[^"\\]|\\.)*"/g, " ");
   const line = stripComments(unquoted);
   if (line === null || line.includes('"')) return "";
+  // Group syntax ("UPS: <a@ups.com>;") and address lists are not one sender.
+  if (/[:;]/.test(line)) return "";
   const angled = [...line.matchAll(/<\s*([^<>@\s]+)@([^<>\s]+?)\s*>/g)];
   const rest = line.replace(/<[^<>]*>/g, " ");
   if (/[<>]/.test(rest)) return "";

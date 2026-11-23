@@ -31,6 +31,15 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
     .join("\n\n");
   if (!subject && !body) return null;
   const fromDomain = fromEmail.includes("@") ? (fromEmail.split("@")[1] ?? "").toLowerCase() : "";
+  // An expanded thread can hold messages from more than one sender. The first
+  // sender cannot vouch for a later one's text, so such a thread is marked.
+  const senderDomains = new Set(
+    [...main.querySelectorAll("span.gD[email]")]
+      .map((element) => (element.getAttribute("email") ?? "").trim().toLowerCase())
+      .filter((address) => address.includes("@"))
+      .map((address) => address.slice(address.lastIndexOf("@") + 1)),
+  );
+  const mixedSenders = [...senderDomains].some((domain) => domain !== fromDomain);
   const lines = [
     `From: ${fromName}${fromEmail ? ` <${fromEmail}>` : ""}`,
     `Subject: ${subject}`,
@@ -44,5 +53,6 @@ export function extractOpenGmailThread(doc: Document): ExtractedEmail | null {
     subject,
     fromEmail,
     fromName,
+    ...(mixedSenders ? { mixedSenders: true } : {}),
   };
 }

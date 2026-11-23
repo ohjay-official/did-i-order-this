@@ -126,7 +126,7 @@ describe("decideVerdict: carrier emails", () => {
       cited_numbers: [{ kind: "tracking", value: "1Z 999 AA1 0123456784" }],
       email_kind: "carrier_update",
     });
-    const verdict = decideVerdict(claim, expectingLedger, pack, "in_cloud");
+    const verdict = decideVerdict(claim, expectingLedger, pack, "in_cloud", { senderCheck: "verified" });
     expect(verdict.outcome).toBe("safe");
     expect(verdict.inferenceSourceLabel).toBe("Checked in the cloud");
     expect(verdict.headline.toLowerCase()).toContain("matches");
@@ -180,7 +180,7 @@ describe("decideVerdict: store order / receipt / shipment notice", () => {
       cited_numbers: [{ kind: "order", value: "nw-10001" }],
       email_kind: "receipt",
     };
-    const verdict = decideVerdict(claim, emptyLedger, pack, "on_device");
+    const verdict = decideVerdict(claim, emptyLedger, pack, "on_device", { senderCheck: "verified" });
     expect(verdict.outcome).toBe("safe");
     expect(verdict.headline).toBe("This number matches an order stored on this device.");
   });
@@ -245,7 +245,7 @@ describe("decideVerdict: renewal, invoice, refund", () => {
       cited_numbers: [{ kind: "invoice", value: "NW-10001" }],
       email_kind: "invoice",
     };
-    const verdict = decideVerdict(claim, emptyLedger, pack);
+    const verdict = decideVerdict(claim, emptyLedger, pack, undefined, { senderCheck: "verified" });
     expect(verdict.outcome).toBe("safe");
   });
 
@@ -287,7 +287,7 @@ describe("decideVerdict: renewal, invoice, refund", () => {
       cited_numbers: [{ kind: "order", value: "NW-10001" }],
       email_kind: "refund",
     };
-    const verdict = decideVerdict(claim, emptyLedger, pack);
+    const verdict = decideVerdict(claim, emptyLedger, pack, undefined, { senderCheck: "verified" });
     expect(verdict.outcome).toBe("safe");
   });
 });
@@ -311,7 +311,7 @@ describe("decideVerdict: unknown sender / unclassifiable", () => {
       cited_numbers: [{ kind: "order", value: "NW-10001" }],
       email_kind: "other",
     };
-    expect(decideVerdict(claim, emptyLedger, pack).outcome).toBe("safe");
+    expect(decideVerdict(claim, emptyLedger, pack, undefined, { senderCheck: "verified" }).outcome).toBe("safe");
     const noDomain: EmailClaim = { ...claim, claimed_party: { name: "Unknown desk", role: "unknown" } };
     // A stored order number with no readable sender domain is a leaked-number warning (23 Nov rerun).
     expect(decideVerdict(noDomain, emptyLedger, pack).outcome).toBe("warning");
