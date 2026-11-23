@@ -2775,3 +2775,69 @@ html.ed-anim .ed [data-sign] { clip-path: inset(0 100% 0 0); }
 .bento-tile .tile-visual.is-ink + .illus-note {
   color: var(--secondary);
 }
+
+/* ---------- UI-NEXT 15 to 27: states and long text ---------- */
+/* 17: "Not sent" after Do not send on a pasted email is a calm state, not an error */
+.result.result-error[data-not-sent] {
+  border: 1px solid var(--hairline);
+  background: var(--neutral-bg);
+  color: var(--neutral-ink);
+}
+
+.result.result-error[data-not-sent] .outcome {
+  color: var(--neutral-ink);
+}
+
+/* 18: disabled Check buttons read as waiting, not broken */
+[data-action="check"]:disabled,
+[data-action="check-paste"]:disabled,
+.btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 19: the reason line is always about the cloud step */
+.result .fallback-detail::before {
+  content: "Cloud";
+}
+
+/* 16: home hero, prepared-sample note and the cloud reason line sit as a pair */
+.hero-verdict .hero-note + .hero-note {
+  margin-top: -4px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(28, 20, 16, 0.18);
+  font-size: 13px;
+}
+
+/* 24, 26, 27, 30, 34: long headlines and the next-step line wrap cleanly */
+.result .headline,
+.hero-verdict .headline,
+.result .reasons li,
+.hero-verdict .reasons li,
+.import-note,
+.track-note {
+  overflow-wrap: anywhere;
+}
+
+/* 22: extension page step 03 names a long folder in <code> */
+.xt-steps code {
+  overflow-wrap: anywhere;
+}
+
+/* 23: phones show every reason in the hero verdict (warnings first), smaller */
+@media (max-width: 900px) {
+  .hero-verdict .reasons li:nth-child(n + 3) {
+    display: list-item;
+  }
+
+  .hero-verdict .reasons {
+    font-size: 12.5px;
+    line-height: 18px;
+  }
+}
+
+.result[data-not-sent] .outcome {
+  text-transform: none;
+}

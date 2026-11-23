@@ -34,9 +34,25 @@ import { senderCheckForEmail, verdictOptionsForEmail } from "./senderCheck.ts";
 type ViewState =
   | { status: "idle" }
   | { status: "checking" }
-  | { status: "done"; verdict: Verdict; claim: EmailClaim; saved: boolean; canSave: boolean }
-  | { status: "limited"; result: LimitedCheckResult }
+  | { status: "done"; verdict: Verdict; claim: EmailClaim; saved: boolean; canSave: boolean; about: CheckedEmail }
+  | { status: "limited"; result: LimitedCheckResult; about: CheckedEmail }
   | { status: "error"; message: string };
+
+interface CheckedEmail {
+  subject: string;
+  from: string;
+}
+
+/** Which email a result is about, shown above the verdict (UI-NEXT 31). */
+function aboutEmail(value: ExtractedEmail): CheckedEmail {
+  const name = value.fromName?.trim();
+  const address = value.fromEmail?.trim() || value.fromDomain;
+  return { subject: value.subject.trim() || "(no subject)", from: name ? `${name} <${address}>` : address };
+}
+
+function renderAbout(about: CheckedEmail): string {
+  return `<p class="checked-about">Checked: <strong>${escapeHtml(about.subject)}</strong><br />from ${escapeHtml(about.from)}</p>`;
+}
 
 const appRoot = document.getElementById("app");
 if (!appRoot) throw new Error("The side panel root is missing.");
@@ -144,13 +160,15 @@ function renderResult(): string {
   }
   if (view.status === "limited") {
     return `<div class="result result-limited">
+      ${renderAbout(view.about)}
       <p class="source-label">${escapeHtml(view.result.inferenceSourceLabel)}</p>
       <h2>${escapeHtml(view.result.headline)}</h2>
       <ul>${view.result.findings.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
     </div>`;
   }
-  const { verdict, claim, canSave, saved } = view;
+  const { verdict, claim, canSave, saved, about } = view;
   return `<div class="result result-${verdict.outcome}">
+    ${renderAbout(about)}
     <p class="outcome">${escapeHtml(verdict.outcome)}</p>
     <h2>${escapeHtml(verdict.headline)}</h2>
     <p class="source-label">${escapeHtml(verdict.inferenceSourceLabel)}</p>
@@ -175,6 +193,7 @@ function runLimited(): void {
       ledger,
       getOfficialPack(),
     ),
+    about: aboutEmail(email),
   };
   render();
 }
@@ -234,6 +253,7 @@ async function runCheck(): Promise<void> {
       claim: result.claim,
       canSave: canSaveShipmentFromClaim(result.claim, ledger, getOfficialPack(), options),
       saved: false,
+      about: aboutEmail(checking),
     };
   } catch (error) {
     if (!sameEmail(email, checking)) return;

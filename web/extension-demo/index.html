@@ -13,6 +13,7 @@
       body { margin: 0; color: #1f1f1f; background: #f6f8fc; font: 14px/1.5 "Google Sans", Roboto, Arial, sans-serif; }
       .fixture-banner { max-width: 880px; margin: 0 auto; padding: 20px 20px 0; }
       .fixture-banner p { margin: 0 0 10px; color: #444746; }
+      .visually-hidden-h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
       .fixture-label { padding: 10px 14px; border: 1px solid #f2c9b4; border-radius: 10px; background: #fdeee4; color: #5a2412 !important; }
       .fixture-banner a { color: #0b57d0; }
       .fixture-threads { display: flex; flex-direction: column; gap: 0; margin: 14px 0 16px; padding: 0; overflow: hidden; list-style: none; border: 1px solid #e3e3e3; border-radius: 12px; background: #fff; }
@@ -38,6 +39,7 @@
   </head>
   <body class="extension-demo-page">
     <header class="fixture-banner" data-fixture-banner>
+      <h1 class="visually-hidden-h1">Extension test fixture</h1>
       <p class="fixture-label"><strong>Extension test fixture.</strong> This page imitates an open Gmail thread so you can try the Did I Order This? extension without signing in to Gmail. It is not Gmail, and these are fictional sample emails, not your mail.</p>
       <p>Load the extension, open its side panel on this page, then pick a sample email below. The side panel checks only on this device. Without on-device AI it offers a limited check, and the full sample walk is in the <a href="/app/">sample inbox</a>. Back to the <a href="/extension/">extension page</a>.</p>
       <nav aria-label="Sample emails">
