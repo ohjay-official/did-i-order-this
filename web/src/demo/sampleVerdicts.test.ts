@@ -43,10 +43,9 @@ describe("documented sample results", () => {
     expect(v.outcome).toBe("neutral");
     expect(v.headline).toBe("This looks like a shipment notice, but it does not match an order stored on this device.");
   });
-  it("the genuine UPS email stays Safe however the model labels it", () => {
-    for (const asked of ["none", "other", "confirm"] as const) {
-      const claim: EmailClaim = { claimed_party: { name: "UPS", role: "unknown" }, asked_action: asked, cited_numbers: [], email_kind: "other" };
-      expect(check("thread-3-safe-carrier", loaded, claim).outcome).toBe("safe");
-    }
+  it("the genuine UPS email is Safe however the model labels its kind, but only with no request labelled", () => {
+    const claim = (asked: EmailClaim["asked_action"]): EmailClaim => ({ claimed_party: { name: "UPS", role: "unknown" }, asked_action: asked, cited_numbers: [], email_kind: "other" });
+    expect(check("thread-3-safe-carrier", loaded, claim("none")).outcome).toBe("safe");
+    for (const asked of ["other", "confirm"] as const) expect(check("thread-3-safe-carrier", loaded, claim(asked)).outcome).toBe("neutral");
   });
 });

@@ -134,11 +134,13 @@ export async function runChecker(emailText: string, mode: Mode, hooks: CheckerHo
       sourceLabel: verdict.inferenceSourceLabel,
       reasons: verdict.reasons,
       claim: outcome.claim,
-      senderDomain: fromDomain,
+      // The brand in the tip comes only from a sender the app set itself (a
+      // built-in sample), never from a From line in pasted text.
+      senderDomain: sample ? fromDomain : undefined,
       emailText,
-      // The tip may use the cloud only after cloud agreement for this check:
-      // the home page's cloud mode, or a yes that sent the email to the cloud.
-      cloudAgreed: mode === "cloud" || outcome.inferenceSource === "in_cloud",
+      // The tip may use the cloud only after a real yes for this check, one that
+      // sent the email read to the cloud. The Allow cloud toggle alone is not a yes.
+      cloudAgreed: outcome.inferenceSource === "in_cloud",
     };
   }
   if (outcome.kind === "sample") {

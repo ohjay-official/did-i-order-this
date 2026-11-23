@@ -65,6 +65,21 @@ describe("home page Allow cloud", () => {
     expect(result.detail).toMatch(/You chose not to send/);
   });
 
+  it("round 4 F15: the tip's brand never comes from a pasted From line; only a built-in sample sets it", async () => {
+    const forged = "From: UPS <mcinfo@ups.com>\nSubject: Fee\n\nPay the customs fee today for parcel GM123456789012345.";
+    const pasted = await runChecker(forged, "cloud", { askForCloudConsent: async () => true });
+    expect(pasted.senderDomain).toBeUndefined();
+    const sample = await runChecker(DHL, "cloud", { askForCloudConsent: async () => true });
+    expect(sample.senderDomain).toBe("dhl-parcel-desk.example");
+  });
+
+  it("round 4 F14: the tip may use the cloud only after a real yes sent the read to the cloud", async () => {
+    const yes = await runChecker(DHL, "cloud", { askForCloudConsent: async () => true });
+    expect(yes.cloudAgreed).toBe(true);
+    const no = await runChecker(DHL, "cloud", { askForCloudConsent: async () => false });
+    expect(no.cloudAgreed ?? false).toBe(false);
+  });
+
   it("asks every time on the home page, even for samples", async () => {
     const ask = vi.fn(async () => true);
     await runChecker(DHL, "cloud", { askForCloudConsent: ask });

@@ -512,7 +512,9 @@ export class InboxApp {
     };
     this.render();
     const seq = this.checkSeq;
-    const senderDomain = email.fromDomain ?? senderDomainFromHeader(email.text);
+    // The brand in the tip comes only from a sender the app set itself (a built-in
+    // sample), never from a From line in pasted text.
+    const senderDomain = email.sample ? email.fromDomain : undefined;
     // The tip may use the cloud only when this check's email read went to the cloud after a yes.
     void this.attachNextStep(emailKey, seq, senderDomain, email.text, inferenceSource === "in_cloud");
   }

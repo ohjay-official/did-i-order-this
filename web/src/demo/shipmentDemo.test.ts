@@ -67,7 +67,8 @@ describe("Load the matching shipment demo", () => {
     expect(wrong.outcome).toBe("warning");
     expect(wrong.headline).toBe("This tracking number is not one of your shipments.");
     const streamhut = decideVerdict(claimOf("thread-4-neutral-renewal"), ledger, pack, undefined, { senderCheck: "verified" });
-    expect(streamhut.headline).toBe("You have no history with this sender.");
+    expect(streamhut.outcome).toBe("neutral");
+    expect(streamhut.headline).toBe("You have no history with this sender, and it asks you to pay or call. Check on the company's own site.");
   });
 
   it("loading twice keeps one demo shipment", async () => {

@@ -8,6 +8,17 @@ import pack from "./official.json";
 // paypal.com all publish p=reject. dpd.com publishes no DMARC record, so it
 // was removed on 2026-11-23.
 //
+// storeDomains: the only store domains whose exact-domain order match may give
+// Safe. Each publishes DMARC p=reject (pct 100 or unset), checked on 2026-11-23
+// via dns.google/resolve?name=_dmarc.<domain>&type=TXT: ebay.com, ebay.co.uk,
+// etsy.com, walmart.com, target.com, bestbuy.com, ikea.com, zara.com, asos.com,
+// argos.co.uk, temu.com, aliexpress.com, nike.com, adidas.com, costco.com,
+// homedepot.com, chewy.com, newegg.com, tesco.com, marksandspencer.com,
+// uniqlo.com, hm.com, zalando.com, jumia.com.ng. Checked and left off because
+// they publish p=quarantine: amazon.com, amazon.co.uk, amazon.de, apple.com,
+// johnlewis.com, shein.com, wayfair.com. Left off as platforms that send for
+// other sellers: shopify.com. A subdomain of a listed store never counts.
+//
 // Sources for the official carrier domains in official.json (JSON cannot hold
 // comments). Each was checked on 2026-11-23 against the operator's own site:
 // - dhl.com, ups.com, usps.com, fedex.com: the carriers' own home domains.

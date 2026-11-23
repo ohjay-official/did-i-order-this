@@ -73,7 +73,30 @@ function asksForRiskyAction(claim: EmailClaim, signals: TextSignals = NO_TEXT): 
 
 /** The code-detected part only: no model label involved. */
 export function textAsksRisky(signals: TextSignals): boolean {
-  return signals.asksToPay || signals.asksToLogIn || signals.asksToDownload || signals.parcelFeeLure || signals.amountDue;
+  return (
+    signals.asksToPay ||
+    signals.asksToLogIn ||
+    signals.asksToDownload ||
+    signals.asksToCall ||
+    signals.parcelFeeLure ||
+    signals.amountDue ||
+    Boolean(signals.hiddenText)
+  );
+}
+
+/**
+ * The signals the verdict reads: the text signals, plus link, image and form
+ * targets the caller read from the email's markup (the Chrome extension reads
+ * them from Gmail), plus hidden text the caller found.
+ */
+export function signalsForVerdict(options: VerdictOptions, pack: OfficialPack): TextSignals {
+  const base = readTextSignals(options.emailText, pack);
+  const extra = (options.linkHosts ?? []).map((host) => host.toLowerCase()).filter(Boolean);
+  return {
+    ...base,
+    linkHosts: [...new Set([...base.linkHosts, ...extra])],
+    hiddenText: Boolean(options.hiddenText),
+  };
 }
 
 /**
@@ -177,6 +200,23 @@ export const RISKY_ORDER_REASON =
 
 const NO_TEXT: TextSignals = readTextSignals(undefined, { version: "", officialDomains: [], lureTemplates: [] });
 
+/** True only when the sender domain is exactly the order's own domain. */
+function exactSender(senderDomain: string | undefined, orderDomain: string): boolean {
+  if (!senderDomain || !orderDomain) return false;
+  return normalizeDomain(senderDomain) === normalizeDomain(orderDomain);
+}
+
+/**
+ * The store domains that may give Safe on an order match: retail domains
+ * whose DMARC policy is p=reject, so a forged From line on that exact domain
+ * is refused by the receiving server. The list lives in the pack.
+ */
+export function isVettedStore(pack: OfficialPack, domain: string | undefined): boolean {
+  if (!domain) return false;
+  const d = normalizeDomain(domain);
+  return (pack.storeDomains ?? []).some((entry) => entry.dmarc === "reject" && normalizeDomain(entry.domain) === d);
+}
+
 /** True when the sender domain is the order's own domain or a subdomain of it. */
 function sameSender(senderDomain: string | undefined, orderDomain: string): boolean {
   if (!senderDomain || !orderDomain) return false;
@@ -265,16 +305,20 @@ function findMatchingShipment(
 function findMatchingOrder(
   claim: EmailClaim,
   orders: LedgerOrder[],
-): { cited: string[]; match?: LedgerOrder; elsewhere?: LedgerOrder; freeMail?: LedgerOrder } {
+): { cited: string[]; match?: LedgerOrder; relay?: LedgerOrder; elsewhere?: LedgerOrder; freeMail?: LedgerOrder } {
   const cited = citedOrderValues(claim);
   const domain = claim.claimed_party.domain;
   const hits = orders.filter((order) => cited.includes(normalizeOrderId(order.orderId)));
-  const match = hits.find((order) => provesStore(order.senderDomain) && sameSender(domain, order.senderDomain));
+  // Only the store's exact domain counts as the store.
+  const match = hits.find((order) => provesStore(order.senderDomain) && exactSender(domain, order.senderDomain));
   // An order kept for a free email domain (gmail.com and the like) proves nothing about the sender.
   const freeMail = match ? undefined : hits.find((order) => !provesStore(order.senderDomain) && sameSender(domain, order.senderDomain));
+  // A subdomain of the store's domain (marketplace.amazon.com, members.ebay.com)
+  // is often a relay that other sellers send through, so it is not the store.
+  const relay = match || freeMail ? undefined : hits.find((order) => provesStore(order.senderDomain) && sameSender(domain, order.senderDomain));
   // A stored order number in an email from another domain: the number has leaked.
-  const elsewhere = match || freeMail ? undefined : hits[0];
-  return { cited, match, elsewhere, freeMail };
+  const elsewhere = match || freeMail || relay ? undefined : hits[0];
+  return { cited, match, relay, elsewhere, freeMail };
 }
 
 /**
@@ -292,12 +336,18 @@ export function canSaveShipmentFromClaim(
   if (claim.email_kind !== "shipment_notice") return false;
   // Only a sender the app reads itself can plant an expected parcel; pasted text cannot.
   if ((options.senderCheck ?? "pasted") !== "verified") return false;
+  // Without the pack the store cannot be checked against the vetted list.
+  if (!pack) return false;
+  if (textWasCut(options) || claim.asked_action !== "none") return false;
+  const signals = signalsForVerdict(options, pack);
   // A notice that asks to pay, log in, download or confirm is not saved, even from the store's domain.
-  if (storeAsksRisky(claim, pack ? readTextSignals(options.emailText, pack) : NO_TEXT)) return false;
+  if (storeAsksRisky(claim, signals)) return false;
   if (!claim.cited_numbers.some((item) => item.kind === "tracking" && item.value)) return false;
   const { match } = findMatchingOrder(claim, ledger.orders);
-  if (!match) return false;
-  if (pack && outsideHosts(readTextSignals(options.emailText, pack), pack, match.senderDomain).length) return false;
+  // Only the store's exact domain, on the vetted DMARC p=reject list, can plant a parcel.
+  if (!match || !isVettedStore(pack, match.senderDomain)) return false;
+  if (outsideHosts(signals, pack, match.senderDomain).length) return false;
+  if (outsideImageHosts(options, pack, match.senderDomain).length) return false;
   return true;
 }
 
@@ -352,9 +402,12 @@ function packReasons(claim: EmailClaim, pack: OfficialPack, signals: TextSignals
  * (Gmail's sender in the Chrome extension, or a built-in sample whose sender
  * the app sets). "pasted": typed or pasted text, where the From line is
  * whatever the text says. "mixed_thread": a Gmail thread with more than one
- * sender. Only "verified" can give Safe; the others cap a match at Neutral.
+ * sender. "flagged": Gmail itself shows the message in Spam, with a warning
+ * banner, or with a "via" sender, so its From line is not trusted.
+ * "fixture": the extension's own test page, not Gmail. Only "verified" can
+ * give Safe; the others cap a match at Neutral.
  */
-export type SenderCheck = "verified" | "pasted" | "mixed_thread";
+export type SenderCheck = "verified" | "pasted" | "mixed_thread" | "flagged" | "fixture";
 
 export interface VerdictOptions {
   /**
@@ -365,7 +418,62 @@ export interface VerdictOptions {
   emailText?: string;
   /** Defaults to "pasted", so a caller that does not say gets no Safe. */
   senderCheck?: SenderCheck;
+  /** Hosts of link and form targets read from the markup, redirects unwrapped. Outside hosts count like links in the text. */
+  linkHosts?: string[];
+  /** Hosts of images the email loads. An image from outside the sender's or official domains caps Safe at Neutral. */
+  imageHosts?: string[];
+  /** The caller found text hidden from view that does not match what is shown. Counts as a risky ask. */
+  hiddenText?: boolean;
+  /** The caller cut the email text, so the verdict did not read all of it. Never Safe. */
+  truncated?: boolean;
 }
+
+/** The most text the model reads. The verdict reads all of it, but a longer email is never Safe. */
+export const MODEL_INPUT_CHARS = 20_000;
+
+function textWasCut(options: VerdictOptions): boolean {
+  return Boolean(options.truncated) || (options.emailText?.length ?? 0) > MODEL_INPUT_CHARS;
+}
+
+/** Image hosts that are neither the sender's own domain (or its subdomains) nor official. */
+function outsideImageHosts(options: VerdictOptions, pack: OfficialPack, ownDomain?: string): string[] {
+  return (options.imageHosts ?? []).filter((host) => {
+    if (!host) return false;
+    if (ownDomain && sameSender(host, ownDomain)) return false;
+    return !findOfficial(pack, host);
+  });
+}
+
+export const FLAGGED_HEADLINE =
+  "This number matches, but Gmail flagged this email (Spam, a warning banner or a \"via\" sender), so it can't be Safe. Open it in the official app or site.";
+export const FLAGGED_SENDER_REASON =
+  "Gmail shows this message in Spam, with a warning, or as sent \"via\" another domain, so the sender it shows cannot vouch for it.";
+export const FIXTURE_HEADLINE =
+  "This number matches, but this is the extension's test page, not Gmail, so it can't be Safe.";
+export const FIXTURE_SENDER_REASON =
+  "The test page sets its own sender, so the extension does not treat it as a verified Gmail sender.";
+export const TOO_LONG_HEADLINE =
+  "This email is too long to check fully, so it can't be Safe. Open the parcel or order in the official app or site.";
+export const TOO_LONG_REASON =
+  "The AI read only the first 20,000 characters of this email, so a request later in it could be missed.";
+export const LABEL_NOT_NONE_HEADLINE =
+  "This number matches, but the AI read could not rule out a request in this email. Open it in the official app or site.";
+export const LABEL_NOT_NONE_REASON =
+  "Safe also needs the AI read to find no request at all in the email, and this read found one or could not name it.";
+export const STORE_UNVERIFIED_HEADLINE =
+  "This order number matches your order, but this store's email can't be authenticated here. Open the order on the store's own site.";
+export const STORE_UNVERIFIED_REASON =
+  "Only stores whose domain tells mail servers to reject forged email (DMARC p=reject) are on the vetted list that can give Safe.";
+export const RELAY_ORDER_HEADLINE =
+  "This order number matches your order, but this email comes from a subdomain of the store that other sellers can send through. Open the order on the store's own site.";
+export const RELAY_ORDER_REASON =
+  "Only the store's exact domain counts as the store. A subdomain such as a marketplace relay can carry messages from other sellers who know your order number.";
+export const IMAGE_HOST_HEADLINE =
+  "This number matches, but the email loads images from a site that is not on the official list, so it can't be Safe.";
+export const HIDDEN_TEXT_REASON =
+  "Part of this email is hidden from view and differs from what is shown, a trick used to fool checks like this one.";
+export const NO_HISTORY_RISKY_HEADLINE =
+  "You have no history with this sender, and it asks you to pay or call. Check on the company's own site.";
 
 export const STORED_NOT_EXPECTED_HEADLINE =
   "This tracking number is stored on this device, but it is not a parcel you are expecting.";
@@ -386,19 +494,53 @@ export function decideVerdict(
   options: VerdictOptions = {},
 ): Verdict {
   const senderCheck: SenderCheck = options.senderCheck ?? "pasted";
-  const { matchKind, ...verdict } = decideInner(claim, ledger, pack, inferenceSource, options, senderCheck);
-  if (verdict.outcome !== "safe" || senderCheck === "verified") return verdict;
+  const { matchKind, ...inner } = decideInner(claim, ledger, pack, inferenceSource, options, senderCheck);
+  const verdict = capSafe(inner, matchKind, claim, pack, options, senderCheck);
+  return tidyReasons(verdict, claim, pack, options);
+}
+
+/** Every rule a Safe must also pass, applied after the main decision. The first that fails sets the Neutral headline. */
+function capSafe(
+  verdict: Verdict,
+  matchKind: MatchKind | undefined,
+  claim: EmailClaim,
+  pack: OfficialPack,
+  options: VerdictOptions,
+  senderCheck: SenderCheck,
+): Verdict {
+  if (verdict.outcome !== "safe") return verdict;
+  const neutral = (headline: string, why: string): Verdict => ({ ...verdict, outcome: "neutral", headline, reasons: [why, ...verdict.reasons] });
   const parcel = matchKind !== "order";
-  const headline =
-    senderCheck === "mixed_thread"
-      ? parcel
-        ? MIXED_PARCEL_HEADLINE
-        : MIXED_ORDER_HEADLINE
-      : parcel
-        ? PASTED_PARCEL_HEADLINE
-        : PASTED_ORDER_HEADLINE;
-  const why = senderCheck === "mixed_thread" ? MIXED_SENDER_REASON : PASTED_SENDER_REASON;
-  return { ...verdict, outcome: "neutral", headline, reasons: [why, ...verdict.reasons] };
+  if (senderCheck === "mixed_thread") return neutral(parcel ? MIXED_PARCEL_HEADLINE : MIXED_ORDER_HEADLINE, MIXED_SENDER_REASON);
+  if (senderCheck === "flagged") return neutral(FLAGGED_HEADLINE, FLAGGED_SENDER_REASON);
+  if (senderCheck === "fixture") return neutral(FIXTURE_HEADLINE, FIXTURE_SENDER_REASON);
+  if (senderCheck !== "verified") return neutral(parcel ? PASTED_PARCEL_HEADLINE : PASTED_ORDER_HEADLINE, PASTED_SENDER_REASON);
+  if (textWasCut(options)) return neutral(TOO_LONG_HEADLINE, TOO_LONG_REASON);
+  if (claim.asked_action !== "none") return neutral(LABEL_NOT_NONE_HEADLINE, LABEL_NOT_NONE_REASON);
+  if (matchKind === "order" && !isVettedStore(pack, claim.claimed_party.domain)) {
+    return neutral(STORE_UNVERIFIED_HEADLINE, STORE_UNVERIFIED_REASON);
+  }
+  const images = outsideImageHosts(options, pack, claim.claimed_party.domain);
+  if (images.length) {
+    return neutral(IMAGE_HOST_HEADLINE, `It loads images from ${images.slice(0, 3).join(", ")}, which is not on the official-domain list.`);
+  }
+  return verdict;
+}
+
+/**
+ * Reasons that read as reassurance are dropped where they mislead: on a Safe,
+ * the "not in the official-domain pack" line; on a Neutral that asks for
+ * something risky, "listed as official" and "not an alarm". Hidden text gets
+ * its own reason first.
+ */
+function tidyReasons(verdict: Verdict, claim: EmailClaim, pack: OfficialPack, options: VerdictOptions): Verdict {
+  let reasons = verdict.reasons;
+  if (verdict.outcome === "safe") reasons = reasons.filter((r) => !r.includes("not in the official-domain pack"));
+  if (verdict.outcome === "neutral" && asksForRiskyAction(claim, signalsForVerdict(options, pack))) {
+    reasons = reasons.filter((r) => !r.includes("listed as official") && !r.includes("not an alarm"));
+  }
+  if (options.hiddenText && !reasons.includes(HIDDEN_TEXT_REASON)) reasons = [HIDDEN_TEXT_REASON, ...reasons];
+  return reasons === verdict.reasons ? verdict : { ...verdict, reasons };
 }
 
 function decideInner(
@@ -410,7 +552,7 @@ function decideInner(
   senderCheck: SenderCheck,
 ): InnerVerdict {
   const inferenceSourceLabel = labelForSource(inferenceSource);
-  const signals = readTextSignals(options.emailText, pack);
+  const signals = signalsForVerdict(options, pack);
   const risky = asksForRiskyAction(claim, signals);
   const reasonsFor = () => packReasons(claim, pack, signals, senderCheck);
   const carrierInText = signals.carrierNamed || signals.carrierTracking || signals.parcelFeeLure;
@@ -481,6 +623,20 @@ function decideInner(
     return outside.length ? `It links to ${outside.slice(0, 3).join(", ")}, which is not the store's own site.` : undefined;
   };
 
+  /** A cited order number from a subdomain of the store's domain: a relay, not the store. */
+  const relayVerdict = (order: LedgerOrder, lead: string[]): InnerVerdict => {
+    const link = orderLinkReason(order);
+    if (storeAsksRisky(claim, signals) || link) {
+      return {
+        outcome: "warning",
+        headline: RISKY_ORDER_MATCH_HEADLINE,
+        reasons: [...(storeAsksRisky(claim, signals) ? [RISKY_ORDER_REASON] : []), ...(link ? [link] : []), RELAY_ORDER_REASON, ...lead, ...reasonsFor()],
+        inferenceSourceLabel,
+      };
+    }
+    return { outcome: "neutral", headline: RELAY_ORDER_HEADLINE, reasons: [RELAY_ORDER_REASON, ...lead, ...reasonsFor()], inferenceSourceLabel };
+  };
+
   const freeMailVerdict = (lead: string[]): InnerVerdict => ({
     outcome: "warning",
     headline: FREE_MAIL_ORDER_HEADLINE,
@@ -535,10 +691,28 @@ function decideInner(
     };
   }
 
+  // A real tracking number is checked before any store or billing branch, so a
+  // model that labels it an order number cannot skip the leaked-number check.
+  // Only the store's own exact domain, citing the matching order, skips it.
+  if (!findMatchingOrder(claim, ledger.orders).match) {
+    const early = findMatchingShipment(claim, ledger.shipments);
+    const lead = [`Cited tracking number: ${early.cited.join(", ")}.`];
+    if (early.match) return parcelMatch(early.match, lead, "This tracking number matches a shipment you are expecting.");
+    if (early.stored) {
+      return {
+        outcome: "warning",
+        headline: STORED_NOT_EXPECTED_HEADLINE,
+        reasons: [...lead, "This tracking number is stored on this device, but not as a parcel you are expecting (for example, it was already delivered).", ...reasonsFor()],
+        inferenceSourceLabel,
+      };
+    }
+  }
+
   if (isInformativeShipmentNotice(claim, signals)) {
-    const { match, elsewhere, freeMail } = findMatchingOrder(claim, ledger.orders);
+    const { match, relay, elsewhere, freeMail } = findMatchingOrder(claim, ledger.orders);
     const reasons: string[] = [];
     if (freeMail) return freeMailVerdict(reasons);
+    if (relay) return relayVerdict(relay, []);
     if (match) {
       const link = orderLinkReason(match);
       if (link) {
@@ -579,11 +753,12 @@ function decideInner(
   }
 
   if (isBillingClaim(claim) || isStoreClaim(claim)) {
-    const { cited, match, elsewhere, freeMail } = findMatchingOrder(claim, ledger.orders);
+    const { cited, match, relay, elsewhere, freeMail } = findMatchingOrder(claim, ledger.orders);
     const known = isKnownSender(claim, ledger);
     const reasons: string[] = [];
     if (cited.length) reasons.push(`Cited number: ${cited.join(", ")}.`);
     if (freeMail) return freeMailVerdict(reasons);
+    if (relay) return relayVerdict(relay, reasons);
     if (elsewhere) {
       return {
         outcome: "warning",
@@ -628,6 +803,11 @@ function decideInner(
         inferenceSourceLabel,
       };
     }
+    if (risky) {
+      reasons.push("You have no purchase history with this sender, and it asks you to pay, call, log in or download.");
+      reasons.push(...reasonsFor());
+      return { outcome: "neutral", headline: NO_HISTORY_RISKY_HEADLINE, reasons, inferenceSourceLabel };
+    }
     reasons.push("You have no purchase history with this sender, so this is not an alarm.");
     reasons.push(...reasonsFor());
     return {
@@ -638,8 +818,9 @@ function decideInner(
     };
   }
 
-  const { match: orderMatch, elsewhere: orderElsewhere, freeMail: orderFreeMail } = findMatchingOrder(claim, ledger.orders);
+  const { match: orderMatch, relay: orderRelay, elsewhere: orderElsewhere, freeMail: orderFreeMail } = findMatchingOrder(claim, ledger.orders);
   if (orderFreeMail) return freeMailVerdict([]);
+  if (orderRelay) return relayVerdict(orderRelay, []);
   if (orderElsewhere) {
     return {
       outcome: "warning",
@@ -685,7 +866,7 @@ function decideInner(
   }
   return {
     outcome: "neutral",
-    headline: "You have no history with this sender.",
+    headline: risky ? NO_HISTORY_RISKY_HEADLINE : "You have no history with this sender.",
     reasons: [
       "This email could not be classified as a known store, carrier, or billing claim, and no cited number matched an order or shipment stored on this device.",
       ...reasonsFor(),

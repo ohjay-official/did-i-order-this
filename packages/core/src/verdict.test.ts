@@ -7,7 +7,7 @@ import {
   type LedgerShipment,
   type OfficialPack,
 } from "./types.ts";
-import { decideVerdict, hasExpectedParcel, labelForSource } from "./verdict.ts";
+import { NO_HISTORY_RISKY_HEADLINE, decideVerdict, hasExpectedParcel, labelForSource } from "./verdict.ts";
 import { normalizeTracking } from "./normalize.ts";
 
 const pack: OfficialPack = {
@@ -16,6 +16,12 @@ const pack: OfficialPack = {
     { domain: "ups.com", name: "UPS", role: "carrier" },
     { domain: "dhl.com", name: "DHL", role: "carrier" },
     { domain: "northwind-outfitters.example", name: "Northwind Outfitters", role: "merchant" },
+  ],
+  // The fictional store domains these unit tests use, as if vetted (DMARC p=reject), so the Safe paths stay covered.
+  storeDomains: [
+    { domain: "shop.northwind-outfitters.example", name: "Northwind Outfitters", dmarc: "reject", checked: "test" },
+    { domain: "streamhut.example", name: "Streamhut", dmarc: "reject", checked: "test" },
+    { domain: "billing.streamhut.example", name: "Streamhut", dmarc: "reject", checked: "test" },
   ],
   lureTemplates: [
     {
@@ -210,7 +216,7 @@ describe("decideVerdict: store order / receipt / shipment notice", () => {
     };
     const verdict = decideVerdict(claim, emptyLedger, pack);
     expect(verdict.outcome).toBe("neutral");
-    expect(verdict.headline).toBe("You have no history with this sender.");
+    expect(verdict.headline).toBe(NO_HISTORY_RISKY_HEADLINE);
   });
 
   it("does not warn on an informative shipment notice, even if the order number is new", () => {
@@ -273,7 +279,7 @@ describe("decideVerdict: renewal, invoice, refund", () => {
     };
     const verdict = decideVerdict(claim, emptyLedger, pack, "on_device");
     expect(verdict.outcome).toBe("neutral");
-    expect(verdict.headline).toBe("You have no history with this sender.");
+    expect(verdict.headline).toBe(NO_HISTORY_RISKY_HEADLINE);
   });
 
   it("is Safe for a refund whose order number is in the ledger", () => {

@@ -3,6 +3,7 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import { zipSync } from "fflate";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +24,17 @@ async function walk(dir, prefix = "") {
 }
 
 const files = await walk(dist);
+// build-info.json names the commit this zip was built from, so a proof run can record it.
+let build = { sha: "unknown", source: "unknown" };
+if (process.env.VERCEL_GIT_COMMIT_SHA) build = { sha: process.env.VERCEL_GIT_COMMIT_SHA, source: "vercel" };
+else {
+  try {
+    build = { sha: execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(), source: "git" };
+  } catch {
+    // Not a git checkout: keep "unknown".
+  }
+}
+files["did-i-order-this-extension/build-info.json"] = new TextEncoder().encode(`${JSON.stringify(build)}\n`);
 for (const forbidden of Object.keys(files)) {
   if (/\.map$|\.env/.test(forbidden)) throw new Error(`Refusing to package ${forbidden}`);
 }

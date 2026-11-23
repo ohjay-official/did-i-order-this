@@ -23,6 +23,11 @@ import {
 } from "./index.ts";
 
 const pack = pack0 as OfficialPack;
+/** The official pack plus the fictional Northwind domain as if it were on the vetted DMARC p=reject store list. */
+const vettedPack: OfficialPack = {
+  ...pack,
+  storeDomains: [...(pack.storeDomains ?? []), { domain: "shop.northwind-outfitters.example", name: "Northwind", dmarc: "reject", checked: "test" }],
+};
 const now = "2026-11-20T00:00:00Z";
 const T = "1Z999AA10123456784";
 const ledger: LedgerSnapshot = {
@@ -72,10 +77,11 @@ describe("W1 to W10: a real tracking number from an unofficial sender never give
     expect(v.headline).toBe(LOOKALIKE_MATCH_HEADLINE);
     expect(v.reasons).toContain("The sender's domain could not be read, so it cannot be the carrier's official domain.");
   });
-  it("the same number from ups.com (or a subdomain) is Safe, whatever the label", () => {
-    for (const asked of ["none", "other", "confirm"] as const) {
-      expect(run(upsText("UPS <mcinfo@ups.com>", "Delivery is tomorrow."), carrierClaim(asked)).outcome).toBe("safe");
-      expect(run(upsText("UPS <alerts@email.ups.com>", "Delivery is tomorrow."), carrierClaim(asked)).outcome).toBe("safe");
+  it("the same number from ups.com (or a subdomain) is Safe only when the AI read labels no request", () => {
+    expect(run(upsText("UPS <mcinfo@ups.com>", "Delivery is tomorrow."), carrierClaim("none")).outcome).toBe("safe");
+    expect(run(upsText("UPS <alerts@email.ups.com>", "Delivery is tomorrow."), carrierClaim("none")).outcome).toBe("safe");
+    for (const asked of ["other", "confirm"] as const) {
+      expect(run(upsText("UPS <mcinfo@ups.com>", "Delivery is tomorrow."), carrierClaim(asked)).outcome).toBe("neutral");
     }
   });
 });
@@ -216,9 +222,11 @@ describe("S1 to S4: store and billing matches", () => {
     const text = "From: x@evil.example (Northwind <orders@shop.northwind-outfitters.example>)\nSubject: Card\n\nOrder NW-10001. Update your card details at https://evil.example";
     expect(run(text, storeClaim("confirm", "receipt")).headline).toBe(ORDER_FROM_OTHER_SENDER_HEADLINE);
   });
-  it("a genuine receipt from the store's own domain stays Safe", () => {
+  it("a genuine receipt from the store's own domain is Safe only when the store is on the vetted list", () => {
     const text = "From: Northwind Outfitters <orders@shop.northwind-outfitters.example>\nSubject: Receipt\n\nThanks for your order NW-10001. Your payment was received.";
-    expect(run(text, storeClaim("none", "receipt")).outcome).toBe("safe");
+    expect(run(text, storeClaim("none", "receipt")).outcome).toBe("neutral");
+    const claim = reconcileClaim(storeClaim("none", "receipt"), text, senderDomainFromHeader(text));
+    expect(decideVerdict(claim, ledger, vettedPack, "on_device", { emailText: text, senderCheck: "verified" }).outcome).toBe("safe");
   });
   it("the unclassified fallback warns on an order number from another sender", () => {
     const text = "From: Desk <a@evil.example>\nSubject: x\n\nAbout NW-10001.";
@@ -233,9 +241,10 @@ describe("S1 to S4: store and billing matches", () => {
   it("a shipment notice that asks for anything risky cannot be saved, even from the store", async () => {
     const { canSaveShipmentFromClaim } = await import("./index.ts");
     const notice: EmailClaim = { ...storeClaim("none", "shipment_notice"), cited_numbers: [{ kind: "order", value: "NW-10001" }, { kind: "tracking", value: "1Z000AA10000000001" }] };
-    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped.", senderCheck: "verified" })).toBe(true);
-    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped." })).toBe(false);
-    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped. Pay the customs fee.", senderCheck: "verified" })).toBe(false);
+    expect(canSaveShipmentFromClaim(notice, ledger, vettedPack, { emailText: "Order NW-10001 shipped.", senderCheck: "verified" })).toBe(true);
+    expect(canSaveShipmentFromClaim(notice, ledger, pack, { emailText: "Order NW-10001 shipped.", senderCheck: "verified" })).toBe(false);
+    expect(canSaveShipmentFromClaim(notice, ledger, vettedPack, { emailText: "Order NW-10001 shipped." })).toBe(false);
+    expect(canSaveShipmentFromClaim(notice, ledger, vettedPack, { emailText: "Order NW-10001 shipped. Pay the customs fee.", senderCheck: "verified" })).toBe(false);
     expect(canSaveShipmentFromClaim({ ...notice, asked_action: "confirm" }, ledger)).toBe(false);
   });
 });

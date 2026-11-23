@@ -65,7 +65,7 @@
           </details>
           <details class="faq-item">
             <summary>What does "Next step, chosen in the cloud" mean?</summary>
-            <p>After the verdict, the hosted site may add one next-step line. The model does not write it: it only picks one of a fixed set of sentences we wrote for that verdict and action, and code fills in the brand&#39;s official site. In the cloud this happens only after you agreed to the cloud for that check (Check in the cloud, or the home page&#39;s cloud mode), and the call sends only the verdict category, the action type (pay, log in, download, or none) and a brand name when the real sender domain is official. It never sends the email body, numbers or the sender address. Without that agreement the pick runs on this device ("Next step, chosen on this device") when Chrome has an on-device model, or not at all, and nothing is loaded from Google. If no line appears, the tip was skipped or failed, and the verdict is unchanged. The extension never shows this line.</p>
+            <p>After the verdict, the hosted site may add one next-step line. The model does not write it: it only picks one of a fixed set of sentences we wrote for that verdict and action, and code fills in the brand&#39;s official site. In the cloud this happens only after you agreed to the cloud for that check (a Check in the cloud yes; the Allow cloud switch alone is not enough), and the call sends only the verdict category, the action type (pay, log in, download, or none) and a brand name when the real sender domain is official. It never sends the email body, numbers or the sender address. Without that agreement the pick runs on this device ("Next step, chosen on this device") when Chrome has an on-device model, or not at all, and nothing is loaded from Google. If no line appears, the tip was skipped or failed, and the verdict is unchanged. The extension never shows this line.</p>
           </details>
           <details class="faq-item">
             <summary>What does "Limited check (no AI)" mean?</summary>
@@ -132,7 +132,7 @@
           </details>
           <details class="faq-item">
             <summary>Can I save a shipment after a check?</summary>
-            <p>Yes, when the shipment notice cites an order already stored on this device, comes from that store&#39;s own domain, and links to no other site. A pasted email cannot save a shipment, because its sender can&#39;t be verified. You confirm first. The Save this shipment control is in the sample inbox.</p>
+            <p>Yes, when the shipment notice cites an order already stored on this device, comes from that store&#39;s exact domain, that store is on the vetted list of stores whose domain rejects forged mail (DMARC p=reject), and it links to no other site. A pasted email cannot save a shipment, because its sender can&#39;t be verified. You confirm first. The Save this shipment control is in the sample inbox.</p>
           </details>
           <details class="faq-item">
             <summary>Does on-device AI work in every browser?</summary>
@@ -148,7 +148,7 @@
           </details>
           <details class="faq-item">
             <summary>Who built this, and is a company endorsing it?</summary>
-            <p>It was built by Oh-Jay as an entry for #BuildHybridAI 2026, the Firebase AI Logic hybrid inference hackathon, with AI coding assistants: Grok Bot wrote the code and tests and built the earlier site and v6 UI, and Claude Opus 5.5 did the v7 and later UI passes. No company has endorsed this product.</p>
+            <p>It was built by Oh-Jay as an entry for #BuildHybridAI 2026, the Firebase AI Logic hybrid inference hackathon, with AI coding assistants: Grok Bot wrote the code and tests and built the earlier site and v6 UI, Claude helped plan the idea on 11 and 12 Nov, and Claude Opus 5.5 made the v7 and UI-NEXT UI commits (16, 15 to 17 Nov). No company has endorsed this product.</p>
           </details>
             </div>
           </div>
