@@ -102,3 +102,13 @@ describe("J2-2: falsy on-device global", () => {
     expect(isGoogleAiRequest("https://did-i-order-this.vercel.app/")).toBe(false);
   });
 });
+
+describe("CLAIM_PROMPT (round 5)", () => {
+  it("asks for a request label on any contact or payment ask, and keeps a plain app note as none", async () => {
+    const { CLAIM_PROMPT } = await import("./schema");
+    expect(CLAIM_PROMPT).toContain("Any request to contact, message, call, reply with details, pay by any method, or visit a site is other or the matching action, never none.");
+    expect(CLAIM_PROMPT).toContain("a phone number, a messaging app or @handle, a payment app, a gift card or voucher, a QR code, and card or bank details");
+    expect(CLAIM_PROMPT).toContain("Use download only when the email asks the reader to download, open or install a file, attachment or app.");
+    expect(CLAIM_PROMPT).toContain("in the sender's own app or account, with no other request, is none.");
+  });
+});

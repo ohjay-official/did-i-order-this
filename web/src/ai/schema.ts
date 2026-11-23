@@ -54,4 +54,6 @@ export const CLAIM_PROMPT = [
   "Any request to contact, message, call, reply with details, pay by any method, or visit a site is other or the matching action, never none.",
   "That includes a request in any language, a phone number, a messaging app or @handle, a payment app, a gift card or voucher, a QR code, and card or bank details.",
   "Use none only when the email asks the reader to do nothing at all.",
+  "Use download only when the email asks the reader to download, open or install a file, attachment or app.",
+  "A plain note that the reader can follow the parcel or order in the sender's own app or account, with no other request, is none.",
 ].join(" ");
