@@ -108,7 +108,7 @@ export async function runCheckFlow(
   deps.onCloudStart?.();
   try {
     const second = await withTimeout(
-      deps.readClaim(email.text, "only_in_cloud"),
+      deps.readClaim(email.text, "prefer_on_device"),
       deps.cloudTimeoutMs ?? CLOUD_TIMEOUT_MS,
     );
     return {

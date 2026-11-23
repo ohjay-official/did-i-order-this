@@ -25,6 +25,7 @@ import {
 } from "../demo/shipmentDemo.ts";
 import { NOT_CHECKED_HEADLINE, SAMPLE_NOTE, runCheckFlow } from "./checkFlow.ts";
 import { appCheckGate } from "../ai/appCheckGate.ts";
+import { isNextStepReason, suggestNextStep } from "../ai/nextStep.ts";
 import { isCloudAiAvailable, isFirebaseConfigured } from "../firebase/app.ts";
 import { ledgerForCheck, loadLedger, resetToDemoSeed, saveOrder, saveSender, saveShipment } from "../ledger/store.ts";
 import { importNoteText } from "../ledger/importNote.ts";
@@ -485,7 +486,7 @@ export class InboxApp {
   }
 
   private finishWithClaim(
-    email: { text: string; sample?: SampleThread },
+    email: { text: string; fromDomain?: string; sample?: SampleThread },
     emailKey: string,
     claim: EmailClaim,
     inferenceSource?: InferenceSourceValue,
@@ -504,6 +505,33 @@ export class InboxApp {
       canSaveShipment: canSaveShipmentFromClaim(claim, ledger, getOfficialPack(), { emailText: email.text }),
       saved: false,
       emailKey,
+    };
+    this.render();
+    const seq = this.checkSeq;
+    const senderDomain = email.fromDomain ?? senderDomainFromHeader(email.text);
+    void this.attachNextStep(emailKey, seq, senderDomain);
+  }
+
+  /**
+   * After the verdict is already on screen, try a non-blocking next-step tip.
+   * Failures leave the verdict as it is.
+   */
+  private async attachNextStep(emailKey: string, seq: number, senderDomain?: string): Promise<void> {
+    if (this.check.status !== "done" || this.check.usedSampleClaim) return;
+    const { claim, verdict } = this.check;
+    const line = await suggestNextStep({
+      claim,
+      verdict,
+      pack: getOfficialPack(),
+      senderDomain,
+    });
+    if (!line) return;
+    if (seq !== this.checkSeq) return;
+    if (this.check.status !== "done" || this.check.emailKey !== emailKey) return;
+    if (this.check.verdict.reasons.some(isNextStepReason)) return;
+    this.check = {
+      ...this.check,
+      verdict: { ...this.check.verdict, reasons: [...this.check.verdict.reasons, line] },
     };
     this.render();
   }

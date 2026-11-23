@@ -42,7 +42,7 @@
               <li>/ Cloud only after you agree</li>
               <li>/ No account, no mailbox scan</li>
             </ul>
-            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes, and Google reCAPTCHA loads only for a cloud check you agreed to.</p>
+            <p class="priv-intro">Your orders, tracking numbers and email text stay in this browser. No email leaves unless you say yes. On the hosted site, a next-step tip may still load Google reCAPTCHA and send only the verdict category, a brand name only when the sender is official or the verdict already names that brand, and the action type. Choosing Do not send skips that tip too.</p>
           </div>
           <div class="priv-bottom">
             <div>
@@ -95,7 +95,7 @@
               <div class="flow-item"><span class="flow-dot"></span><div><h4>The text of that one email</h4><p>And only on the hosted site, after a consent dialog.</p></div></div>
               <div class="flow-item"><span class="flow-dot"></span><div><h4>Nothing, if you choose Do not send</h4><p>You can still run a limited check with no AI.</p></div></div>
               <div class="flow-item"><span class="flow-dot"></span><div><h4>Nothing from the Chrome extension</h4><p>The side panel never sends mail to the cloud.</p></div></div>
-              <div class="flow-item"><span class="flow-dot"></span><div><h4>App Check on production cloud</h4><p>reCAPTCHA Enterprise protects production cloud calls. It does not read your inbox.</p></div></div>
+              <div class="flow-item"><span class="flow-dot"></span><div><h4>App Check on production cloud</h4><p>reCAPTCHA Enterprise protects production cloud calls, including the next-step tip. It does not read your inbox.</p></div></div>
             </div>
           </div>
         </div>
@@ -138,7 +138,7 @@
   <div class="policy-inner">
     <p class="eyebrow">The fine print</p>
     <h2 id="policy-title">Privacy policy</h2>
-    <p class="policy-meta">Last updated: 16 November 2026. Applies to did-i-order-this.vercel.app and the sideloaded Chrome extension.</p>
+    <p class="policy-meta">Last updated: 23 November 2026. Applies to did-i-order-this.vercel.app and the sideloaded Chrome extension.</p>
 
     <h3>Who runs this</h3>
     <p>Did I Order This? is a hackathon project built by Oh-Jay for #BuildHybridAI 2026. There is no company behind it, no account system, and nothing to buy.</p>
@@ -147,7 +147,8 @@
     <ul>
       <li><strong>Orders, tracking numbers and senders you save.</strong> Stored only on your device: in this browser's IndexedDB on the website, or in <code>chrome.storage.local</code> in the extension. They are never uploaded.</li>
       <li><strong>Files you import</strong> (CSV or ZIP order history). Read in the browser and turned into saved orders. The files are not uploaded.</li>
-      <li><strong>Email text you paste or open.</strong> Read on your device. It leaves the device only in the cloud case below.</li>
+      <li><strong>Email text you paste or open.</strong> Read on your device. The email text leaves the device only in the cloud-email case below.</li>
+      <li><strong>A next-step tip on the hosted site.</strong> After a verdict, the site may send only the verdict outcome, our headline, a brand name only when the real sender domain is official or the verdict text already names a claimed brand from our official list, and the action type (pay, log in, download, or none). It never sends the email body, tracking or order numbers, or the sender address. This step loads App Check and reCAPTCHA. The extension does not make this call, and choosing <em>Do not send</em> skips it.</li>
       <li><strong>Usage analytics.</strong> Page views and performance numbers, described under Analytics. No email text, no saved orders, no names.</li>
     </ul>
     <p>We do not ask for a name, an email address, a phone number or a payment card, and we do not use the Gmail API or scan a mailbox.</p>
@@ -156,16 +157,17 @@
     <ol>
       <li>Every check starts on your device, using Chrome's built-in model through Firebase AI Logic.</li>
       <li>If on-device AI is not available, the hosted site asks first. Only if you choose <em>Check in the cloud</em> does the text of that one email go to the cloud. You can choose <em>Do not send</em> or run a limited check with no AI instead.</li>
-      <li>The Chrome extension never sends email text to the cloud.</li>
-      <li>The verdict is computed on your device by comparing the model's reading with the orders you saved.</li>
+      <li>After a verdict on the hosted site, a separate next-step tip may be requested in the cloud. That call does not include the email body. It does load App Check and reCAPTCHA, even when the email itself was read on the device. Choosing <em>Do not send</em> skips this tip.</li>
+      <li>The Chrome extension never sends email text to the cloud, and it does not request a next-step tip.</li>
+      <li>The verdict is computed on your device by comparing the model's reading with the orders you saved. A failed next-step call never changes that verdict.</li>
     </ol>
 
     <h3>Firebase and Google processing</h3>
-    <p>Cloud reads go through Google's Firebase AI Logic to the Gemini Developer API. Requests are protected by Firebase App Check with reCAPTCHA, which Google loads only after you choose Check in the cloud on the hosted site, to tell real visitors from scripts. An on-device check or Do not send loads nothing from Google. reCAPTCHA may set its own security cookie and stores a <code>_grecaptcha</code> value in local storage. Google processes these requests under its own terms and the <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</p>
+    <p>Cloud reads go through Google's Firebase AI Logic to the Gemini Developer API. Requests are protected by Firebase App Check with reCAPTCHA, which Google loads for a cloud email read you agreed to, and also for the hosted site's next-step tip, to tell real visitors from scripts. An on-device email read does not send the email or load reCAPTCHA. Choosing Do not send skips both the email cloud read and the next-step tip, so nothing is loaded from Google. reCAPTCHA may set its own security cookie and stores a <code>_grecaptcha</code> value in local storage. Google processes these requests under its own terms and the <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</p>
     <p>The project uses the free quota of the Gemini API. Under Google's <a href="https://ai.google.dev/gemini-api/terms" rel="noopener">Gemini API Additional Terms</a>, Google may use content sent to the unpaid quota, and the responses, to improve its products, and human reviewers may read it after it is disconnected from the project. In the EEA, Switzerland and the UK, Google applies its paid-service terms instead. Do not send an email that holds information you would not share with Google.</p>
 
     <h3>Analytics</h3>
-    <p>The website uses Vercel Web Analytics and Vercel Speed Insights. Both are cookie-free: they set no cookies and do not track you across sites. They record the page path (we strip query strings), referrer, browser, operating system, device type, country and page speed numbers. Vercel identifies a visit with a hash that resets daily and does not store your IP address. Because nothing here sets a tracking cookie, there is no cookie banner. The only cookie you may see is reCAPTCHA's security cookie, and only after you agree to a cloud check.</p>
+    <p>The website uses Vercel Web Analytics and Vercel Speed Insights. Both are cookie-free: they set no cookies and do not track you across sites. They record the page path (we strip query strings), referrer, browser, operating system, device type, country and page speed numbers. Vercel identifies a visit with a hash that resets daily and does not store your IP address. Because nothing here sets a tracking cookie, there is no cookie banner. The only cookie you may see is reCAPTCHA's security cookie, after a cloud email read you agreed to, or after the hosted site's next-step tip.</p>
     <p>The site also keeps three small values in session storage for the open tab, cleared when it closes: the cloud budget count (<code>dio.cloudCalls.v1</code>), whether you said yes to the cloud for sample threads (<code>dio.cloudConsent.v1</code>), and whether App Check failed in this tab, so the email is not sent again (<code>dio.appCheckBlocked.v1</code>). None of them holds email text.</p>
 
     <h3>Retention</h3>
