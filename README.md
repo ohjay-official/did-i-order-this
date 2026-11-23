@@ -120,7 +120,7 @@ Platform and prize category names are taken from the [#BuildHybridAI 2026](https
 
 ## More Ways to Test
 
-From quickest to most real. None needs a Google or Firebase account. Times were measured on the build machine on 23 Nov 2026 (Africa/Lagos) from a fresh clone of `main` at `2e40e13`, Node 24.22.1, warm npm cache (later commits change docs, page copy and an analytics option, and add one small test); a first install on a new machine takes longer.
+From quickest to most real. None needs a Google or Firebase account. Times were measured on the build machine on 23 Nov 2026 (Africa/Lagos) from a fresh clone of the round 3 branch at `25ebcf4`, Node 24.22.1, warm npm cache: `npm ci` 4.6 seconds, `npm test` 3.5 seconds, `npm run verify` 31.3 seconds (19 of 19 passed); a first install on a new machine takes longer.
 
 | Way | Time and what it needs | Steps |
 | --- | --- | --- |
