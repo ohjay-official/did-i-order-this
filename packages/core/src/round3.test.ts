@@ -209,12 +209,13 @@ describe("F9: store wording floors", () => {
 describe("I2: the ZIP import checks the real inflated size", () => {
   it("rejects an entry whose declared size understates what it inflates to", () => {
     const big = "order_id,merchant\n" + "X-1,Shop\n".repeat(6_000_000); // about 54 MB
-    const zip = zipSync({ "orders.csv": strToU8(big) }, { level: 9 });
+    const zip = zipSync({ "orders.csv": strToU8(big) }, { level: 1 });
     // Understate the uncompressed size in the local header and the central directory.
     const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
     view.setUint32(22, 1000, true);
     const central = zip.findIndex((_b, i) => view.getUint32(i, true) === 0x02014b50);
     view.setUint32(central + 24, 1000, true);
     expect(() => parseOrderHistoryFile({ name: "orders.zip", bytes: zip })).toThrow(/too big|larger|could not be read/i);
-  });
+    // It builds and inflates about 54 MB, which can pass 5 seconds on a CI runner under coverage.
+  }, 60_000);
 });
