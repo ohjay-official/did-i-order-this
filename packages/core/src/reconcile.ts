@@ -1,5 +1,5 @@
 import { extractCandidateNumbers } from "./limitedCheck.ts";
-import { normalizeDomain, normalizeTracking } from "./normalize.ts";
+import { normalizeDomain, normalizeOrderId, normalizeTracking } from "./normalize.ts";
 import type { EmailClaim } from "./types.ts";
 
 const DOMAIN = /^(?=.{3,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/;
@@ -18,7 +18,8 @@ export function looksLikeDomain(value: string): boolean {
  *   not a valid domain the claim has no domain, which the verdict treats as
  *   unofficial;
  * - tracking-shaped numbers found in the text are added if the model left them out.
- * No cited number the model returned is removed.
+ * A number the model returned is kept only if it also appears in the email text
+ * (round 7: a hallucinated cited number from the model never gives a match).
  */
 export function reconcileClaim(claim: EmailClaim, emailText: string, senderDomain: string): EmailClaim {
   const party = { ...claim.claimed_party };
@@ -28,11 +29,20 @@ export function reconcileClaim(claim: EmailClaim, emailText: string, senderDomai
   } else {
     delete party.domain;
   }
-  const cited = new Set(claim.cited_numbers.map((item) => normalizeTracking(item.value)));
+  // Letters and digits only, both from the model and from the text, folded to upper case.
+  const normalise = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const normalizedText = normalise(emailText || "");
+  const kept = claim.cited_numbers.filter((item) => {
+    if (!item.value) return false;
+    const norm = normalise(item.value);
+    return norm.length > 0 && normalizedText.includes(norm);
+  });
+  void normalizeOrderId;
+  const cited = new Set(kept.map((item) => normalizeTracking(item.value)));
   const extra = extractCandidateNumbers(emailText)
     .filter((value) => !cited.has(value))
     .map((value) => ({ kind: "tracking" as const, value }));
-  return { ...claim, claimed_party: party, cited_numbers: [...claim.cited_numbers, ...extra] };
+  return { ...claim, claimed_party: party, cited_numbers: [...kept, ...extra] };
 }
 
 const HEADER_LINE = /^[A-Za-z][A-Za-z0-9-]*:/;

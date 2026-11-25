@@ -134,8 +134,13 @@ const BARE_HOST = new RegExp(String.raw`(?<![@\w.-])((?:[a-z0-9](?:[a-z0-9-]*[a-
 // that label is a common file extension, so "ups-customs.pw" or "is.gd/x" is a
 // link while "label.pdf" is not. Over-matching only costs Safe, never adds it.
 const FILE_EXTS = "pdf|png|jpe?g|gif|webp|svg|bmp|tiff?|heic|docx?|xlsx?|pptx?|odt|rtf|txt|csv|zip|rar|7z|gz|eml|msg|ics|vcf|html?|xml|json|mp[34]|mov|wav";
+// Round 7: the last label may hold digits and hyphens as well as letters, so an
+// attacker can't slip "evi1.c0m" or "evil.c-om" past the scanner — but it must
+// still hold at least one letter, so a price like "1.99" or a version like
+// "2.0.1" is not a link. The file-extension list keeps "label.pdf" out too.
+// Over-matching only costs Safe, never grants it.
 const ANY_HOST = new RegExp(
-  String.raw`(?<![@\w.-])((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?!(?:${FILE_EXTS})(?![a-z0-9-]))[a-z]{2,24})(?![\w-])`,
+  String.raw`(?<![@\w.-])((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?!(?:${FILE_EXTS})(?![a-z0-9-]))(?=[a-z0-9-]{2,24}(?![\w-]))[a-z0-9]*[a-z][a-z0-9-]*)(?![\w-])`,
   "gi",
 );
 const IPV4_HOST = /(?<![\w.])(\d{1,3}(?:\.\d{1,3}){3})(?![\w.]*\d)/g;
@@ -300,7 +305,8 @@ const FOREIGN_WORDS = new Set(
 export function isMostlyNonEnglish(raw: string): boolean {
   const text = raw.replace(/\b(?:https?|hxxps?):\/\/\S+/gi, " ").replace(/\S+@\S+/g, " ");
   const letters = text.match(/\p{L}/gu) ?? [];
-  if (letters.length >= 20) {
+  // Round 7: the 8-letter floor catches short lures ("Zahlen Sie") too, not just full paragraphs.
+  if (letters.length >= 8) {
     const latin = text.match(/\p{Script=Latin}/gu) ?? [];
     if (latin.length / letters.length < 0.7) return true;
   }

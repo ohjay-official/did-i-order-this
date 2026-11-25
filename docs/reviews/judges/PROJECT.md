@@ -3,7 +3,7 @@
 - **Name:** Did I Order This?
 - **One line: what it does and for whom:** For people who get a delivery or billing email asking them to pay or click: Firebase AI Logic reads what the email claims (party, action, numbers, kind), then deterministic code checks that claim against the orders and tracking numbers stored on their own device and returns Safe, Warning or Neutral, labelled with where the AI ran.
 - **Public repo:** https://github.com/ohjay-official/did-i-order-this
-- **Commit under review:** the head of `main` when you clone (record it). At card time: `ec707ce` plus a docs-only commit adding this card and `docs/submission/devpost-draft.md`.
+- **Commit under review:** the head of `main` when you clone (record it). Round 6 (23 Nov 2026): `68b5011` (round-6 security fixes shipped on top of `0a3f7f3`).
 - **Live app or demo:** site https://did-i-order-this.vercel.app ; sample inbox https://did-i-order-this.vercel.app/app/ ; extension test page https://did-i-order-this.vercel.app/extension-demo/ ; judge extension zip https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip ; deployed commit https://did-i-order-this.vercel.app/build-info.json
 - **Onchain or backend addresses:** none. No project server or database. The hosted site calls Firebase AI Logic (Gemini Developer API) and Firebase App Check (reCAPTCHA Enterprise) only after a consent dialog.
 - **How a newcomer tries it:** README "Try It (5 steps, no setup)"; full steps in docs/TESTING.md.

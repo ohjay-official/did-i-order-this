@@ -232,7 +232,8 @@ export function mountLanding(root: ParentNode = document): void {
   };
 
   const run = async (emailText: string, displayText?: string, demoNote = "") => {
-    const trimmed = emailText.trim();
+    // Round 7: cap paste at 200k chars, same cap as the extension sanitizer.
+    const trimmed = emailText.trim().slice(0, 200_000);
     if (!trimmed) {
       input.focus();
       return;

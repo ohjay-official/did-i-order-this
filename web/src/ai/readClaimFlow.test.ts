@@ -104,14 +104,16 @@ describe("readClaim through Firebase AI Logic", () => {
 
   it("on-device only: warms the device model, spends no cloud budget, labels on_device", async () => {
     state.responses.push({ text: GOOD, inferenceSource: "on_device" });
-    const result = await readClaim("email body", "only_on_device");
+    // reconcileClaim drops numbers the model named but the email text does not mention (round 7),
+    // so the email body here cites the same number the fixture claims.
+    const result = await readClaim("A customs fee is due. Tracking GM123456789012345.", "only_on_device");
     expect(result.inferenceSource).toBe("on_device");
     expect(result.claim.cited_numbers[0].value).toBe("GM123456789012345");
     expect(state.initCalls).toBe(1);
     expect(take).not.toHaveBeenCalled();
     expect(state.params[0].mode).toBe("only_on_device");
     expect(state.prompts[0]).toContain("Do not invent numbers");
-    expect(state.prompts[0]).toContain("email body");
+    expect(state.prompts[0]).toContain("Tracking GM123456789012345");
   });
 
   it("cloud only: skips the device model, spends one budget unit, uses the brief model", async () => {

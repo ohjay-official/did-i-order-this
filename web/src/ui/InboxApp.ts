@@ -98,7 +98,8 @@ export class InboxApp {
 
   private currentEmail(): { text: string; fromDomain: string; subject: string; sample?: SampleThread } | null {
     if (this.mode === "paste") {
-      const text = this.pasteText.trim();
+      // Round 7: cap paste at 200k chars, like the extension sanitizer, so a huge paste can't tie up signal scans.
+      const text = this.pasteText.trim().slice(0, 200_000);
       if (!text) return null;
       const sample = sampleThreads.find((thread) => formatEmailText(thread).trim() === text);
       return {
