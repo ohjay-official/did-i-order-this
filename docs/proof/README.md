@@ -2,6 +2,8 @@
 
 These files are copied from the artifacts of public GitHub Actions runs in [`ohjay-official/nano-film`](https://github.com/ohjay-official/nano-film), so the proof stays readable after the artifacts expire. Every run used a 4 vCPU / 16 GB GitHub runner with Chrome 157.0.8103.78, which downloaded Gemini Nano before the check (`warmup.result` is `on-device-ok`).
 
+Outside tester notes, when any exist, go in [testers.md](testers.md). The one-page card to send a tester is [tester-card.md](tester-card.md).
+
 | Run | What it checked | Result | Files |
 | --- | --- | --- | --- |
 | [45127511017](https://github.com/ohjay-official/nano-film/actions/runs/45127511017) (`on-device-demo`), 23 Nov 2026, 07:57 to 07:59 Africa/Lagos | The live sample inbox at `https://did-i-order-this.vercel.app/app/`, first DHL thread, production `2e40e13` | **Checked on this device**, **Warning**, **You're not expecting any parcel right now.**, no cloud consent dialog | [result.json](site-run-45127511017-result.json), [frame](site-run-45127511017-hosted-inbox.png) |

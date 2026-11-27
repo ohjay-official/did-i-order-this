@@ -10,14 +10,17 @@
 
 A parcel or billing email can ask you to pay a fee or open a link, and a fake DHL or UPS message can look like a real one. This app uses Firebase AI Logic to read what the email claims, then plain code checks that claim against the orders and tracking numbers stored on your device. A perfect-looking fake still fails when you are not expecting a parcel, and the email stays on your device unless you say yes.
 
-**Safe is narrow by design.** A **Safe** verdict needs all of these: a sender the app verified itself (Gmail's own record in the Chrome extension, or a built-in sample, never pasted text), an order or tracking number stored on your device that matches, no request to pay, call, log in or download found by code, no link or image off the official site list, and an AI read that labels no request. Anything less stops at **Neutral**, and a stored number from the wrong sender gets **Warning**. So a pasted email can never be Safe, and the app says why. The rules are in `decideVerdict()` ([verdict.ts](packages/core/src/verdict.ts)) and the [tests](docs/TESTING.md).
+**User story:** someone who just got a delivery or billing email opens it in this app, or in Gmail with the extension, checks it against the orders and tracking numbers on their device, and leaves knowing whether the claim matches a shipment they are expecting, without the email leaving the device unless they say yes.
+
+**Safe is narrow by design.** Safe needs a verified sender (never pasted text), a stored match, no risky ask or outside link found by code, and an AI label of none. Anything less stops at Neutral or Warning ([`decideVerdict()`](packages/core/src/verdict.ts)).
+
 
 ## Quick Links
 
 | What | Time and what it needs |
 | --- | --- |
 | [Try the sample inbox](#try-it-5-steps-no-setup) on the live site | 5 steps, no setup, no account |
-| Watch the film: `TBD-post-build: film URL (YouTube, at most 3 minutes, not filmed yet)` | At most 3 minutes (the hackathon limit) |
+| Watch the film: `TBD-post-build: film URL (YouTube, under 2:30, not filmed yet)` | Under 2:30 (the event allows 3 minutes) |
 | [Judge extension zip](https://did-i-order-this.vercel.app/downloads/did-i-order-this-extension-0.1.0.zip) and its [test page](https://did-i-order-this.vercel.app/extension-demo/) | 4 steps, desktop Chrome 138 or later ([how](docs/TESTING.md#5-chrome-extension-desktop-chrome-138-or-later)) |
 | [One-command check](#more-ways-to-test): `npm ci` then `npm run verify` | About 30 to 40 seconds on the build machine, Node 22.22 or later |
 | [How It Compares](#how-it-compares), [Tracks](#tracks), [how it was built](#built-during-buildhybridai-2026), [testing guide](docs/TESTING.md) | Reference |
@@ -42,7 +45,7 @@ The same kind of carrier email failed or passed only because of what is stored o
 - **Tests:** 645 unit tests; core coverage 95.78% statements and 91.13% branches, gated at 95% and 85% ([config](packages/core/vitest.config.ts)).
 - **CI:** `npm run verify -- --offline` on every push to `main` and every pull request ([ci.yml](.github/workflows/ci.yml)).
 - **Lighthouse 13.6.0 (mobile),** re-run 26 Nov 2026 on production `44584dd`: Accessibility, Best Practices and SEO 100 on all 9 indexed routes; Performance 96 to 100 (home 96, every other route 99 or 100). The `/extension-demo/` test fixture is marked noindex by design, so its SEO drops to 63 and it is not counted among the 9. Reports in [docs/proof/lh-26nov/](docs/proof/lh-26nov/) ([live site](https://did-i-order-this.vercel.app)).
-- **No real users yet.** Three testers are planned for 26 to 28 Nov 2026.
+- **No real users yet.** Three testers are planned for 26 to 28 Nov 2026. A one-page card is in [docs/proof/tester-card.md](docs/proof/tester-card.md); results go in [docs/proof/testers.md](docs/proof/testers.md).
 
 <details>
 <summary><strong>Tests, Lighthouse detail and the device notes</strong></summary>
@@ -112,8 +115,9 @@ Platform and prize category names are taken from the [#BuildHybridAI 2026](https
 | Import order history (Amazon ZIP or CSV, PayPal CSV, generic CSV), parsed in the browser; save a shipment from a "your order has shipped" email that cites an order already stored on the device, sent from that store's own domain | Works |
 | Chrome extension side panel on an open Gmail thread | Works when sideloaded; on-device only. Proven on a public runner with a local Gmail-thread fixture, not a signed-in mail.google.com session. The extension's Safe path is covered by unit tests only: it has not been recorded on a runner or on signed-in Gmail, because the runner's fixture is the project's test page, which never gives Safe |
 | Chrome Web Store listing | Not done. Planned |
-| Screenshots, `.eml` files, SMS or phone texts; Outlook, Yahoo or other webmail in the extension | Not supported (the extension is Gmail only) |
-| Account login emails | Out of scope by design |
+| Scope of this entry | Delivery and billing emails in the hosted app (sample inbox or paste box) or in Gmail on the web (the sideloaded extension). Account login emails are out of scope. |
+| Scope: channels and languages left out | SMS, phone texts, screenshots, `.eml` files, and other webmail. Wording checks are scoped to English; a mostly non-English email stops at Neutral by design. |
+| Scope: on-device AI | Desktop Chrome with Gemini Nano (Chrome's hardware requirements). On other browsers the hosted site offers a consented cloud check or a limited check with no AI. The extension is on-device only. |
 | Real user numbers | None yet |
 
 ## More Ways to Test
@@ -169,6 +173,8 @@ It cannot promise that an email is safe or is a scam. It can only say whether th
 
 ## How Firebase AI Logic Is Used
 
+**Why only Firebase AI Logic:** this check only makes sense on Firebase AI Logic because one SDK runs the email read on Gemini Nano first, falls back to Gemini in the cloud only after a yes, and labels each result from the SDK's own `inferenceSource`, with App Check on the cloud path.
+
 All of this is in code, imported from `firebase/ai` and `firebase/app-check`, and called at runtime. It is not only named here.
 
 - **Calls:** `getAI` with `new GoogleAIBackend()`, `getGenerativeModel`, `initializeDeviceModel`, and `generateContent` in `web/src/ai/readClaim.ts` (email read, used by the hosted site and the extension) and `web/src/ai/nextStep.ts` (hosted-site next-step tip only).
@@ -201,7 +207,7 @@ All of this is in code, imported from `firebase/ai` and `firebase/app-check`, an
 - **No secrets in the repo.** `.env.example` has empty values only. `npm run verify` scans tracked files and the full git history for API keys, tokens, private keys, and App Check debug tokens, and checks the built bundles for a debug token.
 - **Dependencies:** `npm audit` (26 Nov 2026) reports the same CVE, [GHSA-m9gg-hp2v-232j](https://github.com/advisories/GHSA-m9gg-hp2v-232j) in `@grpc/grpc-js`, counted four times because it affects four Firebase packages (`firebase`, `@firebase/firestore`, `@firebase/firestore-compat` and `@grpc/grpc-js`), and one low advisory in the same package, [GHSA-f596-whhp-79r4](https://github.com/advisories/GHSA-f596-whhp-79r4). Both sit inside the Firestore part of the `firebase` package; this app never imports Firestore, and the verify script checks that no grpc code is in the web bundle. Verify accepts GHSA-m9gg-hp2v-232j by id and fails on any other high or critical advisory. There has been no third-party security audit.
 
-**What it doesn't promise:** a passed check is not a guarantee the email is safe. A cloud check sends that one email to Google's free Gemini tier, which may keep it and may review it. On-device AI needs desktop Chrome with Gemini Nano available (Chrome's own hardware requirements apply). The extension reads Gmail on the web only, and is sideloaded; there is no Chrome Web Store listing yet. SMS, phone texts, screenshots, and `.eml` files are not covered. Account login emails are out of scope.
+**What it doesn't promise:** a passed check is not a guarantee the email is safe. A cloud check sends that one email to Google's free Gemini tier, which may keep it and may review it. For what this entry covers, see [What Works Today](#what-works-today).
 
 ## Sustainability
 
@@ -226,7 +232,7 @@ There is no product server to run. Orders stay on the device. The site is hosted
 | New project | All commits are inside the submission period. Earlier work reused is disclosed below: the on-device warm-up approach, supplied media, and parts of a CSS checklist |
 | Value proposition, features, and instructions | The tagline and [What's New Here](#whats-new-here) (value), [What Works Today](#what-works-today) (features), [Try It](#try-it-5-steps-no-setup) and [More Ways to Test](#more-ways-to-test) (instructions), plus a hosted project URL (encouraged by the rules) |
 | Open source license | Apache-2.0, the rules' preferred license, in the `LICENSE` file and shown in the GitHub About box |
-| Demonstration video | Required on the Devpost form, at most 3 minutes, public on YouTube, in English. Its link goes in the film line under [Quick Links](#quick-links) |
+| Demonstration video | Required on the Devpost form, public on YouTube, in English, under 2:30 (the event allows 3 minutes). Its link goes in the film line under [Quick Links](#quick-links) |
 | No production secrets in the repo, form, or testing instructions | `.env.example` uses placeholders only; `npm run verify` scans for secrets |
 
 **AI code:** Grok Bot wrote the product code, the tests, the docs, and the verify pipeline, and built the earlier site and v6 UI, directed by Oh-Jay. Claude helped plan the idea on 11 and 12 Nov 2026 (no code before the first commit). Claude Opus 5.5 did the v7 and UI-NEXT passes from 15 to 17 Nov 2026 (13 commits reachable from `main`, each with a Co-Authored-By line; three earlier v7 commits were squashed into the 16 Nov import); see the build log fold. Oh-Jay chose the idea, wrote the product and design briefs, made the product decisions, and reviewed the builds on his phone.

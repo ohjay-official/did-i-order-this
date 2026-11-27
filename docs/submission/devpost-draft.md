@@ -1,12 +1,12 @@
 # Devpost draft: Did I Order This? (DRAFT, not submitted)
 
-Refreshed 26 Nov 2026 against the README on `main` at `68b5011` (production; the last code change is `e528bd3` round 7 security fixes, after `bfe5e25` round 6; `68b5011` updates docs for the round 6 fourteen-store vetted list). Nothing here has been pasted into Devpost. The only placeholder is the film URL, marked `FILM_URL`.
+Refreshed 27 Nov 2026 against the README on `main` at `5985f4d` (production at the start of this refresh; the last code change is `e528bd3` round 7 security fixes). Nothing here has been pasted into Devpost. The only placeholder is the film URL, marked `FILM_URL`.
 
 Deadline: Mon 30 Nov 2026, 2:00 PM PT = **23:00 Africa/Lagos**. Target: submit by **20:00 Africa/Lagos**. After the deadline the entry locks and later commits are not evaluated.
 
 ## Fields only Oh-Jay can fill or confirm on the form
 
-1. **Video demo link:** `FILM_URL` (public YouTube, 3:00 or less, English or English subtitles).
+1. **Video demo link:** `FILM_URL` (public YouTube, under 2:30, English or English subtitles; the event allows 3:00).
 2. **Submitter details:** individual entrant, your country of residence, and the eligibility tick boxes (age of majority, not in an excluded country, not a Google or Devpost employee or family member).
 3. **Team members:** only you, unless you add someone.
 4. **Image gallery and thumbnail:** upload from the repo's `docs/images/` (all are real captures of the live site with sample data; none show your phone). Suggested thumbnail: `docs/images/sample-verdict-prepared.png`.
@@ -52,6 +52,8 @@ Fake parcel-fee and billing emails work because they look like real ones. A "you
 
 ### What it does
 
+**User story:** someone who just got a delivery or billing email opens it in this app, or in Gmail with the extension, checks it against the orders and tracking numbers on their device, and leaves knowing whether the claim matches a shipment they are expecting, without the email leaving the device unless they say yes.
+
 - You open an email (the sample inbox on the site, or an open Gmail thread with the extension) and click **Check this email**.
 - Firebase AI Logic reads what the email claims: who it says it is from, what it asks you to do, which numbers it cites, and what kind of email it is, as structured JSON.
 - Deterministic code then checks that claim against the orders and tracking numbers stored in the browser (IndexedDB on the site, `chrome.storage.local` in the extension). The model never gives the verdict.
@@ -59,9 +61,11 @@ Fake parcel-fee and billing emails work because they look like real ones. A "you
 - Every email-read result is labelled **Checked on this device** or **Checked in the cloud**. After a verdict, the hosted site may also append **Next step, chosen in the cloud** (or **on this device**): one sentence from a fixed, vetted set that the model only picks by id. Other results say **Limited check (no AI)**, **Check not completed**, or, on sample threads when no AI ran, that the claim prepared for that sample thread was used.
 - It also imports order history (Amazon ZIP or CSV, PayPal CSV, generic CSV) in the browser, and saves a shipment from a "your order has shipped" email that cites an order already stored on the device, sent from that store's exact domain, only for stores on a vetted list that publish DMARC `p=reject`.
 
-It cannot promise that an email is safe or is a scam. It can only say whether the claim matches what is stored on that device.
+It cannot promise that an email is safe or is a scam. It can only say whether the claim matches what is stored on that device. Scope of this entry: delivery and billing emails in the hosted app or in Gmail on the web; wording checks are scoped to English (a mostly non-English email stops at Neutral by design); on-device AI is desktop Chrome with Gemini Nano; SMS, phone texts, screenshots, `.eml` files, other webmail, and account login emails are out of scope.
 
 ### How we built it (how Firebase AI Logic is used)
+
+**Why only Firebase AI Logic:** this check only makes sense on Firebase AI Logic because one SDK runs the email read on Gemini Nano first, falls back to Gemini in the cloud only after a yes, and labels each result from the SDK's own `inferenceSource`, with App Check on the cloud path.
 
 - `getAI` with `GoogleAIBackend`, `getGenerativeModel`, `initializeDeviceModel` and `generateContent` from `firebase/ai`, in `readClaim()` (`web/src/ai/readClaim.ts`, used by the site and the extension) and in `suggestNextStep()` (`web/src/ai/nextStep.ts`, hosted site only).
 - Hybrid inference is split by feature. The email read tries `InferenceMode.ONLY_ON_DEVICE` (Gemini Nano in Chrome) first. Only on the hosted site, and only after a consent dialog that says Google's free Gemini tier may keep and review the text, that fallback uses `InferenceMode.PREFER_ON_DEVICE`. If App Check rejects the browser, the email is not sent. We did not use `PREFER_ON_DEVICE` for the first email read, because it falls back to the cloud without asking, and an email is personal. A separate next-step tip on the hosted site asks the model only to pick a template id (`Schema.enumString`) from vetted sentences for that verdict and action; code writes the text. It uses `InferenceMode.ONLY_IN_CLOUD` (`gemini-3.5-flash-lite`) only after the user agreed to the cloud for that check (a **Check in the cloud** yes; the home page's Allow cloud switch alone is not enough), with its own budget and App Check gate, and sends only the verdict category, the action type (read in code from the email) and a brand name only for a built-in sample whose sender domain is on the official list (never from a pasted From line). Otherwise it uses `InferenceMode.ONLY_ON_DEVICE` with no App Check, or does not run. It never sends the email body, tracking or order numbers, or the sender address. The extension never calls the cloud.
@@ -73,7 +77,7 @@ It cannot promise that an email is safe or is a scam. It can only say whether th
 
 ### Challenges we ran into
 
-- Gemini Nano needs desktop Chrome on capable hardware, and private CI runners cannot load it. On-device proof runs on public GitHub runners in a separate public repo.
+- On-device AI is scoped to desktop Chrome with Gemini Nano, and private CI runners cannot load it. On-device proof runs on public GitHub runners in a separate public repo.
 - reCAPTCHA Enterprise rejects automated Chrome, so cloud checks cannot be tested by a bot. The page says why (App Check), does not send the email, and on sample threads falls back to the prepared claim. Real cloud verdicts were recorded by hand on a Galaxy S25 in Chrome Android, in the Telegram and X in-app browsers, and in iPad Safari (WebKit, desktop layout). iPhone Safari itself was not run.
 - Small on-device models sometimes return a display name as the domain or miss the tracking number. We moved those facts out of the model's hands and read them from the email in code.
 - Making the demo work for a judge with no Nano and no cloud call, without ever labelling a canned result as an AI read in the sample inbox.
@@ -84,7 +88,7 @@ It cannot promise that an email is safe or is a scam. It can only say whether th
 - Real on-device runs on public GitHub runners on production `a166eac` (23 Nov, round 5): nano-film run 45162692620 (site) showed **Checked on this device** for DHL **Warning**, the UPS sample **Safe**, a leaked-number fee email **Warning**, and a pasted UPS email **Neutral** (a pasted email can't prove who sent it); run 45162700037 (extension, live judge zip built from `a166eac`) showed **Checked on this device** and **Warning** in the side panel. Each result.json records the deployed commit, read from the site's `/build-info.json` and the zip's `build-info.json`. The result.json files and frames are kept in the repo's `docs/proof/`. One earlier round 5 run, 45161337542, failed: Nano labelled the clean pasted UPS email as a download request (Warning, not Neutral); a prompt fix followed. The extension's Safe path is covered by unit tests only, not recorded on a runner or on signed-in Gmail.
 - Real cloud verdicts recorded by hand on a Galaxy S25 (17 Nov 2026; no public capture): Chrome Android showed **Checked in the cloud** for the first DHL thread (**Warning**, **You're not expecting any parcel right now.**) and, after **Load the matching shipment demo**, for the UPS thread (**Safe**), with no second consent dialog. The Telegram and X in-app browsers on the same phone and iPad Safari also returned **Checked in the cloud**.
 - One command, `npm run verify`, prints PASS or FAIL for 19 checks: 645 unit tests, a coverage gate, typecheck, lint, a guard against direct Prompt API calls, builds, the extension zip, secret scans of files, history and bundles, a dependency audit, and live-site checks.
-- Lighthouse 12.8.2 (mobile), 17 Nov on `fcbfb0c` and re-run 23 Nov on `eedce9a`: Accessibility, Best Practices and SEO 100 on all 9 routes; Performance 96 to 100.
+- Lighthouse 13.6.0 (mobile), re-run 26 Nov 2026 on production `44584dd`: Accessibility, Best Practices and SEO 100 on all 9 indexed routes; Performance 96 to 100 (home 96, every other route 99 or 100). The `/extension-demo/` test fixture is marked noindex by design, so its SEO drops to 63 and it is not counted among the 9. Reports in `docs/proof/lh-26nov/`.
 
 ### What we learned
 
@@ -93,8 +97,8 @@ It cannot promise that an email is safe or is a scam. It can only say whether th
 
 ### What's next
 
-- Chrome Web Store listing for the extension (sideloaded today).
-- Real testers (planned for 26 to 28 Nov; there are no real users yet).
+- Chrome Web Store listing for the extension (sideloaded today; a listing is not part of this entry).
+- Outside testers: none recorded yet. A one-page card is in `docs/proof/tester-card.md`; results will be logged in `docs/proof/testers.md`.
 - More carriers and stores in the official-domain pack.
 
 ### Built during the submission period, and AI tools used
@@ -119,7 +123,7 @@ Full steps with every on-screen string: `docs/TESTING.md` in the repo. One-comma
 
 ## Before you press Submit
 
-1. `FILM_URL` replaced here and in the README (Grok does the README); the video is public, 3:00 or less, captions on.
+1. `FILM_URL` replaced here and in the README (Grok does the README); the video is public, under 2:30, captions on.
 2. Grok's final pre-submit check has passed (live site, zip, numbers here match the README).
 
 (Repo is public, checked 23 Nov.)
