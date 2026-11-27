@@ -78,7 +78,7 @@ It cannot promise that an email is safe or is a scam. It can only say whether th
 ### Challenges we ran into
 
 - On-device AI is scoped to desktop Chrome with Gemini Nano, and private CI runners cannot load it. On-device proof runs on public GitHub runners in a separate public repo.
-- reCAPTCHA Enterprise rejects automated Chrome, so cloud checks cannot be tested by a bot. The page says why (App Check), does not send the email, and on sample threads falls back to the prepared claim. Real cloud verdicts were recorded by hand on a Galaxy S25 in Chrome Android, in the Telegram and X in-app browsers, and in iPad Safari (WebKit, desktop layout). iPhone Safari itself was not run.
+- reCAPTCHA Enterprise rejects automated Chrome, so cloud checks cannot be tested by a bot. The page says why (App Check), does not send the email, and on sample threads falls back to the prepared claim. Real cloud verdicts were recorded by hand on a Galaxy S25 in Chrome Android, in the Telegram and X in-app browsers, and in iPad Safari (WebKit, desktop layout). iPhone Safari was run on 27 Nov 2026 at https://didiorder.vercel.app/app/ on production `e16a54e`: Warning then Safe, no cloud (**Do not send**); on-device AI did not run, so both checks used the prepared sample-thread claim ([docs/proof/ios-safari-27nov.mp4](../proof/ios-safari-27nov.mp4)).
 - Small on-device models sometimes return a display name as the domain or miss the tracking number. We moved those facts out of the model's hands and read them from the email in code.
 - Making the demo work for a judge with no Nano and no cloud call, without ever labelling a canned result as an AI read in the sample inbox.
 

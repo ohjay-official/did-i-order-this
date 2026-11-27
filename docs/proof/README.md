@@ -4,6 +4,8 @@ These files are copied from the artifacts of public GitHub Actions runs in [`ohj
 
 Outside tester notes, when any exist, go in [testers.md](testers.md). The one-page card to send a tester is [tester-card.md](tester-card.md).
 
+**iPhone Safari, 27 Nov 2026, about 14:00 Africa/Lagos:** on a real iPhone, at [https://didiorder.vercel.app/app/](https://didiorder.vercel.app/app/) on production `e16a54e`, DHL was **Warning** (**You're not expecting any parcel right now.**) and, after **Load the matching shipment demo**, UPS was **Safe** (**This tracking number matches a shipment you are expecting.**). No cloud: both checks used **Do not send**; on-device AI did not run, so each check used the structured claim prepared for that sample thread. File: [ios-safari-27nov.mp4](ios-safari-27nov.mp4).
+
 | Run | What it checked | Result | Files |
 | --- | --- | --- | --- |
 | [45127511017](https://github.com/ohjay-official/nano-film/actions/runs/45127511017) (`on-device-demo`), 23 Nov 2026, 07:57 to 07:59 Africa/Lagos | The live sample inbox at `https://did-i-order-this.vercel.app/app/`, first DHL thread, production `2e40e13` | **Checked on this device**, **Warning**, **You're not expecting any parcel right now.**, no cloud consent dialog | [result.json](site-run-45127511017-result.json), [frame](site-run-45127511017-hosted-inbox.png) |
